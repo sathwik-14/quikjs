@@ -1,0 +1,19 @@
+{
+  "name": "@waglesathwik/pag",
+  "version": "1.0.1",
+  "description": "Nodejs rest api generator built for pacewisdom solutions",
+  "main": "index.js",
+  "bin": {
+    "p-a-g": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "waglesathwik",
+  "license": "ISC",
+  "dependencies": {
+    "inquirer": "^9.2.16"
+  },
+  "type": "module"
+}
