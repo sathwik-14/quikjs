@@ -518,7 +518,7 @@ async function main() {
   const formData = await promptModelForm();
   console.log("Form Data:", formData);
   try {
-    const { model_name, model_desc, fields, relations } = formData;
+    let { model_name, model_desc, fields, relations } = formData;
     const name = model_name;
 
     const model = transformFields(fields);
@@ -536,6 +536,7 @@ async function main() {
     if (modelExists) {
       console.log("model/service already exist");
     } else {
+      relations = isArrayNotEmpty(relations)?relations:[];
       await generateScaffold(name, model, relations);
       updateState({ name, model, relations });
       console.log(

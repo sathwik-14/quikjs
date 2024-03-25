@@ -4,8 +4,8 @@
   "description": "Nodejs rest api generator built for pacewisdom solutions",
   "main": "index.js",
   "bin": {
-    "--p": "./index.js",
-    "--m": "./generate.js"
+    "pag-g-p": "./index.js",
+    "pag-g-m": "./generate.js"
   },
   "scripts": {
     "start": "node index.js",
