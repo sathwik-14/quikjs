@@ -297,6 +297,148 @@ function controllersPrisma(serviceName) {
   );
 }
 
+// Generate sequalize client init
+function generateSequalizeClientInit() {
+  fs.writeFileSync(
+    path.join(projectRoot, "config", "db.js"),
+    template.sequelizeInitContent
+  );
+}
+
+// Check if a variable is an array and is not empty
+function isArrayNotEmpty(arr) {
+  return Array.isArray(arr) && arr.length > 0;
+}
+
+// Generate sequelize model
+function generateSequelizeModel(serviceName, model, relations) {
+  console.log("model----- ", serviceName, model);
+  const modelsDirectory = "./models";
+
+  const capitalizedServiceName = capitalize(serviceName);
+  const modelFields = Object.entries(model)
+    .map(
+      ([fieldName, fieldType]) =>
+        `  ${fieldName}: DataTypes.${fieldType.toUpperCase()},`
+    )
+    .join("\n");
+
+  const modelContent = `
+    // Sequelize schema for ${serviceName}
+    const { sequelize } = require("../config/db");
+    const { DataTypes } = require("sequelize");
+
+    const ${capitalizedServiceName} = sequelize.define('${serviceName.toLowerCase()}', {
+      ${modelFields}
+    });
+
+    ${capitalizedServiceName}.sync()
+      .then(() => console.log('${serviceName} model synced successfully'))
+      .catch(err => console.log('${serviceName} model sync failed'));
+
+    module.exports = ${capitalizedServiceName};
+  `;
+
+  if (isArrayNotEmpty(relations)) {
+    const associationContent = ` // Define associations
+  ${generateAssociations(capitalizedServiceName, relations)}
+`;
+    modelContent += associationContent;
+  }
+
+  // Ensure the models directory exists
+  if (!fs.existsSync(modelsDirectory)) {
+    fs.mkdirSync(modelsDirectory);
+  }
+
+  // Generate and write model content to the file
+  const filePath = `${modelsDirectory}/${serviceName.toLowerCase()}.js`;
+  fs.writeFileSync(filePath, modelContent);
+
+  // Update index.js file to export all models
+  const indexFilePath = `${modelsDirectory}/index.js`;
+  let indexContent = "";
+
+  // Read existing content of index.js file
+  if (fs.existsSync(indexFilePath)) {
+    indexContent = fs.readFileSync(indexFilePath, "utf-8");
+  }
+
+  // Append the new export statement
+  const newContent = `
+    const ${capitalizedServiceName} = require('./${serviceName.toLowerCase()}');
+    module.exports.${capitalizedServiceName} = ${capitalizedServiceName};
+  `;
+
+  // Check if index file content already includes the new content
+  if (!indexContent.includes(newContent)) {
+    fs.appendFileSync(indexFilePath, newContent);
+    console.log("New content appended to the index file.");
+  } else {
+    console.log(
+      "Index file already contains the new content. No changes made."
+    );
+  }
+}
+
+// Controllers generation for sequelize models
+function controllersSequelize(serviceName) {
+  // Write to controller file
+  const controllerFilePath = path.join(
+    projectRoot,
+    "controllers",
+    `${serviceName}.js`
+  );
+  fs.writeFileSync(controllerFilePath, template.controllerContent(serviceName));
+}
+
+// Setup Sequalize
+async function setupSequalize(serviceName, model, relations) {
+  try {
+    console.log("generate client");
+    generateSequalizeClientInit();
+    console.log("generate model");
+    generateSequelizeModel(serviceName, model, relations);
+    console.log("model generation complete");
+    // await sequelizeMigration();
+    // console.log("done generation and migration");
+  } catch (error) {
+    console.error("Error setting up Prisma:", error);
+    throw error;
+  }
+}
+
+// Generate associations
+function generateAssociations(modelName, relations) {
+  let associations = "";
+
+  relations.forEach(({ model_name, type }) => {
+    associations += `
+      const ${capitalize(
+        model_name
+      )} = require('./${model_name.toLowerCase()}');
+    `;
+
+    if (type === "one-to-many") {
+      associations += `
+        ${modelName}.hasMany(${capitalize(model_name)});
+      `;
+    } else if (type === "many-to-one") {
+      associations += `
+        ${modelName}.belongsTo(${capitalize(model_name)});
+      `;
+    } else if (type === "many-to-many") {
+      associations += `
+        ${modelName}.belongsToMany(${capitalize(
+        model_name
+      )}, { through: 'IntermediateTableName' });
+      `;
+    }
+  });
+
+  return associations;
+}
+
 // Main function to generate scaffold
 async function generateScaffold(serviceName, model, relations) {
   try {

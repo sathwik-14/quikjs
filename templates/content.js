@@ -238,10 +238,8 @@ try {
   require("dotenv").config();
   const dbUri = process.env['DATABASE_URL'];
   
-  // Configure Sequelize with the extracted connection details
   const sequelize = new Sequelize(dbUri);
   
-
   const testDbConnection = async () => {
     try {
       await sequelize.authenticate();

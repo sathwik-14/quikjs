@@ -4,8 +4,8 @@
   "description": "Nodejs rest api generator built for pacewisdom solutions",
   "main": "index.js",
   "bin": {
-    "p-a-g": "./index.js",
-    "p-a-g-m": "./generate.js"
+    "g:p": "./index.js",
+    "g:m": "./generate.js"
   },
   "scripts": {
     "start": "node index.js",
@@ -15,7 +15,7 @@
   "author": "waglesathwik",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^5.11.0"
+    "inquirer": "^9.2.16"
   },
   "type": "module"
 }

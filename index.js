@@ -87,8 +87,12 @@ async function runORMSetup(orm, db) {
   console.log("starting orm setup..", orm);
   switch (orm) {
     case "prisma":
+      execSync("npm i prisma @prisma/client");
       await initializePrisma(db);
       generatePrismaClientInit();
+      break;
+    case "sequelize":
+      execSync("npm i sequelize sequelize-cli");
       break;
   }
 }
@@ -148,24 +152,18 @@ function generateProjectStructure(input) {
 }
 
 inquirer.prompt(questions).then((answers) => {
-  console.log('Installing dependencies...');
-  exec('npm i express cors dotenv helmet morgan compression',(err,stdout,stderr)=>{
-    if(err)console.log("error installing packages")
-    else
-    {
-      switch(answers.db){
-        case "postgresQL":
-          execSync('npm i pg pg-hstore')
+  console.log("Installing dependencies...");
+  exec(
+    "npm i express cors dotenv helmet morgan compression",
+    (err, stdout, stderr) => {
+      if (err) console.log("error installing packages");
+      else {
+        switch (answers.db) {
+          case "postgresQL":
+            execSync("npm i pg pg-hstore");
+        }
+        generateProjectStructure(answers);
       }
-      switch(answers.orm){
-        case "prisma":
-          execSync('npm i prisma @prisma/client');
-          break;
-        case "sequelize":
-          execSync('npm i sequelize sequelize-cli')
-          break;
-      }
-      generateProjectStructure(answers);
-      }
-  })
+    }
+  );
 });
