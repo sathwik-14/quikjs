@@ -45,7 +45,7 @@ const questions = [
 ];
 
 function generateProjectStructure() {
-    const projectRoot = path.resolve(new URL('.', import.meta.url).pathname);
+    const projectRoot = path.resolve(new URL('../../', import.meta.url).pathname);
     const folders = [
         'controllers',
         'models',
