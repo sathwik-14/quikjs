@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 import appTemplate from "./templates/app.js";
 import template from "./templates/content.js";
-import { exec } from "child_process";
+import { exec, execSync } from "child_process";
 const questions = [
   {
     type: "input",
@@ -150,5 +150,24 @@ function generateProjectStructure(input) {
 }
 
 inquirer.prompt(questions).then((answers) => {
-  generateProjectStructure(answers);
+  console.log('Installing dependencies...');
+  exec('npm i express cors dotenv helmet morgan compression',(err,stdout,stderr)=>{
+    if(err)console.log("error installing packages")
+    else
+    {
+      switch(answers.db){
+        case "postgresQL":
+          execSync('npm i pg pg-hstore')
+      }
+      switch(answers.orm){
+        case "prisma":
+          execSync('npm i prisma @prisma/client');
+          break;
+        case "sequelize":
+          execSync('npm i sequelize sequelize-cli')
+          break;
+      }
+      generateProjectStructure(answers);
+      }
+  })
 });
