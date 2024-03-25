@@ -6,6 +6,8 @@ import path from "path";
 import appTemplate from "./templates/app.js";
 import template from "./templates/content.js";
 import { exec, execSync } from "child_process";
+
+// Questions for project setup
 const questions = [
   {
     type: "input",
@@ -44,6 +46,7 @@ const questions = [
   },
 ];
 
+// Get the current working directory
 const projectRoot = process.cwd();
 
 // Generate prisma client init
@@ -83,6 +86,7 @@ function initializePrisma(db) {
   });
 }
 
+// Function to run ORM setup
 async function runORMSetup(orm, db) {
   console.log("starting orm setup..", orm);
   switch (orm) {
@@ -97,6 +101,7 @@ async function runORMSetup(orm, db) {
   }
 }
 
+// Core function to generate project structure
 function generateProjectStructure(input) {
   const { name, description, db, orm } = input;
   const folders = [
@@ -151,19 +156,13 @@ function generateProjectStructure(input) {
   }
 }
 
+//  Process user input
 inquirer.prompt(questions).then((answers) => {
   console.log("Installing dependencies...");
-  exec(
-    "npm i express cors dotenv helmet morgan compression",
-    (err, stdout, stderr) => {
-      if (err) console.log("error installing packages");
-      else {
-        switch (answers.db) {
-          case "postgresQL":
-            execSync("npm i pg pg-hstore");
-        }
-        generateProjectStructure(answers);
-      }
-    }
-  );
+  execSync("npm i express cors dotenv helmet morgan compression");
+  switch (answers.db) {
+    case "postgresQL":
+      execSync("npm i pg pg-hstore");
+  }
+  generateProjectStructure(answers);
 });

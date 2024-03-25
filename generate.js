@@ -14,6 +14,7 @@ let state;
 
 const projectRoot = process.cwd();
 
+// get state from config.json
 (() => {
   const config = fs.readFileSync(path.join(projectRoot, "config.json"));
   if (config != "") {
@@ -26,6 +27,7 @@ function capitalize(str) {
   if (str) return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+// Orms object
 const orms = {
   prisma: { id: 1, name: "prisma", getType: (input) => prismaDataType(input) },
   sequelize: {
@@ -45,6 +47,7 @@ const orms = {
   },
 };
 
+// Function that takes user input
 async function promptModelForm() {
   let types = [
     "string",
@@ -183,6 +186,7 @@ async function promptModelForm() {
   return formData;
 }
 
+// Function to transform user input into usable data structure
 function transformFields(fields) {
   const transformedFields = {};
 
@@ -193,6 +197,7 @@ function transformFields(fields) {
   return transformedFields;
 }
 
+// Function to generate prisma model
 function generatePrismaModel(serviceName, model, db) {
   // Read existing schema.prisma file
   const schemaPath = path.join(projectRoot, "prisma", "schema.prisma");
@@ -275,7 +280,6 @@ async function setupPrisma(serviceName, model, db) {
 function controllersPrisma(serviceName) {
   const controllerContent = `const prisma = require('../config/db');
 
-  
   ${template.createFunctionContent(serviceName)}
   ${template.getAllFunctionContent(serviceName)}
   ${template.getByIdFunctionContent(serviceName)}
@@ -509,6 +513,7 @@ function updateState(data) {
   return config;
 }
 
+// Core function 
 async function main() {
   const formData = await promptModelForm();
   console.log("Form Data:", formData);
