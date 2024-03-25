@@ -12,9 +12,7 @@ import { spawnSync } from "child_process";
 
 let state;
 
-const projectRoot = path.resolve(
-  new URL("../../../", import.meta.url).pathname
-);
+const projectRoot = process.cwd();
 
 (() => {
   const config = fs.readFileSync(path.join(projectRoot, "config.json"));

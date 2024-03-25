@@ -44,9 +44,7 @@ const questions = [
   },
 ];
 
-const projectRoot = path.resolve(
-  new URL("../../../", import.meta.url).pathname
-);
+const projectRoot = process.cwd();
 
 // Generate prisma client init
 function generatePrismaClientInit() {
