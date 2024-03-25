@@ -30,21 +30,22 @@ const questions = [
     type: "list",
     name: "db",
     message: "Which database are you using?",
-    choices: ["mongoDB", "postgresQL", "mySQL"],
-    filter: function (val) {
-      return val.toLowerCase();
-    },
+    choices: ["mongoDB", "postgresQL", "mySQL"]
   },
   {
     type: "list",
     name: "orm",
     message: "Which ORM are you using?",
-    choices: ["prisma", "sequelize", "mongoose"],
-    filter: function (val) {
-      return val.toLowerCase();
-    },
+    choices: function(answers) {
+      if (answers.db === "mongoDB") {
+        return ["prisma", "mongoose"];
+      } else {
+        return ["prisma", "sequelize"];
+      }
+    }
   },
 ];
+
 
 // Get the current working directory
 const projectRoot = process.cwd();
@@ -157,12 +158,36 @@ function generateProjectStructure(input) {
 }
 
 //  Process user input
-inquirer.prompt(questions).then((answers) => {
-  console.log("Installing dependencies...");
-  execSync("npm i express cors dotenv helmet morgan compression");
-  switch (answers.db) {
-    case "postgresQL":
-      execSync("npm i pg pg-hstore");
+inquirer.prompt(questions).then(async(answers) => {
+  const configPath = path.join(projectRoot, 'config.json');
+  try {
+    // Check if config.json exists
+    await fs.promises.access(configPath, fs.constants.F_OK);
+
+    // Read config.json file
+    const data = await fs.promises.readFile(configPath, 'utf-8');
+
+    // Parse JSON data
+    const config = JSON.parse(data);
+
+    // Check if config object has name property
+    if (!config || !config.name) {
+      console.error('Config file is empty or missing name property');
+    }
+
+    // Compare answers.name with config.name
+    if (answers.name === config.name) {
+      console.log('Project already created');
+      return
+    }
+    console.log("Installing dependencies...");
+    execSync("npm i express cors dotenv helmet morgan compression");
+    switch (answers.db) {
+      case "postgresQL":
+        execSync("npm i pg pg-hstore");
+    }
+    generateProjectStructure(answers);
+  } catch (error) {
+    console.error('Error:', error);
   }
-  generateProjectStructure(answers);
 });
