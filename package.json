@@ -4,10 +4,12 @@
   "description": "Nodejs rest api generator built for pacewisdom solutions",
   "main": "index.js",
   "bin": {
-    "p-a-g": "./index.js"
+    "g:p": "./index.js",
+    "g:a": "./generate.js"
   },
   "scripts": {
     "start": "node index.js",
+    "generate": "node generate.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "waglesathwik",

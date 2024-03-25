@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 import appTemplate from "./templates/app.js";
 import template from "./templates/content.js";
-
+import { exec } from "child_process";
 const questions = [
   {
     type: "input",
@@ -44,46 +44,111 @@ const questions = [
   },
 ];
 
-function generateProjectStructure() {
-    const projectRoot = path.resolve(new URL('../../', import.meta.url).pathname);
-    const folders = [
-        'controllers',
-        'models',
-        'routes',
-        'services',
-        'middlewares',
-        'utils',
-        'config',
-        'migrations',
-        'tests',
-        'public'
-    ];
+const projectRoot = path.resolve(
+  new URL("../../../", import.meta.url).pathname
+);
 
-    const files = [
-        { path: 'app.js', content: appTemplate },
-        { path: '.env', content: '' }, // Empty .env file
-        { path: '.gitignore', content: 'node_modules\n.env\n' }, // Default .gitignore content
-        { path: 'README.md', content: '# Your Project Name\n\nProject documentation goes here.' }
-    ];
+// Generate prisma client init
+function generatePrismaClientInit() {
+  fs.writeFileSync(
+    path.join(projectRoot, "config", "db.js"),
+    template.prismaInitContent
+  );
+}
 
-    try {
-        folders.forEach(folder => {
-            const folderPath = path.join(projectRoot, folder);
-            fs.mkdirSync(folderPath, { recursive: true });
-        });
+// Run npx prisma init
+function initializePrisma(db) {
+  return new Promise((resolve, reject) => {
+    exec("npx prisma init", (err, stdout, stderr) => {
+      if (err) {
+        console.log("error setting up prisma");
+      } else {
+        // Read existing schema.prisma file
+        const schemaPath = path.join(projectRoot, "prisma", "schema.prisma");
+        let prismaModelContent = fs.readFileSync(schemaPath, "utf-8");
 
-        files.forEach(file => {
-            const filePath = path.join(projectRoot, file.path);
-            fs.writeFileSync(filePath, file.content);
-        });
+        if (db == "mongoDB") {
+          prismaModelContent = prismaModelContent.replace(
+            "postgresql",
+            "mongodb"
+          );
+          prismaModelContent = prismaModelContent.replace(
+            'provider = "prisma-client-js"',
+            'provider = "prisma-client-js"\n\tpreviewFeatures = ["mongodb"]'
+          );
+        }
+        fs.writeFileSync(schemaPath, prismaModelContent);
+        console.log("Prisma initialization completed successfully");
+      }
+      resolve();
+    });
+  });
+}
 
-        console.log('Project structure created successfully.');
-    } catch (error) {
-        console.error('Error creating project structure:', error);
-    }
+async function runORMSetup(orm, db) {
+  console.log("starting orm setup..", orm);
+  switch (orm) {
+    case "prisma":
+      await initializePrisma(db);
+      generatePrismaClientInit();
+      break;
+  }
+}
+
+function generateProjectStructure(input) {
+  const { name, description, db, orm } = input;
+  const folders = [
+    "controllers",
+    "models",
+    "routes",
+    "services",
+    "middlewares",
+    "utils",
+    "config",
+    "migrations",
+    "tests",
+    "public",
+  ];
+
+  const files = [
+    { path: "app.js", content: appTemplate },
+    { path: ".env", content: "" }, // Empty .env file
+    { path: ".gitignore", content: "node_modules\n.env\n" }, // Default .gitignore content
+    {
+      path: "README.md",
+      content: "# Your Project Name\n\nProject documentation goes here.",
+    },
+  ];
+
+  try {
+    folders.forEach((folder) => {
+      const folderPath = path.join(projectRoot, folder);
+      fs.mkdirSync(folderPath, { recursive: true });
+    });
+
+    files.forEach((file) => {
+      const filePath = path.join(projectRoot, file.path);
+      fs.writeFileSync(filePath, file.content);
+    });
+
+    //setup ORM
+    runORMSetup(orm, db).then(() => {
+      const config = {
+        name,
+        description,
+        db,
+        orm,
+        models: [],
+      };
+      const folderPath = path.join(projectRoot, "config.json");
+      fs.writeFileSync(folderPath, JSON.stringify(config));
+      console.log("Project setup successful.");
+    });
+  } catch (error) {
+    console.error("Error creating project structure:", error);
+  }
 }
 
 inquirer.prompt(questions).then((answers) => {
-  console.log(answers.name, answers.description, answers.db, answers.orm)
-  generateProjectStructure()
+  generateProjectStructure(answers);
 });
