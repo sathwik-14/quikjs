@@ -317,18 +317,28 @@ function isArrayNotEmpty(arr) {
 }
 
 // Generate sequelize model
-function generateSequelizeModel(serviceName, model) {
+function generateSequelizeModel(serviceName, model, db) {
   console.log("model----- ", serviceName, model);
   const modelsDirectory = "./models";
 
   const capitalizedServiceName = capitalize(serviceName);
-  const modelFields = Object.entries(model)
-    .map(
-      ([fieldName, fieldType]) =>
-        `  ${fieldName}: DataTypes.${fieldType.toUpperCase()},`
-    )
+  
+  // Fixed fields for all Sequelize models
+  const fixedFields = [
+    "id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 }",
+    "created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }",
+    "updated_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }"
+  ];
+
+  // Convert model fields to Sequelize format
+  const customFields = Object.entries(model)
+    .map(([fieldName, fieldType]) => `  ${fieldName}: { type: DataTypes.${fieldType.toUpperCase()} },`)
     .join("\n");
 
+  // Combine fixed fields and custom fields
+  const modelFields = [...fixedFields, customFields].join("\n");
+
+  // Sequelize model content
   const modelContent = `
     // Sequelize schema for ${serviceName}
     const { sequelize } = require("../config/db");
