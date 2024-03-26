@@ -161,15 +161,12 @@ function generateProjectStructure(input) {
 inquirer.prompt(questions).then(async(answers) => {
   const configPath = path.join(projectRoot, 'config.json');
   try {
-    // Check if config.json exists
-    await fs.promises.access(configPath, fs.constants.F_OK);
-
     // Read config.json file
     const data = await fs.promises.readFile(configPath, 'utf-8');
-
+    if(data){
     // Parse JSON data
     const config = JSON.parse(data);
-
+    
     // Check if config object has name property
     if (!config || !config.name) {
       console.error('Config file is empty or missing name property');
@@ -180,6 +177,7 @@ inquirer.prompt(questions).then(async(answers) => {
       console.log('Project already created');
       return
     }
+  }
   } catch (error) {
     console.error('Error:', error);
   }
