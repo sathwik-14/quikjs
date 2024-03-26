@@ -180,14 +180,14 @@ inquirer.prompt(questions).then(async(answers) => {
       console.log('Project already created');
       return
     }
-    console.log("Installing dependencies...");
+  } catch (error) {
+    console.error('Error:', error);
+  }
+  console.log("Installing dependencies...");
     execSync("npm i express cors dotenv helmet morgan compression");
     switch (answers.db) {
       case "postgresQL":
         execSync("npm i pg pg-hstore");
     }
     generateProjectStructure(answers);
-  } catch (error) {
-    console.error('Error:', error);
-  }
 });

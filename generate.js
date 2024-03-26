@@ -317,7 +317,7 @@ function isArrayNotEmpty(arr) {
 }
 
 // Generate sequelize model
-function generateSequelizeModel(serviceName, model, relations) {
+function generateSequelizeModel(serviceName, model) {
   console.log("model----- ", serviceName, model);
   const modelsDirectory = "./models";
 
@@ -344,13 +344,6 @@ function generateSequelizeModel(serviceName, model, relations) {
 
     module.exports = ${capitalizedServiceName};
   `;
-
-  if (isArrayNotEmpty(relations)) {
-    const associationContent = ` // Define associations
-  ${generateAssociations(capitalizedServiceName, relations)}
-`;
-    modelContent += associationContent;
-  }
 
   // Ensure the models directory exists
   if (!fs.existsSync(modelsDirectory)) {
@@ -404,7 +397,8 @@ async function setupSequalize(serviceName, model, relations) {
     console.log("generate client");
     generateSequalizeClientInit();
     console.log("generate model");
-    generateSequelizeModel(serviceName, model, relations);
+    generateSequelizeModel(serviceName, model);
+    generateAssociations(serviceName, relations)
     console.log("model generation complete");
     // await sequelizeMigration();
     // console.log("done generation and migration");
@@ -414,35 +408,62 @@ async function setupSequalize(serviceName, model, relations) {
   }
 }
 
-// Generate associations
+// Function to generate associations in Sequelize models
 function generateAssociations(modelName, relations) {
-  let associations = "";
+  relations.forEach(({ model_name, relation_type }) => {
+    // Generate association code
+    const associationCode = generateAssociationCode(modelName, model_name, relation_type);
 
-  relations.forEach(({ model_name, type }) => {
-    associations += `
-      const ${capitalize(
-        model_name
-      )} = require('./${model_name.toLowerCase()}');
-    `;
+    // Append association code to model file
+    appendToFile(`${modelName}.js`, associationCode);
 
-    if (type === "one-to-many") {
-      associations += `
-        ${modelName}.hasMany(${capitalize(model_name)});
-      `;
-    } else if (type === "many-to-one") {
-      associations += `
-        ${modelName}.belongsTo(${capitalize(model_name)});
-      `;
-    } else if (type === "many-to-many") {
-      associations += `
-        ${modelName}.belongsToMany(${capitalize(
-        model_name
-      )}, { through: 'IntermediateTableName' });
-      `;
-    }
+    // Append inverse association code to related model file
+    appendToFile(`${model_name}.js`, generateInverseAssociationCode(modelName, model_name, relation_type));
   });
+}
 
-  return associations;
+// Function to generate association code
+function generateAssociationCode(modelName, relatedModelName, type) {
+  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+
+  let associationCode = `// Define association with ${capitalize(relatedModelName)}\n`;
+
+  if (type === 'one-to-many') {
+    associationCode += `${capitalize(modelName)}.hasMany(${capitalize(relatedModelName)});\n`;
+  } else if (type === 'many-to-one') {
+    associationCode += `${capitalize(modelName)}.belongsTo(${capitalize(relatedModelName)});\n`;
+  } else if (type === 'many-to-many') {
+    associationCode += `${capitalize(modelName)}.belongsToMany(${capitalize(relatedModelName)});\n`;
+  } else if (type === 'one-to-one') {
+    associationCode += `${capitalize(modelName)}.hasOne(${capitalize(relatedModelName)});\n`;
+  }
+
+  return associationCode;
+}
+
+// Function to generate inverse association code
+function generateInverseAssociationCode(modelName, relatedModelName, type) {
+  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+
+  let inverseAssociationCode = `// Define inverse association with ${capitalize(modelName)}\n`;
+
+  if (type === 'one-to-many') {
+    inverseAssociationCode += `${capitalize(relatedModelName)}.belongsTo(${capitalize(modelName)});\n`;
+  } else if (type === 'many-to-one') {
+    inverseAssociationCode += `${capitalize(relatedModelName)}.hasMany(${capitalize(modelName)});\n`;
+  } else if (type === 'many-to-many') {
+    inverseAssociationCode += `${capitalize(relatedModelName)}.belongsToMany(${capitalize(modelName)});\n`;
+  } else if (type === 'one-to-one') {
+    inverseAssociationCode += `${capitalize(relatedModelName)}.hasOne(${capitalize(modelName)});\n`;
+  }
+
+  return inverseAssociationCode;
+}
+
+// Function to append content to a file
+function appendToFile(fileName, content) {
+  const filePath = path.join(projectRoot,"models",fileName)
+  fs.appendFileSync(filePath, content);
 }
 
 // Main function to generate scaffold
