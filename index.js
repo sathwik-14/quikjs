@@ -169,7 +169,7 @@ inquirer.prompt(questions).then(async(answers) => {
     
     // Check if config object has name property
     if (!config || !config.name) {
-      console.error('Config file is empty or missing name property');
+      console.log('Config file is empty or missing name property');
     }
 
     // Compare answers.name with config.name
@@ -179,7 +179,7 @@ inquirer.prompt(questions).then(async(answers) => {
     }
   }
   } catch (error) {
-    console.error('Error:', error);
+    console.log('Initializing project setup\n');
   }
   console.log("Installing dependencies...");
     execSync("npm i express cors dotenv helmet morgan compression");

@@ -2,7 +2,7 @@ function capitalize(str) {
   if (str) return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-let content = ''
+let content = "";
 
 export default content = {
   prismaInitContent: `
@@ -10,7 +10,7 @@ export default content = {
   const prisma = new PrismaClient();
   module.exports = prisma;
   `,
-    routesContent: (serviceName) => `const express = require('express');
+  routesContent: (serviceName) => `const express = require('express');
 const router = express.Router();
 const ${serviceName}Controller = require('../controllers/${serviceName}');
 
@@ -30,21 +30,23 @@ router.delete('/:id', ${serviceName}Controller.delete${capitalize(
   )}ById);
 
 module.exports = router;`,
-  createFunctionContent: (serviceName) => `
-async function create${capitalize(serviceName)}(req, res) {
-try {
-    const new${capitalize(serviceName)} = await prisma.${serviceName}.create({
-        data: req.body
-    });
-    res.status(201).json(new${capitalize(serviceName)});
-} catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.meta.message });
-}
-}
-  `,
 
-  getAllFunctionContent: (serviceName) => `
+  createPrismaContent: (serviceName) => `
+async function create${capitalize(serviceName)}(req, res) {
+    try {
+      req.body = req.body || {}
+        const new${capitalize(
+          serviceName
+        )} = await prisma.${serviceName}.create({
+            data: req.body
+        });
+        res.status(201).json(new${capitalize(serviceName)});
+    } catch (error) {
+      res.status(400).json({ error });
+    }
+}
+`,
+  getAllPrismaContent: (serviceName) => `
   async function getAll${capitalize(serviceName)}(req, res) {
       try {
           let { page = 1, limit = 10, sortBy, sortOrder } = req.query;
@@ -74,7 +76,7 @@ try {
       }
   }
   `,
-  getByIdFunctionContent: (serviceName) => `
+  getByIdPrismaContent: (serviceName) => `
 async function get${capitalize(serviceName)}ById(req, res) {
 try {
     const ${serviceName.toLowerCase()} = await prisma.${serviceName}.findFirst({
@@ -94,7 +96,7 @@ try {
 }
 }
   `,
-  updateFunctionContent: (serviceName) => `
+  updatePrismaContent: (serviceName) => `
 async function update${capitalize(serviceName)}ById(req, res) {
 try {
     const updated${capitalize(
@@ -117,7 +119,7 @@ try {
 }
 }
   `,
-  deleteFunctionContent: (serviceName) => `
+  deletePrismaContent: (serviceName) => `
 async function delete${capitalize(serviceName)}ById(req, res) {
 try {
     const deleted${capitalize(
@@ -139,19 +141,20 @@ try {
 }
 }
   `,
-  controllerContent: (serviceName) => `
-  const db = require('../models/index');
-  
+  createSequelizeContent: (serviceName) => `
   async function create${capitalize(serviceName)}(req, res) {
     try {
-      const new${capitalize(serviceName)} = await db.${capitalize(serviceName)}.create(req.body);
+      const new${capitalize(serviceName)} = await db.${capitalize(
+    serviceName
+  )}.create(req.body);
       res.status(201).json(new${capitalize(serviceName)});
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }
-  
+  `,
+  getAllSequelizeContent: (serviceName) => `
   async function getAll${capitalize(serviceName)}(req, res) {
     try {
       let { page = 1, limit = 10, sortBy, sortOrder } = req.query;
@@ -172,7 +175,9 @@ try {
         order: sortBy ? [[sortBy, sortOrder || 'ASC']] : [] // Sorting order
       };
   
-      const ${serviceName}List = await db.${capitalize(serviceName)}.findAll(options);
+      const ${serviceName}List = await db.${capitalize(
+    serviceName
+  )}.findAll(options);
   
       // Respond with the retrieved data
       res.status(200).json(${serviceName}List);
@@ -181,13 +186,16 @@ try {
       res.status(500).json({ error: 'Internal server error' });
     }
   }
-  
+  `,
+  getByIdSequelizeContent: (serviceName) => `
   async function get${capitalize(serviceName)}ById(req, res) {
     try {
       const { id } = req.params;
       const ${serviceName} = await db.${capitalize(serviceName)}.findByPk(id);
       if (!${serviceName}) {
-        return res.status(404).json({ error: '${capitalize(serviceName)} not found' });
+        return res.status(404).json({ error: '${capitalize(
+          serviceName
+        )} not found' });
       }
       res.status(200).json(${serviceName});
     } catch (error) {
@@ -195,45 +203,48 @@ try {
       res.status(500).json({ error: 'Internal server error' });
     }
   }
-  
+  `,
+  updateSequelizeContent: (serviceName) => `
   async function update${capitalize(serviceName)}ById(req, res) {
     try {
       const { id } = req.params;
-      const [updatedCount] = await db.${capitalize(serviceName)}.update(req.body, { where: { id } });
+      const [updatedCount] = await db.${capitalize(
+        serviceName
+      )}.update(req.body, { where: { id } });
       if (updatedCount === 0) {
-        return res.status(404).json({ error: '${capitalize(serviceName)} not found' });
+        return res.status(404).json({ error: '${capitalize(
+          serviceName
+        )} not found' });
       }
-      res.status(200).json({ message: '${capitalize(serviceName)} updated successfully' });
+      res.status(200).json({ message: '${capitalize(
+        serviceName
+      )} updated successfully' });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Internal server error' });
     }
-  }
-  
+  }`,
+  deleteSequelizeContent: (serviceName) => `
   async function delete${capitalize(serviceName)}ById(req, res) {
     try {
       const { id } = req.params;
-      const deletedCount = await db.${capitalize(serviceName)}.destroy({ where: { id } });
+      const deletedCount = await db.${capitalize(
+        serviceName
+      )}.destroy({ where: { id } });
       if (deletedCount === 0) {
-        return res.status(404).json({ error: '${capitalize(serviceName)} not found' });
+        return res.status(404).json({ error: '${capitalize(
+          serviceName
+        )} not found' });
       }
-      res.status(200).json({ message: '${capitalize(serviceName)} deleted successfully' });
+      res.status(200).json({ message: '${capitalize(
+        serviceName
+      )} deleted successfully' });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Internal server error' });
     }
-  }
-  
-  module.exports = {
-    create${capitalize(serviceName)},
-    getAll${capitalize(serviceName)},
-    get${capitalize(serviceName)}ById,
-    update${capitalize(serviceName)}ById,
-    delete${capitalize(serviceName)}ById
-  };
-  `,
-  
-    sequelizeInitContent : `
+  }`,
+  sequelizeInitContent: `
   const { Sequelize } = require("sequelize");
   require("dotenv").config();
   const dbUri = process.env['DATABASE_URL'];
@@ -250,5 +261,5 @@ try {
   };
   testDbConnection();
   module.exports = {sequelize};
-  `
+  `,
 };

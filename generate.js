@@ -209,11 +209,11 @@ function generatePrismaModel(serviceName, model, db) {
   const modelContent = `
 // Prisma schema for ${serviceName}
 model ${capitalize(serviceName)} {
-  id   String @id @default(dbgenerated()) @map("_id") ${
+  id   String @id @default(uuid()) @map("_id") ${
     db == "mongoDB" ? "@db.ObjectId" : ""
   }
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
 ${Object.entries(model)
   .map(([fieldName, fieldType]) => `  ${fieldName} ${fieldType}`)
   .join("\n")}
@@ -282,11 +282,11 @@ async function setupPrisma(serviceName, model, db) {
 function controllersPrisma(serviceName) {
   const controllerContent = `const prisma = require('../config/db');
 
-  ${template.createFunctionContent(serviceName)}
-  ${template.getAllFunctionContent(serviceName)}
-  ${template.getByIdFunctionContent(serviceName)}
-  ${template.updateFunctionContent(serviceName)}
-  ${template.deleteFunctionContent(serviceName)}
+  ${template.createPrismaContent(serviceName)}
+  ${template.getAllPrismaContent(serviceName)}
+  ${template.getByIdPrismaContent(serviceName)}
+  ${template.updatePrismaContent(serviceName)}
+  ${template.deletePrismaContent(serviceName)}
   
   module.exports = {
     create${capitalize(serviceName)},
@@ -317,29 +317,32 @@ function isArrayNotEmpty(arr) {
 }
 
 // Generate sequelize model
-function generateSequelizeModel(serviceName, model, db) {
+function generateSequelizeModel(serviceName, model) {
   console.log("model----- ", serviceName, model);
   const modelsDirectory = "./models";
 
   const capitalizedServiceName = capitalize(serviceName);
-  
+
   // Fixed fields for all Sequelize models
   const fixedFields = [
     "id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 }",
-    "created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }",
-    "updated_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }"
   ];
 
   // Convert model fields to Sequelize format
   const customFields = Object.entries(model)
-    .map(([fieldName, fieldType]) => `  ${fieldName}: { type: DataTypes.${fieldType.toUpperCase()} },`)
+    .map(
+      ([fieldName, fieldType]) =>
+        `  ${fieldName}: { type: DataTypes.${fieldType.toUpperCase()} },`
+    )
     .join("\n");
 
   // Combine fixed fields and custom fields
-  const modelFields = [...fixedFields, customFields].join("\n");
+  const modelFields = [...fixedFields, customFields].join(",\n");
 
   // Sequelize model content
   const modelContent = `
+    // Imports
+
     // Sequelize schema for ${serviceName}
     const { sequelize } = require("../config/db");
     const { DataTypes } = require("sequelize");
@@ -393,12 +396,29 @@ function generateSequelizeModel(serviceName, model, db) {
 // Controllers generation for sequelize models
 function controllersSequelize(serviceName) {
   // Write to controller file
+  const controllerContent = `
+  const db = require('../models/index');
+
+  ${template.createSequelizeContent(serviceName)}
+  ${template.getAllSequelizeContent(serviceName)}
+  ${template.getByIdSequelizeContent(serviceName)}
+  ${template.updateSequelizeContent(serviceName)}
+  ${template.deleteSequelizeContent(serviceName)}
+  
+  module.exports = {
+    create${capitalize(serviceName)},
+    getAll${capitalize(serviceName)},
+    get${capitalize(serviceName)}ById,
+    update${capitalize(serviceName)}ById,
+    delete${capitalize(serviceName)}ById
+  };
+  `;
   const controllerFilePath = path.join(
     projectRoot,
     "controllers",
     `${serviceName}.js`
   );
-  fs.writeFileSync(controllerFilePath, template.controllerContent(serviceName));
+  fs.writeFileSync(controllerFilePath, controllerContent);
 }
 
 // Setup Sequalize
@@ -408,10 +428,8 @@ async function setupSequalize(serviceName, model, relations) {
     generateSequalizeClientInit();
     console.log("generate model");
     generateSequelizeModel(serviceName, model);
-    generateAssociations(serviceName, relations)
+    generateAssociations(serviceName, relations);
     console.log("model generation complete");
-    // await sequelizeMigration();
-    // console.log("done generation and migration");
   } catch (error) {
     console.error("Error setting up Prisma:", error);
     throw error;
@@ -422,13 +440,20 @@ async function setupSequalize(serviceName, model, relations) {
 function generateAssociations(modelName, relations) {
   relations.forEach(({ model_name, relation_type }) => {
     // Generate association code
-    const associationCode = generateAssociationCode(modelName, model_name, relation_type);
+    const associationCode = generateAssociationCode(
+      modelName,
+      model_name,
+      relation_type
+    );
 
     // Append association code to model file
     appendToFile(`${modelName}.js`, associationCode);
 
     // Append inverse association code to related model file
-    appendToFile(`${model_name}.js`, generateInverseAssociationCode(modelName, model_name, relation_type));
+    appendToFile(
+      `${model_name}.js`,
+      generateInverseAssociationCode(modelName, model_name, relation_type)
+    );
   });
 }
 
@@ -436,16 +461,30 @@ function generateAssociations(modelName, relations) {
 function generateAssociationCode(modelName, relatedModelName, type) {
   const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
-  let associationCode = `// Define association with ${capitalize(relatedModelName)}\n`;
+  let associationCode = `// Define association with ${capitalize(
+    relatedModelName
+  )}\n
+  const ${capitalize(
+    relatedModelName
+  )} = require('./${relatedModelName.toLowerCase()}');\n
+  `;
 
-  if (type.toLowerCase() === 'one-to-many') {
-    associationCode += `${capitalize(modelName)}.hasMany(${capitalize(relatedModelName)});\n`;
-  } else if (type.toLowerCase() === 'many-to-one') {
-    associationCode += `${capitalize(modelName)}.belongsTo(${capitalize(relatedModelName)});\n`;
-  } else if (type.toLowerCase() === 'many-to-many') {
-    associationCode += `${capitalize(modelName)}.belongsToMany(${capitalize(relatedModelName)});\n`;
-  } else if (type.toLowerCase() === 'one-to-one') {
-    associationCode += `${capitalize(modelName)}.hasOne(${capitalize(relatedModelName)});\n`;
+  if (type.toLowerCase() === "one-to-many") {
+    associationCode += `${capitalize(modelName)}.hasMany(${capitalize(
+      relatedModelName
+    )});\n`;
+  } else if (type.toLowerCase() === "many-to-one") {
+    associationCode += `${capitalize(modelName)}.belongsTo(${capitalize(
+      relatedModelName
+    )});\n`;
+  } else if (type.toLowerCase() === "many-to-many") {
+    associationCode += `${capitalize(modelName)}.belongsToMany(${capitalize(
+      relatedModelName
+    )});\n`;
+  } else if (type.toLowerCase() === "one-to-one") {
+    associationCode += `${capitalize(modelName)}.hasOne(${capitalize(
+      relatedModelName
+    )});\n`;
   }
 
   return associationCode;
@@ -455,16 +494,28 @@ function generateAssociationCode(modelName, relatedModelName, type) {
 function generateInverseAssociationCode(modelName, relatedModelName, type) {
   const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
-  let inverseAssociationCode = `// Define inverse association with ${capitalize(modelName)}\n`;
+  let inverseAssociationCode = `// Define inverse association with ${capitalize(
+    modelName
+  )}\n
+  const ${capitalize(modelName)} = require('./${modelName.toLowerCase()}');\n
+  `;
 
-  if (type.toLowerCase() === 'one-to-many') {
-    inverseAssociationCode += `${capitalize(relatedModelName)}.belongsTo(${capitalize(modelName)});\n`;
-  } else if (type.toLowerCase() === 'many-to-one') {
-    inverseAssociationCode += `${capitalize(relatedModelName)}.hasMany(${capitalize(modelName)});\n`;
-  } else if (type.toLowerCase() === 'many-to-many') {
-    inverseAssociationCode += `${capitalize(relatedModelName)}.belongsToMany(${capitalize(modelName)});\n`;
-  } else if (type.toLowerCase() === 'one-to-one') {
-    inverseAssociationCode += `${capitalize(relatedModelName)}.hasOne(${capitalize(modelName)});\n`;
+  if (type.toLowerCase() === "one-to-many") {
+    inverseAssociationCode += `${capitalize(
+      relatedModelName
+    )}.belongsTo(${capitalize(modelName)});\n`;
+  } else if (type.toLowerCase() === "many-to-one") {
+    inverseAssociationCode += `${capitalize(
+      relatedModelName
+    )}.hasMany(${capitalize(modelName)});\n`;
+  } else if (type.toLowerCase() === "many-to-many") {
+    inverseAssociationCode += `${capitalize(
+      relatedModelName
+    )}.belongsToMany(${capitalize(modelName)});\n`;
+  } else if (type.toLowerCase() === "one-to-one") {
+    inverseAssociationCode += `${capitalize(
+      relatedModelName
+    )}.hasOne(${capitalize(modelName)});\n`;
   }
 
   return inverseAssociationCode;
@@ -472,7 +523,7 @@ function generateInverseAssociationCode(modelName, relatedModelName, type) {
 
 // Function to append content to a file
 function appendToFile(fileName, content) {
-  const filePath = path.join(projectRoot,"models",fileName)
+  const filePath = path.join(projectRoot, "models", fileName);
   fs.appendFileSync(filePath, content);
 }
 
@@ -546,7 +597,7 @@ function updateState(data) {
   return config;
 }
 
-// Core function 
+// Core function
 async function main() {
   const formData = await promptModelForm();
   console.log("Form Data:", formData);
@@ -569,7 +620,7 @@ async function main() {
     if (modelExists) {
       console.log("model/service already exist");
     } else {
-      relations = isArrayNotEmpty(relations)?relations:[];
+      relations = isArrayNotEmpty(relations) ? relations : [];
       await generateScaffold(name, model, relations);
       updateState({ name, model, relations });
       console.log(
