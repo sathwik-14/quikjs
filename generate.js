@@ -438,13 +438,13 @@ function generateAssociationCode(modelName, relatedModelName, type) {
 
   let associationCode = `// Define association with ${capitalize(relatedModelName)}\n`;
 
-  if (type === 'one-to-many') {
+  if (type.toLowerCase() === 'one-to-many') {
     associationCode += `${capitalize(modelName)}.hasMany(${capitalize(relatedModelName)});\n`;
-  } else if (type === 'many-to-one') {
+  } else if (type.toLowerCase() === 'many-to-one') {
     associationCode += `${capitalize(modelName)}.belongsTo(${capitalize(relatedModelName)});\n`;
-  } else if (type === 'many-to-many') {
+  } else if (type.toLowerCase() === 'many-to-many') {
     associationCode += `${capitalize(modelName)}.belongsToMany(${capitalize(relatedModelName)});\n`;
-  } else if (type === 'one-to-one') {
+  } else if (type.toLowerCase() === 'one-to-one') {
     associationCode += `${capitalize(modelName)}.hasOne(${capitalize(relatedModelName)});\n`;
   }
 
@@ -457,13 +457,13 @@ function generateInverseAssociationCode(modelName, relatedModelName, type) {
 
   let inverseAssociationCode = `// Define inverse association with ${capitalize(modelName)}\n`;
 
-  if (type === 'one-to-many') {
+  if (type.toLowerCase() === 'one-to-many') {
     inverseAssociationCode += `${capitalize(relatedModelName)}.belongsTo(${capitalize(modelName)});\n`;
-  } else if (type === 'many-to-one') {
+  } else if (type.toLowerCase() === 'many-to-one') {
     inverseAssociationCode += `${capitalize(relatedModelName)}.hasMany(${capitalize(modelName)});\n`;
-  } else if (type === 'many-to-many') {
+  } else if (type.toLowerCase() === 'many-to-many') {
     inverseAssociationCode += `${capitalize(relatedModelName)}.belongsToMany(${capitalize(modelName)});\n`;
-  } else if (type === 'one-to-one') {
+  } else if (type.toLowerCase() === 'one-to-one') {
     inverseAssociationCode += `${capitalize(relatedModelName)}.hasOne(${capitalize(modelName)});\n`;
   }
 
