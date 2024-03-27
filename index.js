@@ -30,22 +30,21 @@ const questions = [
     type: "list",
     name: "db",
     message: "Which database are you using?",
-    choices: ["mongoDB", "postgresQL", "mySQL"]
+    choices: ["mongoDB", "postgresQL", "mySQL"],
   },
   {
     type: "list",
     name: "orm",
     message: "Which ORM are you using?",
-    choices: function(answers) {
+    choices: function (answers) {
       if (answers.db === "mongoDB") {
         return ["prisma", "mongoose"];
       } else {
         return ["prisma", "sequelize"];
       }
-    }
+    },
   },
 ];
-
 
 // Get the current working directory
 const projectRoot = process.cwd();
@@ -87,6 +86,14 @@ function initializePrisma(db) {
   });
 }
 
+// Generate sequalize client init
+function generateSequalizeClientInit() {
+  fs.writeFileSync(
+    path.join(projectRoot, "config", "db.js"),
+    template.sequelizeInitContent
+  );
+}
+
 // Function to run ORM setup
 async function runORMSetup(orm, db) {
   console.log("starting orm setup..", orm);
@@ -98,6 +105,7 @@ async function runORMSetup(orm, db) {
       break;
     case "sequelize":
       execSync("npm i sequelize sequelize-cli");
+      generateSequalizeClientInit();
       break;
   }
 }
@@ -158,34 +166,36 @@ function generateProjectStructure(input) {
 }
 
 //  Process user input
-inquirer.prompt(questions).then(async(answers) => {
-  const configPath = path.join(projectRoot, 'config.json');
+inquirer.prompt(questions).then(async (answers) => {
+  const configPath = path.join(projectRoot, "config.json");
   try {
     // Read config.json file
-    const data = await fs.promises.readFile(configPath, 'utf-8');
-    if(data){
-    // Parse JSON data
-    const config = JSON.parse(data);
-    
-    // Check if config object has name property
-    if (!config || !config.name) {
-      console.log('Config file is empty or missing name property');
-    }
+    const data = await fs.promises.readFile(configPath, "utf-8");
+    if (data) {
+      // Parse JSON data
+      const config = JSON.parse(data);
 
-    // Compare answers.name with config.name
-    if (answers.name === config.name) {
-      console.log('Project already created');
-      return
+      // Check if config object has name property
+      if (!config || !config.name) {
+        console.log("Config file is empty or missing name property");
+      }
+
+      // Compare answers.name with config.name
+      if (answers.name === config.name) {
+        console.log("Project already created");
+        return;
+      }
     }
-  }
   } catch (error) {
-    console.log('Initializing project setup\n');
+    console.log("Initializing project setup\n");
   }
   console.log("Installing dependencies...");
-    execSync("npm i express cors dotenv helmet morgan compression");
-    switch (answers.db) {
-      case "postgresQL":
-        execSync("npm i pg pg-hstore");
-    }
-    generateProjectStructure(answers);
+  execSync("npm i express cors dotenv helmet morgan compression");
+  switch (answers.db) {
+    case "postgresQL":
+      execSync("npm i pg pg-hstore");
+    case "mySQL":
+      execSync("npm i --save mysql2");
+  }
+  generateProjectStructure(answers);
 });

@@ -114,6 +114,12 @@ async function promptModelForm() {
       },
       {
         type: "confirm",
+        name: "is_primary_key",
+        message: "Is this field a primary key?",
+        default: false,
+      },
+      {
+        type: "confirm",
         name: "add_another_field",
         message: "Do you want to add another field?",
         default: true,
@@ -154,6 +160,12 @@ async function promptModelForm() {
         choices: relationTypes,
       },
       {
+        type: "input",
+        name: "foreign_key",
+        message: "Enter the foreign key for this relation:",
+        validate: (value) => (value ? true : "Foreign key is required"),
+      },
+      {
         type: "confirm",
         name: "add_another_relation",
         message: "Do you want to add another relation?",
@@ -172,6 +184,12 @@ async function promptModelForm() {
           choices: relationTypes,
         },
         {
+          type: "input",
+          name: "foreign_key",
+          message: "Enter the foreign key for this relation:",
+          validate: (value) => (value ? true : "Foreign key is required"),
+        },
+        {
           type: "confirm",
           name: "add_another_relation",
           message: "Do you want to add another relation?",
@@ -187,6 +205,7 @@ async function promptModelForm() {
 
   return formData;
 }
+
 
 // Function to transform user input into usable data structure
 function transformFields(fields) {
@@ -303,14 +322,6 @@ function controllersPrisma(serviceName) {
   );
 }
 
-// Generate sequalize client init
-function generateSequalizeClientInit() {
-  fs.writeFileSync(
-    path.join(projectRoot, "config", "db.js"),
-    template.sequelizeInitContent
-  );
-}
-
 // Check if a variable is an array and is not empty
 function isArrayNotEmpty(arr) {
   return Array.isArray(arr) && arr.length > 0;
@@ -424,11 +435,10 @@ function controllersSequelize(serviceName) {
 // Setup Sequalize
 async function setupSequalize(serviceName, model, relations) {
   try {
-    console.log("generate client");
-    generateSequalizeClientInit();
-    console.log("generate model");
+    console.log("generating model");
     generateSequelizeModel(serviceName, model);
-    generateAssociations(serviceName, relations);
+    if (isArrayNotEmpty(relations))
+      generateAssociations(serviceName, relations);
     console.log("model generation complete");
   } catch (error) {
     console.error("Error setting up Prisma:", error);
@@ -604,7 +614,6 @@ async function main() {
   try {
     let { model_name, model_desc, fields, relations } = formData;
     const name = model_name;
-
     const model = transformFields(fields);
     console.log(model);
     let modelExists;
