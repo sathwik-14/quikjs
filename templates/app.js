@@ -1,11 +1,20 @@
-let app = ''
-export default app=`
+let app;
+
+function authMiddleware(auth) {
+  if(auth){
+    return `app.use(passport.initialize());
+    require("./middlewares/passport")(passport);`
+  }
+}
+
+export default app=(auth)=>`
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const compression = require("compression");
+${auth?'const passport = require("passport")':''}
 
 const PORT = process.env.PORT || "3000";
 
@@ -24,6 +33,7 @@ app.use(express.urlencoded({ extended: true })); // Parses URL-encoded form data
 app.use(helmet()); // Set security HTTP headers
 app.use(morgan("combined")); // Logging
 app.use(compression()); // Gzip compression
+${authMiddleware(auth)}
 
 // Error handling middleware
 app.use((err, req, res, next) => {

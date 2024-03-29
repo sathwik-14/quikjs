@@ -136,7 +136,7 @@ function generateProjectStructure(input) {
   ];
 
   const files = [
-    { path: "app.js", content: appTemplate },
+    { path: "app.js", content: appTemplate() },
     { path: ".env", content: "" }, // Empty .env file
     { path: ".gitignore", content: "node_modules\n.env\n" }, // Default .gitignore content
     {
