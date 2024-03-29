@@ -1,8 +1,6 @@
-let template = "";
-
-export default template = {
+export default {
   middleware: `
-    const db = require("../models/index");
+const db = require("../models/index");
 const { Strategy, ExtractJwt } = require("passport-jwt");
 require("dotenv").config();
 
@@ -30,7 +28,7 @@ module.exports = (passport) => {
 
     `,
   util: `
-    const passport = require("passport");
+const passport = require("passport");
 
 const userAuth = passport.authenticate("jwt", { session: false });
 

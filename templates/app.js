@@ -1,20 +1,19 @@
-let app;
-
 function authMiddleware(auth) {
-  if(auth){
+  if (auth) {
     return `app.use(passport.initialize());
-    require("./middlewares/passport")(passport);`
+require("./middlewares/passport")(passport);`;
   }
+  return ''
 }
 
-export default app=(auth)=>`
+export default (auth) => `
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const compression = require("compression");
-${auth?'const passport = require("passport")':''}
+${auth ? 'const passport = require("passport")' : ""}
 
 const PORT = process.env.PORT || "3000";
 
@@ -47,4 +46,4 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(\`Server running on port \${PORT}\`);
 });
-`
+`;

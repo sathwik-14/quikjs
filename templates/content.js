@@ -1,10 +1,37 @@
-function capitalize(str) {
-  if (str) return str.charAt(0).toUpperCase() + str.slice(1);
-}
+import capitalize from "../utils/capitalize";
 
-let content = "";
+export default  {
+  mongooseInit:`
+const mongoose = require('mongoose');
+require("dotenv").config()
 
-export default content = {
+const dbURI = process.env.DATABASE_URL 
+
+mongoose.connect(dbURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+mongoose.connection.on('connected', () => {
+  console.log("Mongoose connected to db");
+});
+
+mongoose.connection.on('error', (err) => {
+  console.log('Mongoose connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('Mongoose disconnected');
+});
+
+process.on('SIGINT', () => {
+  mongoose.connection.close(() => {
+    console.log('Mongoose disconnected through app termination');
+    process.exit(0);
+  });
+});
+
+module.exports = mongoose;`,
   prismaInitContent: `
   const { PrismaClient } = require('@prisma/client');
   const prisma = new PrismaClient();
