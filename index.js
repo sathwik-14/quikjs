@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 import appTemplate from "./templates/app.js";
 import template from "./templates/content.js";
+import passport from "./templates/passport.js"
 import { exec, execSync } from "child_process";
 
 // Questions for project setup
@@ -44,6 +45,12 @@ const questions = [
       }
     },
   },
+  {
+    type: "confirm",
+    name: "authentication",
+    message: "Do you want authentication for your project?(passport-jwt)",
+    default: true
+  }
 ];
 
 // Get the current working directory
@@ -112,7 +119,9 @@ async function runORMSetup(orm, db) {
 
 // Core function to generate project structure
 function generateProjectStructure(input) {
-  const { name, description, db, orm } = input;
+  console.log(input.authentication);
+  return
+  const { name, description, db, orm, authentication } = input;
   const folders = [
     "controllers",
     "models",
@@ -135,6 +144,11 @@ function generateProjectStructure(input) {
       content: "# Your Project Name\n\nProject documentation goes here.",
     },
   ];
+
+  if(authentication){
+    files.push({ path: "middlewares/passport.js", content: passport.middleware})
+    files.push({ path: "utils/auth.js", content: passport.util})
+  }
 
   try {
     folders.forEach((folder) => {
@@ -191,11 +205,13 @@ inquirer.prompt(questions).then(async (answers) => {
   }
   console.log("Installing dependencies...");
   execSync("npm i express cors dotenv helmet morgan compression");
+  if(authentication)
+  execSync("npm i passport passport-jwt")
   switch (answers.db) {
     case "postgresQL":
       execSync("npm i pg pg-hstore");
     case "mySQL":
-      execSync("npm i --save mysql2");
+      execSync("npm i mysql2");
   }
   generateProjectStructure(answers);
 });
