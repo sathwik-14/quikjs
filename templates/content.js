@@ -1,4 +1,4 @@
-import capitalize from "../utils/capitalize";
+import capitalize from "../utils/capitalize.js";
 
 export default  {
   mongooseInit:`
