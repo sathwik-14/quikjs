@@ -114,12 +114,6 @@ async function promptModelForm() {
       },
       {
         type: "confirm",
-        name: "is_primary_key",
-        message: "Is this field a primary key?",
-        default: false,
-      },
-      {
-        type: "confirm",
         name: "add_another_field",
         message: "Do you want to add another field?",
         default: true,
@@ -160,12 +154,6 @@ async function promptModelForm() {
         choices: relationTypes,
       },
       {
-        type: "input",
-        name: "foreign_key",
-        message: "Enter the foreign key for this relation:",
-        validate: (value) => (value ? true : "Foreign key is required"),
-      },
-      {
         type: "confirm",
         name: "add_another_relation",
         message: "Do you want to add another relation?",
@@ -178,16 +166,16 @@ async function promptModelForm() {
     while (newRelationData.add_another_relation) {
       const nextRelationData = await inquirer.prompt([
         {
+          type: "input",
+          name: "model_name",
+          message: "Select relation model name:",
+          validate: (value) => (value ? true : "model name is required"),
+        },
+        {
           type: "list",
           name: "relation_type",
           message: "Select relation type:",
           choices: relationTypes,
-        },
-        {
-          type: "input",
-          name: "foreign_key",
-          message: "Enter the foreign key for this relation:",
-          validate: (value) => (value ? true : "Foreign key is required"),
         },
         {
           type: "confirm",
@@ -205,7 +193,6 @@ async function promptModelForm() {
 
   return formData;
 }
-
 
 // Function to transform user input into usable data structure
 function transformFields(fields) {
@@ -257,22 +244,19 @@ function migrateAndGeneratePrisma() {
       });
 
       if (migrateDevProcess.error) {
-        throw migrateDevProcess.error;
+        console.log("Prisma migrate dev failed");
+      } else {
+        console.log("Prisma migrate dev completed");
       }
-
-      console.log("Prisma migrate dev completed.");
-
       // Execute 'npx prisma generate' synchronously
       const generateProcess = spawnSync("npx", ["prisma", "generate"], {
         stdio: "inherit",
       });
-
       if (generateProcess.error) {
-        throw generateProcess.error;
+        console.log("Prisma generate failed");
+      } else {
+        console.log("Prisma generate completed");
       }
-
-      console.log("Prisma generate completed.");
-
       resolve(); // Resolve the promise if commands executed successfully
     } catch (error) {
       console.error("Prisma migrate or generate failed:", error);
@@ -286,14 +270,10 @@ async function setupPrisma(serviceName, model, db) {
   try {
     console.log("start orm model setup");
     generatePrismaModel(serviceName, model, db);
-    console.log("end orm model setup");
     console.log("start migration");
     await migrateAndGeneratePrisma();
-    console.log("done migration");
-    console.log("done prisma model setup");
   } catch (error) {
-    console.error("Error setting up Prisma:", error);
-    throw error;
+    console.log("Error setting up Prisma:", error);
   }
 }
 
@@ -441,8 +421,7 @@ async function setupSequalize(serviceName, model, relations) {
       generateAssociations(serviceName, relations);
     console.log("model generation complete");
   } catch (error) {
-    console.error("Error setting up Prisma:", error);
-    throw error;
+    console.log("Error setting up Prisma:", error);
   }
 }
 
