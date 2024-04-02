@@ -1,6 +1,6 @@
 {
   "name": "@waglesathwik/pag",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Nodejs rest api generator built for pacewisdom solutions",
   "main": "index.js",
   "bin": {
