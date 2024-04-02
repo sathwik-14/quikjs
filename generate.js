@@ -19,12 +19,16 @@ let state;
 const projectRoot = process.cwd();
 
 // get state from config.json
-(() => {
-  const config = fs.readFileSync(path.join(projectRoot, "config.json"));
-  if (config != "") {
-    state = JSON.parse(config);
+const loadState = async () => {
+  try {
+    const config = fs.readFileSync(path.join(projectRoot, "config.json"));
+    if (config.length !== 0) {
+      state = JSON.parse(config);
+    }
+  } catch (error) {
+    console.log("Please run the project setup command first - npx pag-g-p");
   }
-})();
+};
 
 // Orms object
 const orms = {
@@ -188,6 +192,18 @@ async function promptModelForm() {
     formData.relations = relationData;
   }
 
+  if(state.authentication && state.roles.length){
+    let roleOptions = []
+    state.roles.forEach(role=>roleOptions.push({name:role}))
+    const accept = await inquirer.prompt({
+      type:"checkbox",
+      name:"roles",
+      message: "Who can access the generated api? (select one/many)",
+      choices: roleOptions
+    })
+    formData.roles = accept.roles;
+  }
+
   return formData;
 }
 
@@ -201,7 +217,6 @@ function transformFields(fields) {
 
   return transformedFields;
 }
-
 
 // Run npx prisma generate
 function migrateAndGeneratePrisma() {
@@ -411,7 +426,7 @@ function appendToFile(fileName, content) {
 }
 
 // Main function to generate scaffold
-async function generateScaffold(serviceName, model, relations) {
+async function generateScaffold(serviceName, model, relations, roles) {
   try {
     const db = state.db;
     const orm = state.orm;
@@ -426,15 +441,25 @@ async function generateScaffold(serviceName, model, relations) {
         controllersSequelize(serviceName);
         break;
     }
-    generateRoutes(serviceName);
+    generateRoutes(serviceName,roles);
     console.log("done generating routes and controllers");
   } catch (error) {
     console.error("Error generating scaffold:", error);
   }
 }
 
+// Check auth middleware
+function authMiddleware(roles){
+if(state.authentication && roles.length){
+  return `userAuth, checkRole(${roles}), `
+}
+else if(state.authentication){
+  return 'userAuth, '
+}
+}
+
 // Generate routes
-function generateRoutes(serviceName) {
+function generateRoutes(serviceName, roles) {
   const mainFilePath = path.join(projectRoot, "app.js");
   fs.writeFileSync(
     path.join(projectRoot, "routes", `${serviceName}.js`),
@@ -442,7 +467,7 @@ function generateRoutes(serviceName) {
   );
   // Append the line to use routes in main file
   const importContent = `const ${serviceName}Routes = require("./routes/${serviceName}");`;
-  const routeContent = `app.use("/api/${serviceName}", ${serviceName}Routes);`;
+  const routeContent = `app.use("/api/${serviceName}",${authMiddleware(roles)}${serviceName}Routes);`;
   let mainFileContent = fs.readFileSync(mainFilePath, "utf-8");
   let lines = mainFileContent.split("\n");
   const importRoutesIndex = lines.findIndex((line) =>
@@ -485,7 +510,7 @@ function updateState(data) {
 async function main() {
   const formData = await promptModelForm();
   console.log("Form Data:", formData);
-  let { model_name, model_desc, fields, relations } = formData;
+  let { model_name, model_desc, fields, relations, roles } = formData;
   try {
     const name = model_name;
     const model = transformFields(fields);
@@ -503,7 +528,7 @@ async function main() {
       console.log("model/service already exist");
     } else {
       relations = isArrayNotEmpty(relations) ? relations : [];
-      await generateScaffold(name, model, relations);
+      await generateScaffold(name, model, relations, roles);
       updateState({ name, model, relations });
       console.log(
         `API GENERATED/MODIFIED FOR SERVICE '${name}' FOR PROJECT '${state.projectName}' USING DATABASE '${req.body.db}'`
@@ -514,4 +539,5 @@ async function main() {
   }
 }
 
+loadState();
 main();

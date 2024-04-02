@@ -1,4 +1,3 @@
-
 import capitalize from "./utils/capitalize.js";
 import fs from "fs";
 import path from "path";

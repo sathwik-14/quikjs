@@ -1,7 +1,7 @@
 import capitalize from "../utils/capitalize.js";
 
-export default  {
-  mongooseInit:`
+export default {
+  mongooseInit: `
 const mongoose = require('mongoose');
 require("dotenv").config()
 

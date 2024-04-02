@@ -3,17 +3,37 @@ function authMiddleware(auth) {
     return `app.use(passport.initialize());
 require("./middlewares/passport")(passport);`;
   }
-  return ''
+  return "";
 }
 
-export default (auth) => `
+function authRoutes(auth) {
+  if (auth) {
+    return `app.post("/auth/register", async (req,res) => await userRegister(req.body,res));
+app.post("/auth/login", async (req,res) => await userLogin(req.body,res));
+app.get("/auth/profile", userAuth, (req,res) => res.status(200).json({ user: serializeUser(req.user) }));`;
+  }
+  return "";
+}
+
+function authImports(auth,roles) {
+  if (auth && roles.length) {
+    return `const passport = require("passport");
+const {userAuth, userRegister, userLogin, checkRole, serializeUser} = require("./utils/auth")`;
+  }else if (auth){
+    return `const passport = require("passport");
+    const {userAuth, userRegister, userLogin, serializeUser} = require("./utils/auth")`;
+  }
+  return "";
+}
+
+export default (auth,roles) => `
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const compression = require("compression");
-${auth ? 'const passport = require("passport")' : ""}
+${authImports(auth,roles)}
 
 const PORT = process.env.PORT || "3000";
 
@@ -41,9 +61,10 @@ app.use((err, req, res, next) => {
 });
 
 // Routes
+${authRoutes(auth)}
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(\`Server running on port \${PORT}\`);
+console.log(\`Server running on port \${PORT}\`);
 });
 `;

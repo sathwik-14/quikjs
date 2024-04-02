@@ -14,6 +14,7 @@ import template from "./templates/content.js";
 import passport from "./templates/passport.js";
 import { exec, execSync } from "child_process";
 import genModel from "./model.js";
+import { type } from "os";
 
 // Orms object
 const orms = {
@@ -52,18 +53,18 @@ const questions = [
   {
     type: "input",
     name: "description",
-    message: "Describe your project:",
+    message: "Describe your project (optional) ",
   },
   {
     type: "list",
     name: "db",
-    message: "Which database are you using?",
+    message: "Which database would you like to use?",
     choices: ["mongoDB", "postgresQL", "mySQL"],
   },
   {
     type: "list",
     name: "orm",
-    message: "Which ORM are you using?",
+    message: "Which ORM would you like to choose?",
     choices: function (answers) {
       if (answers.db === "mongoDB") {
         return ["prisma", "mongoose"];
@@ -76,6 +77,15 @@ const questions = [
     type: "confirm",
     name: "authentication",
     message: "Do you want authentication for your project?(passport-jwt)",
+    default: true,
+  },
+];
+
+const askRoleAuth = [
+  {
+    type: "confirm",
+    name: "roles",
+    message: "Do you want role based authentication?",
     default: true,
   },
 ];
@@ -158,7 +168,7 @@ async function runORMSetup(orm, db) {
 
 // Core function to generate project structure
 function generateProjectStructure(input) {
-  const { name, description, db, orm, authentication } = input;
+  const { name, description, db, orm, authentication, roles } = input;
   const folders = [
     "controllers",
     "models",
@@ -173,7 +183,7 @@ function generateProjectStructure(input) {
   ];
 
   const files = [
-    { path: "app.js", content: appTemplate(authentication) },
+    { path: "app.js", content: appTemplate(authentication,roles) },
     { path: ".env", content: "" }, // Empty .env file
     { path: ".gitignore", content: "node_modules\n.env\n" }, // Default .gitignore content
     {
@@ -208,6 +218,8 @@ function generateProjectStructure(input) {
         description,
         db,
         orm,
+        authentication,
+        roles,
         models: [],
       };
       const folderPath = path.join(projectRoot, "config.json");
@@ -234,12 +246,6 @@ async function promptModelForm(answers) {
     "binary",
     "decimal",
   ];
-  const relationTypes = [
-    "One-to-One",
-    "One-to-Many",
-    "Many-to-One",
-    "Many-to-Many",
-  ];
   types = types.map((type) => orms[answers.orm].getType(type));
   const formData = await inquirer.prompt([
     {
@@ -249,9 +255,6 @@ async function promptModelForm(answers) {
       default: true,
     },
   ]);
-
-  // relation data
-  const relationData = [];
 
   // field data
   const fieldData = [];
@@ -287,67 +290,6 @@ async function promptModelForm(answers) {
   }
 
   formData.fields = fieldData;
-
-  // Ask if user wants to add a relation
-  const addRelation = await inquirer.prompt({
-    type: "confirm",
-    name: "add_relation",
-    message: "Do you want to add a relation?",
-    default: true,
-  });
-
-  if (addRelation.add_relation) {
-    const newRelationData = await inquirer.prompt([
-      {
-        type: "input",
-        name: "model_name",
-        message: "Select relation model name:",
-        validate: (value) => (value ? true : "model name is required"),
-      },
-      {
-        type: "list",
-        name: "relation_type",
-        message: "Select relation type:",
-        choices: relationTypes,
-      },
-      {
-        type: "confirm",
-        name: "add_another_relation",
-        message: "Do you want to add another relation?",
-        default: false,
-      },
-    ]);
-
-    relationData.push(newRelationData);
-
-    while (newRelationData.add_another_relation) {
-      const nextRelationData = await inquirer.prompt([
-        {
-          type: "input",
-          name: "model_name",
-          message: "Select relation model name:",
-          validate: (value) => (value ? true : "model name is required"),
-        },
-        {
-          type: "list",
-          name: "relation_type",
-          message: "Select relation type:",
-          choices: relationTypes,
-        },
-        {
-          type: "confirm",
-          name: "add_another_relation",
-          message: "Do you want to add another relation?",
-          default: false,
-        },
-      ]);
-
-      relationData.push(nextRelationData);
-    }
-
-    formData.relations = relationData;
-  }
-
   return formData;
 }
 
@@ -363,7 +305,7 @@ function installDependencies(answers) {
   }
   if (answers.authentication) {
     console.log("Setting up  passport,passport-jwt");
-    execSync("npm i passport passport-jwt");
+    execSync("npm i passport passport-jwt jsonwebtoken bcrypt");
   }
 }
 
@@ -378,23 +320,16 @@ function transformFields(fields) {
   return transformedFields;
 }
 
-//  Process user input
-inquirer.prompt(questions).then(async (answers) => {
-  const configPath = path.join(projectRoot, "config.json");
-
+async function CheckProjectExist() {
   try {
-    // Read config.json file
+    const configPath = path.join(projectRoot, "config.json");
     const data = await fs.promises.readFile(configPath, "utf-8");
     if (data) {
-      // Parse JSON data
       const config = JSON.parse(data);
 
-      // Check if config object has name property
       if (!config || !config.name) {
         console.log("Config file is empty or missing name property");
       }
-
-      // Compare answers.name with config.name
       if (answers.name === config.name) {
         console.log("Project already created");
         return;
@@ -403,20 +338,67 @@ inquirer.prompt(questions).then(async (answers) => {
   } catch (error) {
     console.log("Initializing project setup");
   }
-  installDependencies(answers);
+}
+
+async function getRoleInput() {
+  try {
+    const roleAnswers = [];
+    let confirm = true;
+
+    while (confirm) {
+      const { addRole } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'addRole',
+          message: 'Do you want to add a role?',
+          default: true,
+        },
+      ]);
+
+      if (!addRole) {
+        confirm = false;
+        break;
+      }
+
+      const { role } = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'role',
+          message: 'Enter the role:',
+        },
+      ]);
+
+      roleAnswers.push(role);
+    }
+
+    return roleAnswers;
+  } catch (error) {
+    console.error('Error getting role input:', error);
+    throw error;
+  }
+}
+
+//  Process user input
+inquirer.prompt(questions).then(async (answers) => {
+  await CheckProjectExist();
   if (answers.authentication) {
+    const ans = await inquirer.prompt(askRoleAuth)
+    answers.roles = ans.roles;
+    if (answers.roles)
+    answers.roles = await getRoleInput()
     console.log("Let us create User model with required fields");
     const data = await promptModelForm(answers);
     const name = "user";
     const model = transformFields(data.fields);
     switch (answers.orm) {
       case "prisma":
-        await genModel.generatePrismaModel(name,model,answers.db);
+        await genModel.generatePrismaModel(name, model, answers.db);
         break;
       case "sequelize":
         await genModel.generateSequelizeModel(name, model);
         break;
     }
   }
+  installDependencies(answers);
   generateProjectStructure(answers);
 });
