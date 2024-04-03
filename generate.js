@@ -133,64 +133,64 @@ async function promptModelForm() {
   formData.fields = fieldData;
 
   // Ask if user wants to add a relation
-  const addRelation = await inquirer.prompt({
-    type: "confirm",
-    name: "add_relation",
-    message: "Do you want to add a relation?",
-    default: true,
-  });
+  // const addRelation = await inquirer.prompt({
+  //   type: "confirm",
+  //   name: "add_relation",
+  //   message: "Do you want to add a relation?",
+  //   default: true,
+  // });
 
-  if (addRelation.add_relation) {
-    const newRelationData = await inquirer.prompt([
-      {
-        type: "input",
-        name: "model_name",
-        message: "Select relation model name:",
-        validate: (value) => (value ? true : "model name is required"),
-      },
-      {
-        type: "list",
-        name: "relation_type",
-        message: "Select relation type:",
-        choices: relationTypes,
-      },
-      {
-        type: "confirm",
-        name: "add_another_relation",
-        message: "Do you want to add another relation?",
-        default: false,
-      },
-    ]);
+  // if (addRelation.add_relation) {
+  //   const newRelationData = await inquirer.prompt([
+  //     {
+  //       type: "input",
+  //       name: "model_name",
+  //       message: "Select relation model name:",
+  //       validate: (value) => (value ? true : "model name is required"),
+  //     },
+  //     {
+  //       type: "list",
+  //       name: "relation_type",
+  //       message: "Select relation type:",
+  //       choices: relationTypes,
+  //     },
+  //     {
+  //       type: "confirm",
+  //       name: "add_another_relation",
+  //       message: "Do you want to add another relation?",
+  //       default: false,
+  //     },
+  //   ]);
 
-    relationData.push(newRelationData);
+  //   relationData.push(newRelationData);
 
-    while (newRelationData.add_another_relation) {
-      const nextRelationData = await inquirer.prompt([
-        {
-          type: "input",
-          name: "model_name",
-          message: "Select relation model name:",
-          validate: (value) => (value ? true : "model name is required"),
-        },
-        {
-          type: "list",
-          name: "relation_type",
-          message: "Select relation type:",
-          choices: relationTypes,
-        },
-        {
-          type: "confirm",
-          name: "add_another_relation",
-          message: "Do you want to add another relation?",
-          default: false,
-        },
-      ]);
+  //   while (newRelationData.add_another_relation) {
+  //     const nextRelationData = await inquirer.prompt([
+  //       {
+  //         type: "input",
+  //         name: "model_name",
+  //         message: "Select relation model name:",
+  //         validate: (value) => (value ? true : "model name is required"),
+  //       },
+  //       {
+  //         type: "list",
+  //         name: "relation_type",
+  //         message: "Select relation type:",
+  //         choices: relationTypes,
+  //       },
+  //       {
+  //         type: "confirm",
+  //         name: "add_another_relation",
+  //         message: "Do you want to add another relation?",
+  //         default: false,
+  //       },
+  //     ]);
 
-      relationData.push(nextRelationData);
-    }
+  //     relationData.push(nextRelationData);
+  //   }
 
-    formData.relations = relationData;
-  }
+  //   formData.relations = relationData;
+  // }
 
   if(state.authentication && state.roles.length){
     let roleOptions = []
@@ -451,11 +451,12 @@ async function generateScaffold(serviceName, model, relations, roles) {
 // Check auth middleware
 function authMiddleware(roles){
 if(state.authentication && roles.length){
-  return `userAuth, checkRole(${roles}), `
+  return `userAuth, checkRole(${JSON.stringify(roles)}), `
 }
 else if(state.authentication){
   return 'userAuth, '
 }
+return ''
 }
 
 // Generate routes
@@ -509,7 +510,7 @@ function updateState(data) {
 // Core function
 async function main() {
   const formData = await promptModelForm();
-  console.log("Form Data:", formData);
+  // console.log("Form Data:", formData);
   let { model_name, model_desc, fields, relations, roles } = formData;
   try {
     const name = model_name;
@@ -529,13 +530,12 @@ async function main() {
     } else {
       relations = isArrayNotEmpty(relations) ? relations : [];
       await generateScaffold(name, model, relations, roles);
-      updateState({ name, model, relations });
       console.log(
         `API GENERATED/MODIFIED FOR SERVICE '${name}' FOR PROJECT '${state.projectName}' USING DATABASE '${req.body.db}'`
       );
     }
   } catch (err) {
-    console.log("something went wrong");
+    // console.log("something went wrong");
   }
 }
 

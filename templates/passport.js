@@ -1,3 +1,53 @@
+function whatsTaken(userModel) {
+  let content = ``;
+  if (Object.hasOwn(userModel, "username")) {
+    content += `const usernameTaken = async (username) => {
+const user = await db.User.findOne({ where: { username } });
+return !!user;
+  };`;
+  }
+  if (Object.hasOwn(userModel, "email")) {
+    content += `const emailTaken = async (email) => {
+const user = await db.User.findOne({ where: { email } });
+return !!user;
+  };`;
+  }
+  return content;
+}
+
+function loginThrough(userModel) {
+  let content = ``;
+  if (Object.hasOwn(userModel, "username")) {
+    content += `const userData = await db.User.findOne({ where: { username: user.username } });`;
+  }
+  if (Object.hasOwn(userModel, "email")) {
+    content += `const userData = await db.User.findOne({ where: { email: user.email } });`;
+  }
+  return content;
+}
+
+function serializeUserContent(userModel) {
+  const keys = Object.keys(userModel);
+  const validKeys = keys.filter(key => !['password', 'id', 'createdAt', 'updatedAt'].includes(key));
+
+  let content = `const serializeUser = (user) => {
+    return {      
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      id: user.id,`;
+  
+  validKeys.forEach(key => {
+    content += `
+      ${key}: user.${key},`;
+  });
+
+  content += `
+    };
+  };`;
+
+  return content;
+}
+
 export default {
   middleware: `
 const db = require("../models/index");
@@ -27,22 +77,14 @@ module.exports = (passport) => {
 };
 
     `,
-  util: `
+  util: (input,userModel) => `
 const passport = require("passport");
 const db = require("../models/index");
 const userAuth = passport.authenticate("jwt", { session: false });
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const usernameTaken = async (username) => {
-  const user = await db.User.findOne({ where: { username } });
-  return !!user;
-};
-
-const emailTaken = async (email) => {
-  const user = await db.User.findOne({ where: { email } });
-  return !!user;
-};
+${whatsTaken(userModel)}
 
 const userRegister = async (user, res) => {
   try {
@@ -87,7 +129,7 @@ const userRegister = async (user, res) => {
 
 const userLogin = async (user, res) => {
   try {
-    const userData = await db.User.findOne({ where: { email: user.email } });
+    ${loginThrough(userModel)}
     if (!userData) {
       return res.status(400).json({
         message: "User does not exist",
@@ -122,16 +164,9 @@ const userLogin = async (user, res) => {
   }
 };
 
-const checkRole => roles => (req,res,next) => !roles.includes(req.user.role) ? res.status(401).json("unauthorized"):next();
+${input.roles.length?'const checkRole = roles => (req,res,next) => !roles.includes(req.user.role) ? res.status(401).json("unauthorized"):next();':''}
 
-const serializeUser = (user) => {
-  return {
-    email: user.email,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
-    id: user.id,
-  };
-};
+${serializeUserContent(userModel)}
 
 const hashPassword = async (password) => {
   const salt = await bcrypt.genSalt(parseInt(process.env.SALT_ROUNDS));

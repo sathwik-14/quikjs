@@ -16,6 +16,8 @@ import { exec, execSync } from "child_process";
 import genModel from "./model.js";
 import { type } from "os";
 
+let userModel;
+
 // Orms object
 const orms = {
   prisma: { id: 1, name: "prisma", getType: (input) => prismaDataType(input) },
@@ -197,7 +199,7 @@ function generateProjectStructure(input) {
       path: "middlewares/passport.js",
       content: passport.middleware,
     });
-    files.push({ path: "utils/auth.js", content: passport.util });
+    files.push({ path: "utils/auth.js", content: passport.util(input,userModel) });
   }
 
   try {
@@ -213,6 +215,8 @@ function generateProjectStructure(input) {
 
     //setup ORM
     runORMSetup(orm, db).then(() => {
+      let models=[];
+      if(userModel)models.push({name:'user',model:userModel})
       const config = {
         name,
         description,
@@ -220,7 +224,7 @@ function generateProjectStructure(input) {
         orm,
         authentication,
         roles,
-        models: [],
+        models,
       };
       const folderPath = path.join(projectRoot, "config.json");
       fs.writeFileSync(folderPath, JSON.stringify(config));
@@ -378,6 +382,7 @@ async function getRoleInput() {
   }
 }
 
+
 //  Process user input
 inquirer.prompt(questions).then(async (answers) => {
   await CheckProjectExist();
@@ -389,13 +394,13 @@ inquirer.prompt(questions).then(async (answers) => {
     console.log("Let us create User model with required fields");
     const data = await promptModelForm(answers);
     const name = "user";
-    const model = transformFields(data.fields);
+    userModel = transformFields(data.fields);
     switch (answers.orm) {
       case "prisma":
-        await genModel.generatePrismaModel(name, model, answers.db);
+        await genModel.generatePrismaModel(name, userModel, answers.db);
         break;
       case "sequelize":
-        await genModel.generateSequelizeModel(name, model);
+        await genModel.generateSequelizeModel(name, userModel);
         break;
     }
   }

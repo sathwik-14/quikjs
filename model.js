@@ -33,7 +33,7 @@ function generatePrismaModel(serviceName, model, db) {
 
 // Generate sequelize model
 function generateSequelizeModel(serviceName, model) {
-  console.log("model----- ", serviceName, model);
+  // console.log("model----- ", serviceName, model);
   const modelsDirectory = "./models";
 
   const capitalizedServiceName = capitalize(serviceName);
@@ -100,10 +100,10 @@ function generateSequelizeModel(serviceName, model) {
   // Check if index file content already includes the new content
   if (!indexContent.includes(newContent)) {
     fs.appendFileSync(indexFilePath, newContent);
-    console.log("New content appended to the index file.");
+    console.log("New model appended to the models/index file.");
   } else {
     console.log(
-      "Index file already contains the new content. No changes made."
+      "Index file already contains the new model. No changes made."
     );
   }
 }
