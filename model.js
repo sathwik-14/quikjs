@@ -1,6 +1,7 @@
 import capitalize from "./utils/capitalize.js";
 import fs from "fs";
 import path from "path";
+import format from "./utils/format.js";
 // Get the current working directory
 const projectRoot = process.cwd();
 
@@ -32,56 +33,67 @@ function generatePrismaModel(serviceName, model, db) {
 }
 
 // Generate sequelize model
-function generateSequelizeModel(serviceName, model) {
-  // console.log("model----- ", serviceName, model);
+async function generateSequelizeModel(serviceName, model) {
   const modelsDirectory = "./models";
-
   const capitalizedServiceName = capitalize(serviceName);
 
-  // Fixed fields for all Sequelize models
-  const fixedFields = [
-    "id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 }",
-  ];
-
   // Convert model fields to Sequelize format
-  const customFields = Object.entries(model)
-    .map(
-      ([fieldName, fieldType]) =>
-        `  ${fieldName}: { type: DataTypes.${fieldType.toUpperCase()} },`
-    )
-    .join("\n");
+  const customFields = model
+    .map(field => {
+      let fieldDefinition = `  ${field.name}: { type: DataTypes.${field.type}`;
 
-  // Combine fixed fields and custom fields
-  const modelFields = [...fixedFields, customFields].join(",\n");
+      // Set default value if field.defaultValue is not null
+      if (field.defaultValue !== null && field.defaultValue != '') {
+        fieldDefinition += `, defaultValue: ${field.defaultValue}`;
+      }
+
+      // Handle foreign key and relationshipType
+      if (field.foreignKey) {
+        fieldDefinition += `, references: { model: '${field.refTable}', key: '${field.refField}' }`;
+      }
+
+      if (field.foreignKey && field.relationshipType) {
+        fieldDefinition += `, as: '${field.refTable}', onDelete: 'CASCADE'`;
+      }
+
+      fieldDefinition += " }";
+      return fieldDefinition;
+    })
+    .join(",\n");
 
   // Sequelize model content
   const modelContent = `
-      // Imports
-  
-      // Sequelize schema for ${serviceName}
-      const { sequelize } = require("../config/db");
-      const { DataTypes } = require("sequelize");
-  
-      const ${capitalizedServiceName} = sequelize.define('${serviceName.toLowerCase()}', {
-        ${modelFields}
-      });
-  
-      ${capitalizedServiceName}.sync()
-        .then(() => console.log('${serviceName} model synced successfully'))
-        .catch(err => console.log('${serviceName} model sync failed'));
-  
-      module.exports = ${capitalizedServiceName};
-    `;
+    // Sequelize schema for ${serviceName}
+    const { sequelize } = require("../config/db");
+    const { DataTypes } = require("sequelize");
+
+    const ${capitalizedServiceName} = sequelize.define('${serviceName.toLowerCase()}', {
+      ${customFields}
+    });
+
+    ${capitalizedServiceName}.sync()
+      .then(() => console.log('${serviceName} model synced successfully'))
+      .catch(err => console.log('${serviceName} model sync failed'));
+
+    module.exports = ${capitalizedServiceName};
+  `;
 
   // Ensure the models directory exists
   if (!fs.existsSync(modelsDirectory)) {
     fs.mkdirSync(modelsDirectory);
   }
 
+  console.log(modelContent);
+
   // Generate and write model content to the file
   const filePath = `${modelsDirectory}/${serviceName.toLowerCase()}.js`;
-  fs.writeFileSync(filePath, modelContent);
+  fs.writeFileSync(filePath, await format(modelContent),'babel');
 
+  updateIndex(modelsDirectory, serviceName, capitalizedServiceName);
+}
+
+
+async function updateIndex(modelsDirectory, serviceName, capitalizedServiceName) {
   // Update index.js file to export all models
   const indexFilePath = `${modelsDirectory}/index.js`;
   let indexContent = "";
@@ -93,20 +105,20 @@ function generateSequelizeModel(serviceName, model) {
 
   // Append the new export statement
   const newContent = `
-      const ${capitalizedServiceName} = require('./${serviceName.toLowerCase()}');
-      module.exports.${capitalizedServiceName} = ${capitalizedServiceName};
-    `;
+    const ${capitalizedServiceName} = require('./${serviceName.toLowerCase()}');
+    module.exports.${capitalizedServiceName} = ${capitalizedServiceName};
+  `;
 
   // Check if index file content already includes the new content
-  if (!indexContent.includes(newContent)) {
-    fs.appendFileSync(indexFilePath, newContent);
+  if (!indexContent.includes(await format(newContent,'babel'))) {
+    fs.appendFileSync(indexFilePath, await format(newContent,'babel'));
     console.log("New model appended to the models/index file.");
   } else {
-    console.log(
-      "Index file already contains the new model. No changes made."
-    );
+    console.log("Index file already contains the new model. No changes made.");
   }
 }
+
+
 
 export default {
   generatePrismaModel,

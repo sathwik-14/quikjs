@@ -4,3 +4,4 @@ package-lock.json
 Dockerfile
 .dockerignore
 notes.txt
+.npmignore

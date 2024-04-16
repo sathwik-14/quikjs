@@ -12,9 +12,12 @@ import {
 import appTemplate from "./templates/app.js";
 import template from "./templates/content.js";
 import passport from "./templates/passport.js";
+import aws from "./templates/aws.js";
+import twilio from "./templates/twilio.js"
 import { exec, execSync } from "child_process";
 import genModel from "./model.js";
 import format from "./utils/format.js";
+import install from "./utils/install.js";
 
 let userModel;
 
@@ -37,6 +40,15 @@ const orms = {
     getType: (input) => typeORMDataType(input),
   },
 };
+
+const tools = [
+  { name: "none" },
+  { name: "s3" },
+  { name: "sns" },
+  { name: "twilio" },
+  { name: "msg91" },
+  { name: "sendgrid" },
+];
 
 // Questions for project setup
 const questions = [
@@ -88,6 +100,12 @@ const questions = [
     default: true,
   },
   {
+    type: "checkbox",
+    name: "tools",
+    message: "Select third-party tools you would like to configure",
+    choices: tools,
+  },
+  {
     type: "confirm",
     name: "authentication",
     message: "Do you want authentication for your project?(passport-jwt)",
@@ -102,86 +120,175 @@ const questions = [
   },
 ];
 
-const schemaQuestions = [
-  {
-    type: 'input',
-    name: 'name',
-    message: "Enter the name of the attribute:",
-  },
-  {
-    type: 'list',
-    name: 'type',
-    message: "Select the data type:",
-    choices: ['INT', 'VARCHAR', 'FLOAT', 'DATE', 'BOOLEAN', 'OTHER']
-  },
-  {
-    type: 'input',
-    name: 'size',
-    message: "Enter the size (if applicable):",
-    when: (answers) => answers.type !== 'BOOLEAN' && answers.type !== 'DATE' // Assuming size is not relevant for BOOLEAN and DATE types
-  },
-  {
-    type: 'input',
-    name: 'defaultValue',
-    message: "Enter the default value (if any):",
-    default: null
-  },
-  {
-    type: 'confirm',
-    name: 'primaryKey',
-    message: "Is this attribute a primary key?",
-    default: false
-  },
-  {
-    type: 'confirm',
-    name: 'allowNulls',
-    message: "Allow NULL values for this attribute?",
-    default: true
-  },
-  {
-    type: 'confirm',
-    name: 'unique',
-    message: "Is this attribute unique?",
-    default: false
-  },
-  {
-    type: 'confirm',
-    name: 'autoIncrement',
-    message: "Should this attribute auto increment?",
-    default: false
-  },
-  {
-    type: 'confirm',
-    name: 'foreignKey',
-    message: "Is this attribute a foreign key?",
-    default: false
-  },
-  {
-    type: 'input',
-    name: 'refTable',
-    message: "Enter the referenced table (if this is a foreign key):",
-    when: (answers) => answers.foreignKey
-  },
-  {
-    type: 'input',
-    name: 'refField',
-    message: "Enter the referenced field (if this is a foreign key):",
-    when: (answers) => answers.foreignKey
-  },
-  {
-    type: 'list',
-    name: 'relationshipType',
-    message: "Select the relationship type:",
-    choices: ['One-to-One', 'One-to-Many', 'Many-to-One', 'Many-to-Many'],
-    when: (answers) => answers.foreignKey
-  },
-  {
-    type: 'confirm',
-    name: 'add_another',
-    message: "Would you like to add another model",
-    default: true
+let tables = [];
+
+// Get database schema information
+async function promptSchemaModel(input) {
+  try {
+    let schemaData = {};
+    let confirm = true;
+
+    let types = [
+      "string",
+      "integer",
+      "float",
+      "boolean",
+      "date",
+      "uuid",
+      "json",
+      "enum",
+      "array",
+      "binary",
+      "decimal",
+    ];
+    types = types.map((type) => orms[input.orm].getType(type));
+
+    const schemaQuestions = [
+      {
+        type: "input",
+        name: "name",
+        message: "Enter the name of the attribute:",
+        validate: function (value) {
+          return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value)
+            ? true
+            : "Please enter a valid attribute name (alphanumeric characters and underscores only, and must start with a letter or underscore).";
+        },
+      },
+      {
+        type: "list",
+        name: "type",
+        message: "Select the data type:",
+        choices: types,
+      },
+      {
+        type: "input",
+        name: "size",
+        message: "Enter the size (if applicable):",
+        when: (answers) => !["BOOLEAN", "DATE"].includes(answers.type),
+        validate: function (value) {
+          return /^\d+$/.test(value)
+            ? true
+            : "Please enter a valid size (a positive integer).";
+        },
+      },
+      {
+        type: "input",
+        name: "defaultValue",
+        message: "Enter the default value (if any):",
+        default: null,
+        validate: function (value) {
+          return value.trim().length === 0 || /^[a-zA-Z0-9_]+$/.test(value)
+            ? true
+            : "Please enter a valid default value (alphanumeric characters and underscores only).";
+        },
+      },
+      {
+        type: "confirm",
+        name: "primaryKey",
+        message: "Is this attribute a primary key?",
+        default: true,
+      },
+      {
+        type: "confirm",
+        name: "allowNulls",
+        message: "Allow NULL values for this attribute?",
+        when: (answers) => !answers.primaryKey,
+        default: true,
+      },
+      {
+        type: "confirm",
+        name: "unique",
+        message: "Should this attribute have unique values?",
+        when: (answers) => !answers.primaryKey,
+        default: false,
+      },
+      {
+        type: "confirm",
+        name: "autoIncrement",
+        message: "Should this attribute auto-increment?",
+        default: false,
+      },
+      {
+        type: "confirm",
+        name: "foreignKey",
+        message: "Is this attribute a foreign key?",
+        default: true,
+      },
+      {
+        type: "list",
+        name: "refTable",
+        message: "Select the referenced table:",
+        choices: tables,
+        when: (answers) => answers.foreignKey,
+      },
+      {
+        type: "list",
+        name: "refField",
+        message: "Enter the referenced field:",
+        when: (answers) => answers.foreignKey,
+        choices: function (answers) {
+          const refTable = answers.refTable;
+          const fields = schemaData[refTable].map((field) => field.name);
+          return fields;
+        },
+      },
+      {
+        type: "list",
+        name: "relationshipType",
+        message: "Select the relationship type:",
+        choices: ["One-to-One", "One-to-Many", "Many-to-One", "Many-to-Many"],
+        when: (answers) => answers.foreignKey,
+      },
+      {
+        type: "confirm",
+        name: "add_another",
+        message: "Do you want to add another attribute?",
+        default: true,
+      },
+    ];
+
+    while (confirm) {
+      let add_attributes = true;
+
+      const ans = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "add_table",
+          message: "Do you want to add a table?",
+          default: true,
+        },
+        {
+          type: "input",
+          name: "table_name",
+          message: "Enter the table name?",
+          when: (answers) => answers.add_table,
+        },
+      ]);
+      if (!ans.add_table) {
+        confirm = false;
+        break;
+      }
+
+      schemaData[ans.table_name] = [];
+      tables.push(ans.table_name);
+
+      while (add_attributes) {
+        const model = await inquirer.prompt(schemaQuestions);
+
+        if (!model.add_another) {
+          schemaData[ans.table_name].push(model);
+          add_attributes = false;
+          break;
+        }
+        schemaData[ans.table_name].push(model);
+      }
+    }
+
+    return schemaData;
+  } catch (e) {
+    console.log("error getting schema details");
   }
-];
+}
 
 // Get the current working directory
 const projectRoot = process.cwd();
@@ -190,7 +297,7 @@ const projectRoot = process.cwd();
 async function generatePrismaClientInit() {
   fs.writeFileSync(
     path.join(projectRoot, "config", "db.js"),
-    await format(template.prismaInitContent)
+    await format(template.prismaInitContent,'babel')
   );
 }
 
@@ -215,7 +322,7 @@ function initializePrisma(db) {
             'provider = "prisma-client-js"\n\tpreviewFeatures = ["mongodb"]'
           );
         }
-        fs.writeFileSync(schemaPath, await format(prismaModelContent));
+        fs.writeFileSync(schemaPath, await format(prismaModelContent,'babel'));
         console.log("Prisma initialization completed successfully");
       }
       resolve();
@@ -227,7 +334,7 @@ function initializePrisma(db) {
 async function generateSequalizeClientInit() {
   fs.writeFileSync(
     path.join(projectRoot, "config", "db.js"),
-    await format(template.sequelizeInitContent)
+    await format(template.sequelizeInitContent,'babel')
   );
 }
 
@@ -235,7 +342,7 @@ async function generateSequalizeClientInit() {
 async function generateMongooseClient() {
   fs.writeFileSync(
     path.join(projectRoot, "config", "db.js"),
-    await format(template.mongooseInit)
+    await format(template.mongooseInit,'babel')
   );
 }
 
@@ -244,16 +351,16 @@ async function runORMSetup(orm, db) {
   console.log(`Setting up ${orm}`);
   switch (orm) {
     case "prisma":
-      execSync("npm i prisma @prisma/client");
+      install("prisma","@prisma/client");
       await initializePrisma(db);
       generatePrismaClientInit();
       break;
     case "sequelize":
-      execSync("npm i sequelize sequelize-cli");
+      install("sequelize","sequelize-cli");
       generateSequalizeClientInit();
       break;
     case "mongoose":
-      execSync("npm i mongoose");
+      install("mongoose");
       generateMongooseClient();
       break;
   }
@@ -261,62 +368,92 @@ async function runORMSetup(orm, db) {
 
 // Core function to generate project structure
 async function generateProjectStructure(input) {
-  const {
-    name,
-    description,
-    db,
-    orm,
-    authentication,
-    roles,
-    logging,
-    error_handling,
-  } = input;
-  const folders = [
-    "controllers",
-    "models",
-    "routes",
-    "services",
-    "middlewares",
-    "utils",
-    "config",
-    "migrations",
-    "tests",
-    "public",
-  ];
-
-  const files = [
-    {
-      path: "app.js",
-      content: await format(appTemplate(input)),
-    },
-    { path: ".env", content: "" }, // Empty .env file
-    { path: ".gitignore", content: "node_modules\n.env\n" }, // Default .gitignore content
-    {
-      path: "README.md",
-      content: "# Your Project Name\n\nProject documentation goes here.",
-    },
-  ];
-
-  if (authentication) {
-    files.push({
-      path: "middlewares/passport.js",
-      content: await format(passport.middleware),
-    });
-    files.push({
-      path: "utils/auth.js",
-      content: await format(passport.util(input, userModel)),
-    });
-  }
-
-  if (logging) {
-    files.push({ path: "access.log", content: "" });
-  }
-
-  if (error_handling) {
-    files.push({ path: "error.log", content: "" });
-  }
-
   try {
+    const {
+      name,
+      description,
+      db,
+      orm,
+      tools,
+      authentication,
+      roles,
+      logging,
+      error_handling,
+    } = input;
+    const folders = [
+      "controllers",
+      "models",
+      "routes",
+      "services",
+      "middlewares",
+      "utils",
+      "config",
+      "migrations",
+      "tests",
+      "public",
+    ];
+
+    let files = [
+      {
+        path: "app.js",
+        content: await format(appTemplate(input),'babel'),
+      },
+      { path: ".env", content: "" }, // Empty .env file
+      { path: ".gitignore", content: "node_modules\n.env\n" }, // Default .gitignore content
+      {
+        path: "README.md",
+        content: "# Your Project Name\n\nProject documentation goes here.",
+      },
+    ];
+
+    if (tools.length) {
+      for (const item of tools) {
+        switch (item) {
+          case "s3":
+            files.push({
+              path: "config/aws.js",
+              content: await format(aws.s3.config(input),'babel')
+            });
+            files.push({
+              path: "utils/s3.js",
+              content: await format(aws.s3.utils(input),'babel'),
+            });
+            break;
+        case "sns":
+            files.push({
+                path:"utils/sns.js",
+                content: await format(aws.sns(input),'babel')
+            })
+            break;
+        case "twilio":
+            files.push({
+                path:"utils/twilio.js",
+                content: await format(twilio(input),'babel') 
+            })
+            break;
+        }
+      }
+    }
+
+    if (authentication) {
+      files.push({
+        path: "middlewares/passport.js",
+        content: await format(passport.middleware,'babel'),
+      });
+      files.push({
+        path: "utils/auth.js",
+        content: await format(passport.util(input, userModel),'babel'),
+      });
+    }
+
+    if (logging) {
+      files.push({ path: "access.log", content: "" });
+    }
+
+    if (error_handling) {
+      files.push({ path: "error.log", content: "" });
+    }
+
     folders.forEach((folder) => {
       const folderPath = path.join(projectRoot, folder);
       fs.mkdirSync(folderPath, { recursive: true });
@@ -328,22 +465,7 @@ async function generateProjectStructure(input) {
     });
 
     //setup ORM
-    runORMSetup(orm, db).then(async () => {
-      let models = [];
-      if (userModel) models.push({ name: "user", model: userModel });
-      const config = {
-        name,
-        description,
-        db,
-        orm,
-        authentication,
-        roles,
-        models,
-      };
-      const folderPath = path.join(projectRoot, "config.json");
-      fs.writeFileSync(folderPath, await format(JSON.stringify(config)));
-      console.log("Project setup successful");
-    });
+    await runORMSetup(orm, db);
   } catch (error) {
     console.error("Error creating project structure:", error);
   }
@@ -414,16 +536,30 @@ async function promptModelForm(answers) {
 // Function to install dependencies
 function installDependencies(answers) {
   console.log("Installing dependencies");
-  execSync("npm i express cors dotenv helmet morgan compression");
+  install("express","cors","dotenv","helmet","morgan","compression");
   switch (answers.db) {
     case "postgresQL":
-      execSync("npm i pg pg-hstore");
+      install("pg","pg-hstore");
+      break;
     case "mySQL":
-      execSync("npm i mysql2");
+      install("mysql2");
+      break;
   }
   if (answers.authentication) {
     console.log("Setting up  passport,passport-jwt");
-    execSync("npm i passport passport-jwt jsonwebtoken bcrypt");
+    install("passport","passport-jwt","jsonwebtoken","bcrypt");
+  }
+  if (answers.tools.length) {
+    for (const item of answers.tools) {
+      switch (item) {
+        case "s3":
+        case "sns":
+            install("aws-sdk");
+            break;
+        case "twilio":
+            install("twilio")
+      }
+    }
   }
 }
 
@@ -497,28 +633,58 @@ async function getRoleInput() {
 }
 
 //  Process user input
-inquirer.prompt(questions).then(async (answers) => {
-  await CheckProjectExist();
-  if (answers.authentication) {
-    if (answers.roles) answers.roles = await getRoleInput();
-    console.log("Let us create User model with required fields");
-    const data = await promptModelForm(answers);
-    const name = "user";
-    userModel = transformFields(data.fields);
-    switch (answers.orm) {
-      case "prisma":
-        genModel.generatePrismaModel(name, userModel, answers.db);
-        break;
-      case "sequelize":
-        genModel.generateSequelizeModel(name, userModel);
-        break;
+async function main() {
+  try {
+    const answers = await inquirer.prompt(questions);
+    await CheckProjectExist();
+    if (answers.authentication) {
+      if (answers.roles) answers.roles = await getRoleInput();
+      console.log("Let us create User model with required fields");
+      const data = await promptModelForm(answers);
+      const name = "user";
+      userModel = transformFields(data.fields);
+      switch (answers.orm) {
+        case "prisma":
+          genModel.generatePrismaModel(name, userModel, answers.db);
+          break;
+        case "sequelize":
+          genModel.generateSequelizeModel(name, userModel);
+          break;
+      }
     }
+    installDependencies(answers);
+    await generateProjectStructure(answers);
+    const schemaData = await promptSchemaModel(answers);
+    if (Object.keys(schemaData).length) {
+      for (const [key, value] of Object.entries(schemaData)) {
+        switch (answers.orm) {
+          case "prisma":
+            genModel.generatePrismaModel(key, value, answers.db);
+            break;
+          case "sequelize":
+            genModel.generateSequelizeModel(key, value);
+            break;
+        }
+      }
+    }
+    let models = [];
+    if (userModel) models.push({ name: "user", model: userModel });
+    const { name, description, db, orm, authentication, roles } = answers;
+    const config = {
+      name,
+      description,
+      db,
+      orm,
+      authentication,
+      roles,
+      models: schemaData,
+    };
+    const folderPath = path.join(projectRoot, "config.json");
+    fs.writeFileSync(folderPath, await format(JSON.stringify(config),'json'));
+    console.log("Project setup successful\n");
+  } catch (error) {
+    console.log("Unable to generate project.");
   }
-  installDependencies(answers);
-  generateProjectStructure(answers);
-  let schemaDetails = []
-  const schema = await inquirer.prompt(schemaQuestions)
-  while(schema.add_another) {
+}
 
-  }
-});
+main();

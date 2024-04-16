@@ -50,162 +50,334 @@ const orms = {
   },
 };
 
-// Function that takes user input
-async function promptModelForm() {
-  let types = [
-    "string",
-    "integer",
-    "float",
-    "boolean",
-    "date",
-    "uuid",
-    "json",
-    "enum",
-    "array",
-    "binary",
-    "decimal",
-  ];
-  const relationTypes = [
-    "One-to-One",
-    "One-to-Many",
-    "Many-to-One",
-    "Many-to-Many",
-  ];
-  if (Object.hasOwn(state, "orm")) {
+async function promptSchemaModel() {
+  try {
+    let schemaData = {};
+    let confirm = true;
+
+    let types = [
+      "string",
+      "integer",
+      "float",
+      "boolean",
+      "date",
+      "uuid",
+      "json",
+      "enum",
+      "array",
+      "binary",
+      "decimal",
+    ];
     types = types.map((type) => orms[state.orm].getType(type));
-  }
-  const formData = await inquirer.prompt([
-    {
-      type: "input",
-      name: "model_name",
-      message: "Enter model name:",
-      validate: (value) => (value ? true : "Model name is required"),
-    },
-    {
-      type: "input",
-      name: "model_desc",
-      message: "Enter model description:",
-    },
-    {
-      type: "confirm",
-      name: "add_field",
-      message: "Do you want to add a field?",
-      default: true,
-    },
-  ]);
 
-  // relation data
-  const relationData = [];
-
-  // field data
-  const fieldData = [];
-  while (formData.add_field) {
-    const newFieldData = await inquirer.prompt([
+    const schemaQuestions = [
       {
         type: "input",
-        name: "field_name",
-        message: "Enter field name:",
-        validate: (value) => (value ? true : "Field name is required"),
+        name: "name",
+        message: "Enter the name of the attribute:",
+        validate: function (value) {
+          return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value)
+            ? true
+            : "Please enter a valid attribute name (alphanumeric characters and underscores only, and must start with a letter or underscore).";
+        },
       },
       {
         type: "list",
-        name: "field_type",
-        message: "Select field type:",
+        name: "type",
+        message: "Select the data type:",
         choices: types,
       },
       {
+        type: "input",
+        name: "size",
+        message: "Enter the size (if applicable):",
+        when: (answers) => !["BOOLEAN", "DATE"].includes(answers.type),
+        validate: function (value) {
+          return /^\d+$/.test(value)
+            ? true
+            : "Please enter a valid size (a positive integer).";
+        },
+      },
+      {
+        type: "input",
+        name: "defaultValue",
+        message: "Enter the default value (if any):",
+        default: null,
+        validate: function (value) {
+          return value.trim().length === 0 || /^[a-zA-Z0-9_]+$/.test(value)
+            ? true
+            : "Please enter a valid default value (alphanumeric characters and underscores only).";
+        },
+      },
+      {
         type: "confirm",
-        name: "add_another_field",
-        message: "Do you want to add another field?",
+        name: "primaryKey",
+        message: "Is this attribute a primary key?",
         default: true,
       },
-    ]);
+      {
+        type: "confirm",
+        name: "allowNulls",
+        message: "Allow NULL values for this attribute?",
+        when: (answers) => !answers.primaryKey,
+        default: true,
+      },
+      {
+        type: "confirm",
+        name: "unique",
+        message: "Should this attribute have unique values?",
+        when: (answers) => !answers.primaryKey,
+        default: false,
+      },
+      {
+        type: "confirm",
+        name: "autoIncrement",
+        message: "Should this attribute auto-increment?",
+        default: false,
+      },
+      {
+        type: "confirm",
+        name: "foreignKey",
+        message: "Is this attribute a foreign key?",
+        default: true,
+        when: (answers)=>Object.keys(state.models).length>=1
+      },
+      {
+        type: "list",
+        name: "refTable",
+        message: "Select the referenced table:",
+        choices: ()=>{
+          if(Object.keys(state.models).length){
+            return Object.values(state.models).map(value=>value.name)
+          }
+        },
+        when: (answers) => answers.foreignKey,
+      },
+      {
+        type: "list",
+        name: "refField",
+        message: "Enter the referenced field:",
+        when: (answers) => answers.foreignKey,
+        choices: function (answers) {
+          const refTable = answers.refTable;
+          const fields = schemaData[refTable].map((field) => field.name);
+          return fields;
+        },
+      },
+      {
+        type: "list",
+        name: "relationshipType",
+        message: "Select the relationship type:",
+        choices: ["One-to-One", "One-to-Many", "Many-to-One", "Many-to-Many"],
+        when: (answers) => answers.foreignKey,
+      },
+      {
+        type: "confirm",
+        name: "add_another",
+        message: "Do you want to add another attribute?",
+        default: true,
+      },
+    ];
 
-    fieldData.push(newFieldData);
+    while (confirm) {
+      let add_attributes = true;
 
-    if (newFieldData.add_another_field) {
-      formData.add_field = true;
-    } else {
-      formData.add_field = false;
+      const ans = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "add_table",
+          message: "Do you want to add a table?",
+          default: true,
+        },
+        {
+          type: "input",
+          name: "table_name",
+          message: "Enter the table name?",
+          when: (answers) => answers.add_table,
+        },
+      ]);
+      if (!ans.add_table) {
+        confirm = false;
+        break;
+      }
+
+      schemaData[ans.table_name] = [];
+      tables.push(ans.table_name);
+
+      while (add_attributes) {
+        const model = await inquirer.prompt(schemaQuestions);
+
+        if (!model.add_another) {
+          schemaData[ans.table_name].push(model);
+          add_attributes = false;
+          break;
+        }
+        schemaData[ans.table_name].push(model);
+      }
     }
+
+    return schemaData;
+  } catch (e) {
+    console.log("error getting schema details");
   }
-
-  formData.fields = fieldData;
-
-  // Ask if user wants to add a relation
-  // const addRelation = await inquirer.prompt({
-  //   type: "confirm",
-  //   name: "add_relation",
-  //   message: "Do you want to add a relation?",
-  //   default: true,
-  // });
-
-  // if (addRelation.add_relation) {
-  //   const newRelationData = await inquirer.prompt([
-  //     {
-  //       type: "input",
-  //       name: "model_name",
-  //       message: "Select relation model name:",
-  //       validate: (value) => (value ? true : "model name is required"),
-  //     },
-  //     {
-  //       type: "list",
-  //       name: "relation_type",
-  //       message: "Select relation type:",
-  //       choices: relationTypes,
-  //     },
-  //     {
-  //       type: "confirm",
-  //       name: "add_another_relation",
-  //       message: "Do you want to add another relation?",
-  //       default: false,
-  //     },
-  //   ]);
-
-  //   relationData.push(newRelationData);
-
-  //   while (newRelationData.add_another_relation) {
-  //     const nextRelationData = await inquirer.prompt([
-  //       {
-  //         type: "input",
-  //         name: "model_name",
-  //         message: "Select relation model name:",
-  //         validate: (value) => (value ? true : "model name is required"),
-  //       },
-  //       {
-  //         type: "list",
-  //         name: "relation_type",
-  //         message: "Select relation type:",
-  //         choices: relationTypes,
-  //       },
-  //       {
-  //         type: "confirm",
-  //         name: "add_another_relation",
-  //         message: "Do you want to add another relation?",
-  //         default: false,
-  //       },
-  //     ]);
-
-  //     relationData.push(nextRelationData);
-  //   }
-
-  //   formData.relations = relationData;
-  // }
-
-  if(state.authentication && state.roles.length){
-    let roleOptions = []
-    state.roles.forEach(role=>roleOptions.push({name:role}))
-    const accept = await inquirer.prompt({
-      type:"checkbox",
-      name:"roles",
-      message: "Who can access the generated api? (select one/many)",
-      choices: roleOptions
-    })
-    formData.roles = accept.roles;
-  }
-
-  return formData;
 }
+
+// Function that takes user input
+// async function promptModelForm() {
+//   let types = [
+//     "string",
+//     "integer",
+//     "float",
+//     "boolean",
+//     "date",
+//     "uuid",
+//     "json",
+//     "enum",
+//     "array",
+//     "binary",
+//     "decimal",
+//   ];
+//   const relationTypes = [
+//     "One-to-One",
+//     "One-to-Many",
+//     "Many-to-One",
+//     "Many-to-Many",
+//   ];
+//   if (Object.hasOwn(state, "orm")) {
+//     types = types.map((type) => orms[state.orm].getType(type));
+//   }
+//   const formData = await inquirer.prompt([
+//     {
+//       type: "input",
+//       name: "model_name",
+//       message: "Enter model name:",
+//       validate: (value) => (value ? true : "Model name is required"),
+//     },
+//     {
+//       type: "input",
+//       name: "model_desc",
+//       message: "Enter model description:",
+//     },
+//     {
+//       type: "confirm",
+//       name: "add_field",
+//       message: "Do you want to add a field?",
+//       default: true,
+//     },
+//   ]);
+
+//   // relation data
+//   const relationData = [];
+
+//   // field data
+//   const fieldData = [];
+//   while (formData.add_field) {
+//     const newFieldData = await inquirer.prompt([
+//       {
+//         type: "input",
+//         name: "field_name",
+//         message: "Enter field name:",
+//         validate: (value) => (value ? true : "Field name is required"),
+//       },
+//       {
+//         type: "list",
+//         name: "field_type",
+//         message: "Select field type:",
+//         choices: types,
+//       },
+//       {
+//         type: "confirm",
+//         name: "add_another_field",
+//         message: "Do you want to add another field?",
+//         default: true,
+//       },
+//     ]);
+
+//     fieldData.push(newFieldData);
+
+//     if (newFieldData.add_another_field) {
+//       formData.add_field = true;
+//     } else {
+//       formData.add_field = false;
+//     }
+//   }
+
+//   formData.fields = fieldData;
+
+//   // Ask if user wants to add a relation
+//   // const addRelation = await inquirer.prompt({
+//   //   type: "confirm",
+//   //   name: "add_relation",
+//   //   message: "Do you want to add a relation?",
+//   //   default: true,
+//   // });
+
+//   // if (addRelation.add_relation) {
+//   //   const newRelationData = await inquirer.prompt([
+//   //     {
+//   //       type: "input",
+//   //       name: "model_name",
+//   //       message: "Select relation model name:",
+//   //       validate: (value) => (value ? true : "model name is required"),
+//   //     },
+//   //     {
+//   //       type: "list",
+//   //       name: "relation_type",
+//   //       message: "Select relation type:",
+//   //       choices: relationTypes,
+//   //     },
+//   //     {
+//   //       type: "confirm",
+//   //       name: "add_another_relation",
+//   //       message: "Do you want to add another relation?",
+//   //       default: false,
+//   //     },
+//   //   ]);
+
+//   //   relationData.push(newRelationData);
+
+//   //   while (newRelationData.add_another_relation) {
+//   //     const nextRelationData = await inquirer.prompt([
+//   //       {
+//   //         type: "input",
+//   //         name: "model_name",
+//   //         message: "Select relation model name:",
+//   //         validate: (value) => (value ? true : "model name is required"),
+//   //       },
+//   //       {
+//   //         type: "list",
+//   //         name: "relation_type",
+//   //         message: "Select relation type:",
+//   //         choices: relationTypes,
+//   //       },
+//   //       {
+//   //         type: "confirm",
+//   //         name: "add_another_relation",
+//   //         message: "Do you want to add another relation?",
+//   //         default: false,
+//   //       },
+//   //     ]);
+
+//   //     relationData.push(nextRelationData);
+//   //   }
+
+//   //   formData.relations = relationData;
+//   // }
+
+//   if(state.authentication && state.roles.length){
+//     let roleOptions = []
+//     state.roles.forEach(role=>roleOptions.push({name:role}))
+//     const accept = await inquirer.prompt({
+//       type:"checkbox",
+//       name:"roles",
+//       message: "Who can access the generated api? (select one/many)",
+//       choices: roleOptions
+//     })
+//     formData.roles = accept.roles;
+//   }
+
+//   return formData;
+// }
 
 // Function to transform user input into usable data structure
 function transformFields(fields) {
@@ -509,10 +681,10 @@ function updateState(data) {
 
 // Core function
 async function main() {
-  const formData = await promptModelForm();
+  try {
+  const formData = await promptSchemaModel();
   // console.log("Form Data:", formData);
   let { model_name, model_desc, fields, relations, roles } = formData;
-  try {
     const name = model_name;
     const model = transformFields(fields);
     let modelExists;
