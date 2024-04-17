@@ -14,10 +14,11 @@ import template from "./templates/content.js";
 import passport from "./templates/passport.js";
 import aws from "./templates/aws.js";
 import twilio from "./templates/twilio.js"
-import { exec, execSync } from "child_process";
+import { exec } from "child_process";
 import genModel from "./model.js";
 import format from "./utils/format.js";
 import install from "./utils/install.js";
+import Handlebars from "handlebars";
 
 let userModel;
 
@@ -393,10 +394,64 @@ async function generateProjectStructure(input) {
       "public",
     ];
 
+
+Handlebars.registerHelper('errorHandlingMiddleware', () => {
+  return `
+  app.use((err, req, res, next) => {
+    console.error("Custom error handler - " + err.stack);
+  
+    // Log the error to a file
+    const logStream = fs.createWriteStream(path.join(__dirname, 'error.log'), { flags: 'a' });
+    logStream.write(new Date().toISOString() + ': ' + err.stack + '\\n');
+    logStream.end();
+  
+    res.status(500).send("Something went wrong!");
+  });`;
+});
+
+Handlebars.registerHelper('defaultErrorHandlingMiddleware', () => {
+  return `
+  app.use((err, req, res, next) => {
+    console.error("Custom error handler - " + err.stack);
+    res.status(500).send("Something went wrong!");
+  });`;
+});
+
+Handlebars.registerHelper('logMiddleware', () => {
+  return `
+  app.use(morgan("combined", { stream: fs.createWriteStream(path.join(process.pwd(), 'access.log'), { flags: 'a' }) })); // Logging to file
+  `;
+});
+
+Handlebars.registerHelper('authRoutes', (authentication) => {
+  if (authentication) {
+    return `
+app.post("/auth/register", async (req,res) => await userRegister(req.body,res));
+app.post("/auth/login", async (req,res) => await userLogin(req.body,res));
+app.get("/auth/profile", userAuth, (req,res) => res.status(200).json({ user: serializeUser(req.user) }));
+    `;
+  }
+  return '';
+});
+
+Handlebars.registerHelper('authImports', (authentication, roles) => {
+  if (authentication && roles.length) {
+    return `const passport = require("passport");
+const {userAuth, userRegister, userLogin, checkRole, serializeUser} = require("./utils/auth")`;
+  } else if (authentication) {
+    return `const passport = require("passport");
+const {userAuth, userRegister, userLogin, serializeUser} = require("./utils/auth")`;
+  }
+  return '';
+});
+
+
+    const appJsTemplate = Handlebars.compile(appTemplate)
+
     let files = [
       {
         path: "app.js",
-        content: await format(appTemplate(input),'babel'),
+        content: await format(appJsTemplate({input}),'babel'),
       },
       { path: ".env", content: "" }, // Empty .env file
       { path: ".gitignore", content: "node_modules\n.env\n" }, // Default .gitignore content

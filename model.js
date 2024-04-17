@@ -37,6 +37,7 @@ async function generateSequelizeModel(serviceName, model) {
   const modelsDirectory = "./models";
   const capitalizedServiceName = capitalize(serviceName);
 
+  if (!model.length) return;
   // Convert model fields to Sequelize format
   const customFields = model
     .map(field => {
