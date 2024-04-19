@@ -10,7 +10,8 @@
   "scripts": {
     "start": "node index.js",
     "generate": "node generate.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "terser _index.js -o index.js && terser _model.js -o model.js && terser _generate.js -o generate.js "
   },
   "author": "waglesathwik",
   "license": "ISC",
@@ -19,8 +20,5 @@
     "inquirer": "^9.2.16",
     "prettier": "^3.2.5"
   },
-  "type": "module",
-  "devDependencies": {
-    "handlebars-loader": "^1.7.3"
-  }
+  "type": "module"
 }

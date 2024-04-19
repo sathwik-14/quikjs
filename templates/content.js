@@ -3,7 +3,6 @@ import capitalize from "../utils/capitalize.js";
 export default {
   mongooseInit: `
 const mongoose = require('mongoose');
-require("dotenv").config()
 
 const dbURI = process.env.DATABASE_URL 
 
@@ -274,6 +273,7 @@ try {
   sequelizeInitContent: `
   const { Sequelize } = require("sequelize");
   require("dotenv").config();
+
   const dbUri = process.env['DATABASE_URL'];
   
   const sequelize = new Sequelize(dbUri);

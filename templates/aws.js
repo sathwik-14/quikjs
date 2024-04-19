@@ -3,7 +3,6 @@ export default {
   s3: {
     config: (input) => `
 const AWS = require('aws-sdk');
-require("dotenv").config();
 
 const s3 = new AWS.S3({
     accessKeyId: process.env.AWS_ACCESS_KEY,
@@ -154,7 +153,6 @@ module.exports = {
   },
   sns: (input) => `
 const AWS = require("aws-sdk");
-require("dotenv").config()
 
 const sendMessageToSnsTopic = async (message, topicArn, region = "ap-south-1") => {
     try {

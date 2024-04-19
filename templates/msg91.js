@@ -1,6 +1,5 @@
 export default (input) => `
 const msg91 = require('msg91');
-require("dotenv").config();
 
 const authKey = process.env.MSG_AUTH_KEY;
 msg91.initialize({authKey});

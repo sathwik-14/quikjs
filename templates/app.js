@@ -1,3 +1,54 @@
+import Handlebars from "handlebars";
+
+Handlebars.registerHelper('errorHandlingMiddleware', () => {
+  return `
+  app.use((err, req, res, next) => {
+    console.error("Custom error handler - " + err.stack);
+  
+    // Log the error to a file
+    const logStream = fs.createWriteStream(path.join(__dirname, 'error.log'), { flags: 'a' });
+    logStream.write(new Date().toISOString() + ': ' + err.stack + '\\n');
+    logStream.end();
+  
+    res.status(500).send("Something went wrong!");
+  });`;
+});
+
+Handlebars.registerHelper('defaultErrorHandlingMiddleware', () => {
+  return `
+  app.use((err, req, res, next) => {
+    console.error("Custom error handler - " + err.stack);
+    res.status(500).send("Something went wrong!");
+  });`;
+});
+
+Handlebars.registerHelper('logMiddleware', () => {
+  return `
+  app.use(morgan("combined", { stream: fs.createWriteStream(path.join(process.cwd(), 'access.log'), { flags: 'a' }) })); // Logging to file
+  `;
+});
+
+Handlebars.registerHelper('authRoutes', (authentication) => {
+  if (authentication) {
+    return `
+app.post("/auth/register", async (req,res) => await userRegister(req.body,res));
+app.post("/auth/login", async (req,res) => await userLogin(req.body,res));
+app.get("/auth/profile", userAuth, (req,res) => res.status(200).json({ user: serializeUser(req.user) }));
+    `;
+  }
+  return '';
+});
+
+Handlebars.registerHelper('authImports', (authentication, roles) => {
+  if (authentication && roles.length) {
+    return `const passport = require("passport");
+const {userAuth, userRegister, userLogin, checkRole, serializeUser} = require("./utils/auth")`;
+  } else if (authentication) {
+    return `const passport = require("passport");
+const {userAuth, userRegister, userLogin, serializeUser} = require("./utils/auth")`;
+  }
+  return '';
+});
 export default `
 const express = require("express");
 const cors = require("cors");
@@ -29,7 +80,7 @@ app.use(express.urlencoded({ extended: true })); // Parses URL-encoded form data
 app.use(helmet()); // Set security HTTP headers
 {{!-- Log middleware --}}
 {{#if input.logging}}
-app.use(morgan("combined", { stream: fs.createWriteStream(path.join(process.pwd(), 'access.log'), { flags: 'a' }) })); // Logging to file
+app.use(morgan("combined", { stream: fs.createWriteStream(path.join(process.cwd(), 'access.log'), { flags: 'a' }) })); // Logging to file
 {{/if}}
 app.use(compression()); // Gzip compression
 {{!-- Auth middleware --}}

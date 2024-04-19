@@ -4,4 +4,8 @@ package-lock.json
 Dockerfile
 .dockerignore
 notes.txt
-.npmignore
+_index.js
+_generate.js
+_model.js
+_types.js
+package.json

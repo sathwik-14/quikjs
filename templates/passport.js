@@ -52,7 +52,6 @@ export default {
   middleware: `
 const db = require("../models/index");
 const { Strategy, ExtractJwt } = require("passport-jwt");
-require("dotenv").config();
 
 const options = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),

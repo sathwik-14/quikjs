@@ -1,6 +1,5 @@
 export default (input) => `
 const twilio = require('twilio');
-require("dotenv").config();
 
 async function sendTwilioMessage(body, from, to) {
   try {

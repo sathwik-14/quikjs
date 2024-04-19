@@ -1,6 +1,5 @@
 export default (input) => `
 const sgMail = require("@sendgrid/mail");
-require("dotenv").config();
 
 const apiKey = process.env.SENDGRID_API_KEY;
 
