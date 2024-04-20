@@ -45,4 +45,4 @@ Contributions are welcome! If you'd like to contribute to PAG API Generator, ple
 
 ## License
 
-PAG-PWS API Generator is licensed under the ISC License.
+PAG-PWS API Generator is licensed under the MIT License.

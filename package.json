@@ -10,11 +10,10 @@
   "scripts": {
     "start": "node index.js",
     "generate": "node generate.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "terser _index.js -o index.js && terser _model.js -o model.js && terser _generate.js -o generate.js "
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "waglesathwik",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "handlebars": "^4.7.8",
     "inquirer": "^9.2.16",
