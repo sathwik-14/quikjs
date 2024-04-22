@@ -49,7 +49,8 @@ const {userAuth, userRegister, userLogin, serializeUser} = require("./utils/auth
   }
   return '';
 });
-export default `
+
+export const appTemplate = `
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");

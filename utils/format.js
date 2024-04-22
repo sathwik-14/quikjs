@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import prettier from "prettier";
 
-export default async (unformattedText,parser) => {
+export default async (unformattedText,parser='babel') => {
   try {
     const prettierOptions = {
-      parser: parser,
+      parser: parser, // Specify type of parser to format ex: babel
       semi: true, // Add semicolons at the end of statements
       singleQuote: true, // Use single quotes instead of double quotes for strings
       trailingComma: "all", // Add trailing commas wherever possible

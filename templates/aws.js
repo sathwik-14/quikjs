@@ -25,7 +25,7 @@ module.exports = {
         return new Promise((resolve, reject) => {
         try {
         var fs = require('fs');
-        const file = fs.readFileSync(filePath);        
+        const file = fs.readFileSync(filePath,"utf-8");        
         const uploadParams = {
         Bucket: BUCKET,
         Key: keyName,

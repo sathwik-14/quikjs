@@ -1,11 +1,11 @@
 {
-  "name": "@waglesathwik/pag",
+  "name": "quikjs",
   "version": "1.0.15",
   "description": "Nodejs rest api generator built for pacewisdom solutions",
   "main": "index.js",
   "bin": {
-    "pag-g-p": "./index.js",
-    "pag-g-m": "./generate.js"
+    "quik-g-p": "./index.js",
+    "quik-g-m": "./generate.js"
   },
   "scripts": {
     "start": "node index.js",
