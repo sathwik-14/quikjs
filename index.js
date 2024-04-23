@@ -1,22 +1,20 @@
 #!/usr/bin/env node
 
 import inquirer from "inquirer";
-import fs from "fs";
-import path from "path";
 import { appTemplate } from "./templates/app.js";
 import passport from "./templates/passport.js";
 import aws from "./templates/aws.js";
 import twilio from "./templates/twilio.js";
-import { write } from "./utils/fs.js";
+import { createDirectory, read, write } from "./utils/fs.js";
 import genModel from "./model.js";
 import format from "./utils/format.js";
 import install from "./utils/install.js";
 import Handlebars from "handlebars";
 import { scaffold } from "./generate.js";
-import { ask } from "./utils/prompt.js";
+// import { ask } from "./utils/prompt.js";
 import prisma from "./plugins/prisma.js";
 import sequelize from "./plugins/sequelize.js";
-import { tools, orms, types } from "./constants.js";
+import { tools, orms } from "./constants.js";
 
 const projectRoot = process.cwd();
 
@@ -183,8 +181,7 @@ async function generateProjectStructure(input) {
       files.push({ path: "error.log", content: "" });
     }
     folders.forEach((folder) => {
-      const folderPath = path.join(projectRoot, folder);
-      fs.mkdirSync(folderPath, { recursive: true });
+      createDirectory(folder);
     });
     files.forEach((file) => {
       write(file.path, file.content);
@@ -196,7 +193,7 @@ async function generateProjectStructure(input) {
 }
 
 async function promptModelForm(answers) {
-  let mappedTypes = types.map((type) => orms[answers.orm].getType(type));
+  let mappedTypes = orms[answers.orm].types;
   const formData = await inquirer.prompt([
     {
       type: "confirm",
@@ -269,8 +266,7 @@ function installDependencies(answers) {
 
 async function CheckProjectExist() {
   try {
-    const configPath = path.join(projectRoot, "config.json");
-    const data = await fs.promises.readFile(configPath, "utf-8");
+    const data = await read("config.json");
     if (data) {
       const config = JSON.parse(data);
       if (!config?.name) {
@@ -316,7 +312,17 @@ async function getRoleInput() {
 
 async function main() {
   try {
-    const answers = await ask(projectQuestions);
+    // const answers = await ask(projectQuestions);
+    const answers = {
+      name: "todos",
+      description: "",
+      db: "postgresQL",
+      orm: "sequelize",
+      logging: true,
+      error_handling: true,
+      tools: ["none"],
+      authentication: false,
+    };
     await CheckProjectExist();
     if (answers.authentication) {
       if (answers.roles) answers.roles = await getRoleInput();
@@ -334,6 +340,7 @@ async function main() {
     }
     installDependencies(answers);
     await generateProjectStructure(answers);
+    console.log("Started generating scaffold...");
     await scaffold(answers);
     if (userModel) models.push({ name: "user", model: userModel });
     console.log("Project setup successful\n");

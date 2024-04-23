@@ -5,7 +5,8 @@
   "main": "index.js",
   "bin": {
     "quik-g-p": "./index.js",
-    "quik-g-m": "./generate.js"
+    "quik-g-m": "./generate.js",
+    "quk init": "pm2 start index.js --name quikjs -i max"
   },
   "scripts": {
     "start": "node index.js",
@@ -19,5 +20,9 @@
     "inquirer": "^9.2.16",
     "prettier": "^3.2.5"
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "pm2": "^5.3.1"
+  }
 }

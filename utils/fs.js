@@ -18,3 +18,21 @@ export function write(relativePath, content) {
     console.error("FAILED WRITING TO FILE ", relativePath);
   }
 }
+
+export function append(relativePath, content) {
+  try {
+    const absPath = pathJoin(relativePath);
+    fs.appendFileSync(absPath, content);
+  } catch {
+    console.error("FAILED WRITING TO FILE ", relativePath);
+  }
+}
+
+export function exists(path) {
+  const absPath = pathJoin(path);
+  return fs.existsSync(absPath, { recursive: true });
+}
+
+export function createDirectory(path) {
+  fs.mkdirSync(path);
+}

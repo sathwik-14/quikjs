@@ -1,17 +1,15 @@
 #!/usr/bin/env node
 
-import inquirer from "inquirer";
 import template from "./templates/content.js";
-import fs from "fs";
-import path from "path";
 import genModel from "./model.js";
 import capitalize from "./utils/capitalize.js";
-import { read, write } from "./utils/fs.js";
-import { types, orms } from "./constants.js";
+import { append, read, write } from "./utils/fs.js";
+import { orms } from "./constants.js";
 import prisma from "./plugins/prisma.js";
+import format from "./utils/format.js";
+import { ask } from "./utils/prompt.js";
 
 let state;
-const projectRoot = process.cwd();
 let tables = [];
 
 const loadState = async (input) => {
@@ -28,8 +26,8 @@ const loadState = async (input) => {
 async function promptSchemaModel(input, name = "") {
   try {
     let schemaData = {};
-    let confirm = true;
-    let mappedTypes = types.map((type) => orms[input.orm].getType(type));
+    let mappedTypes = orms[input.orm].types;
+
     const schemaQuestions = [
       {
         type: "input",
@@ -52,23 +50,19 @@ async function promptSchemaModel(input, name = "") {
         type: "input",
         name: "size",
         message: "Enter the size (if applicable):",
-        when: (answers) => !["BOOLEAN", "DATE"].includes(answers.type),
-        validate: function (value) {
-          return /^\d+$/.test(value)
-            ? true
-            : "Please enter a valid size (a positive integer).";
-        },
+        when: (answers) =>
+          ["string", "binary"].includes(answers.type.toLowerCase()),
+        default: "",
       },
       {
         type: "input",
         name: "defaultValue",
         message: "Enter the default value (if any):",
-        default: null,
-        validate: function (value) {
-          return value.trim().length === 0 || /^\w+$/.test(value)
-            ? true
-            : "Please enter a valid default value (alphanumeric characters and underscores only).";
-        },
+        when: (answers) =>
+          ["string", "integer", "float", "boolean", "date", "decimal"].includes(
+            answers.type.toLowerCase()
+          ),
+        default: "",
       },
       {
         type: "confirm",
@@ -88,13 +82,13 @@ async function promptSchemaModel(input, name = "") {
         name: "unique",
         message: "Should this attribute have unique values?",
         when: (answers) => !answers.primaryKey,
-        default: false,
+        default: true,
       },
       {
         type: "confirm",
         name: "autoIncrement",
         message: "Should this attribute auto-increment?",
-        default: false,
+        default: true,
       },
       {
         type: "confirm",
@@ -135,9 +129,8 @@ async function promptSchemaModel(input, name = "") {
       },
     ];
 
-    while (confirm) {
-      let add_attributes = true;
-      const ans = await inquirer.prompt([
+    while (true) {
+      const ans = await ask([
         {
           type: "confirm",
           name: "add_table",
@@ -152,15 +145,15 @@ async function promptSchemaModel(input, name = "") {
         },
       ]);
       if (!ans.add_table) {
-        confirm = false;
+        break;
       }
       schemaData[ans.table_name] = [];
       tables.push(ans.table_name);
-      while (add_attributes) {
-        const model = await inquirer.prompt(schemaQuestions);
+      while (true) {
+        const model = await ask(schemaQuestions);
         if (!model.add_another) {
           schemaData[ans.table_name].push(model);
-          add_attributes = false;
+          break;
         }
         schemaData[ans.table_name].push(model);
       }
@@ -187,7 +180,7 @@ function controllersPrisma(serviceName) {
   const controllerContent = `const prisma = require('../config/db');
 \n\n  ${template.createPrismaContent(serviceName)}\n  ${template.getAllPrismaContent(serviceName)}\n  ${template.getByIdPrismaContent(serviceName)}\n  ${template.updatePrismaContent(serviceName)}\n  ${template.deletePrismaContent(serviceName)}\n  \n  module.exports = {\n    create${capitalize(serviceName)},\n    getAll${capitalize(serviceName)},\n    get${capitalize(serviceName)}ById,\n    update${capitalize(serviceName)}ById,\n    delete${capitalize(serviceName)}ById\n  };
 \n    `;
-  write(path.join(`controllers/${serviceName}.js`), controllerContent);
+  write(`controllers/${serviceName}.js`, controllerContent);
 }
 
 function isArrayNotEmpty(arr) {
@@ -203,20 +196,19 @@ function controllersSequelize(serviceName) {
     ${template.deleteSequelizeContent(serviceName)}\n  
     \n module.exports = {\n  
           create${capitalize(serviceName)},\n 
-             getAll${capitalize(serviceName)},\n  
-               get${capitalize(serviceName)}ById,\n  
-                 update${capitalize(serviceName)}ById,\n  
-                   delete${capitalize(serviceName)}ById\n  };`;
+  getAll${capitalize(serviceName)},\n  
+    get${capitalize(serviceName)}ById,\n  
+      update${capitalize(serviceName)}ById,\n  
+        delete${capitalize(serviceName)}ById\n  };`;
   write(`controllers/${serviceName}.js`, controllerContent);
 }
 
 async function setupSequalize(serviceName, model, relations = []) {
   try {
-    console.log("generating model");
-    genModel.generateSequelizeModel(serviceName, model);
+    await genModel.generateSequelizeModel(serviceName, model);
     if (isArrayNotEmpty(relations))
       generateAssociations(serviceName, relations);
-    console.log("model generation complete");
+    console.log("Model generation complete - "+serviceName);
   } catch (error) {
     console.log("Error setting up Prisma:", error);
   }
@@ -278,35 +270,7 @@ function generateInverseAssociationCode(modelName, relatedModelName, type) {
 }
 
 function appendToFile(fileName, content) {
-  const filePath = path.join(projectRoot, "models", fileName);
-  fs.appendFileSync(filePath, content);
-}
-
-async function generateScaffold(
-  serviceName,
-  model,
-  relations = [],
-  roles = []
-) {
-  try {
-    const db = state.db;
-    const orm = state.orm;
-    console.log("started generating scaffold...");
-    switch (orm) {
-      case "prisma":
-        await setupPrisma(serviceName, model, db);
-        controllersPrisma(serviceName);
-        break;
-      case "sequelize":
-        await setupSequalize(serviceName, model, relations);
-        controllersSequelize(serviceName);
-        break;
-    }
-    generateRoutes(serviceName, roles);
-    console.log("done generating routes and controllers");
-  } catch (error) {
-    console.error("Error generating scaffold:", error);
-  }
+  append(`models/${fileName}`, content);
 }
 
 function authMiddleware(roles) {
@@ -358,21 +322,113 @@ function updateState(data) {
   return config;
 }
 
+async function generateScaffold(
+  serviceName,
+  model,
+  relations = [],
+  roles = []
+) {
+  try {
+    const db = state.db;
+    const orm = state.orm;
+    switch (orm) {
+      case "prisma":
+        await setupPrisma(serviceName, model, db);
+        controllersPrisma(serviceName);
+        break;
+      case "sequelize":
+        await setupSequalize(serviceName, model, relations);
+        controllersSequelize(serviceName);
+        break;
+    }
+    generateRoutes(serviceName, roles);
+    console.log("Generated routes and controllers for ",serviceName);
+  } catch (error) {
+    console.error("Error generating scaffold:", error);
+  }
+}
+
 async function scaffold(input) {
   try {
     await loadState(input);
-    const schemaData = await promptSchemaModel(input);
-    console.log("Form Data:", schemaData);
+    // const schemaData = await promptSchemaModel(input);
+    const schemaData = {
+      country: [
+        {
+          name: "id",
+          type: "INTEGER",
+          defaultValue: "",
+          primaryKey: true,
+          autoIncrement: true,
+          foreignKey: false,
+          add_another: true,
+        },
+        {
+          name: "name",
+          type: "STRING",
+          size: "",
+          defaultValue: "",
+          primaryKey: false,
+          allowNulls: false,
+          unique: false,
+          autoIncrement: false,
+          foreignKey: false,
+          add_another: false,
+        },
+      ],
+      employee: [
+        {
+          name: "id",
+          type: "INTEGER",
+          defaultValue: "",
+          primaryKey: true,
+          autoIncrement: true,
+          foreignKey: false,
+          add_another: true,
+        },
+        {
+          name: "name",
+          type: "TEXT",
+          primaryKey: false,
+          allowNulls: false,
+          unique: false,
+          autoIncrement: false,
+          foreignKey: false,
+          add_another: true,
+        },
+        {
+          name: "country_id",
+          type: "INTEGER",
+          defaultValue: "",
+          primaryKey: false,
+          allowNulls: false,
+          unique: false,
+          autoIncrement: false,
+          foreignKey: true,
+          refTable: "country",
+          refField: "id",
+          relationshipType: "Many-to-One",
+          add_another: true,
+        },
+        {
+          name: "start_date",
+          type: "DATE",
+          defaultValue: "",
+          primaryKey: false,
+          allowNulls: true,
+          unique: false,
+          autoIncrement: false,
+          foreignKey: false,
+          add_another: false,
+        },
+      ],
+    };
     if (Object.keys(schemaData).length) {
       for (const [key, value] of Object.entries(schemaData)) {
         await generateScaffold(key, value);
       }
     }
-    if (modelExists) {
-      console.log("model/service already exist");
-    } else {
-      let relations = isArrayNotEmpty(relations) ? relations : [];
-    }
+    // let relations = isArrayNotEmpty(relations) ? relations : [];
     const { name, description, db, orm, authentication, roles } = input;
     const config = {
       name,
@@ -384,11 +440,9 @@ async function scaffold(input) {
       schemaData,
     };
     write("config.json", await format(JSON.stringify(config), "json"));
-    console.log(
-      `API GENERATED/MODIFIED FOR SERVICE '${name}' FOR PROJECT '${state.projectName}' USING DATABASE '${req.body.db}'`
-    );
   } catch (err) {
-    console.log("something went wrong");
+    console.error(err);
+    console.error("something went wrong");
   }
 }
 

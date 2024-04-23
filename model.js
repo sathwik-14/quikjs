@@ -1,17 +1,18 @@
 import capitalize from "./utils/capitalize.js";
-import fs from "fs";
 import format from "./utils/format.js";
-import { read,write } from "./utils/fs.js";
-
-const projectRoot = process.cwd();
+import { append, createDirectory, exists, read, write } from "./utils/fs.js";
 
 function generatePrismaModel(serviceName, model, db) {
   let prismaModelContent = read("prisma/schema.prisma");
-  const modelContent = `\n  // Prisma schema for ${serviceName}\n  model ${capitalize(serviceName)} {\n    id   String @id @default(uuid()) @map("_id") ${db == "mongoDB" ? "@db.ObjectId" : ""}\n    createdAt DateTime @default(now())\n    updatedAt DateTime @default(now())\n  ${Object.entries(
-    model
-  )
-    .map(([fieldName, fieldType]) => `${fieldName} ${fieldType}`)
-    .join("\n")}\n  }\n  `;
+  const modelContent = `\n  
+  // Prisma schema for ${serviceName}\n 
+  model ${capitalize(serviceName)} {\n
+        id   String @id @default(uuid()) @map("_id") ${db == "mongoDB" ? "@db.ObjectId" : ""}\n 
+           createdAt DateTime @default(now())\n
+               updatedAt DateTime @default(now())\n
+                 ${Object.entries(model)
+                   .map(([fieldName, fieldType]) => `${fieldName} ${fieldType}`)
+                   .join("\n")}\n  }\n  `;
   if (!prismaModelContent.includes(modelContent.trim())) {
     write("prisma/schema.prisma", prismaModelContent + modelContent);
   } else {
@@ -45,11 +46,14 @@ async function generateSequelizeModel(serviceName, model) {
 \n\n    ${capitalizedServiceName}.sync()\n      .then(() => console.log('${serviceName} model synced successfully'))\n      .catch(err => console.log('${serviceName} model sync failed'));
 \n\n    module.exports = ${capitalizedServiceName};
 \n  `;
-  if (!fs.existsSync(modelsDirectory)) {
-    fs.mkdirSync(modelsDirectory);
+  if (!exists(modelsDirectory)) {
+    createDirectory(modelsDirectory);
   }
-  write(`${modelsDirectory}/${serviceName.toLowerCase()}.js`, await format(modelContent));
-  updateIndex(modelsDirectory, serviceName, capitalizedServiceName);
+  write(
+    `${modelsDirectory}/${serviceName.toLowerCase()}.js`,
+    await format(modelContent)
+  );
+  await updateIndex(modelsDirectory, serviceName, capitalizedServiceName);
 }
 
 async function updateIndex(
@@ -59,21 +63,23 @@ async function updateIndex(
 ) {
   const indexFilePath = `${modelsDirectory}/index.js`;
   let indexContent = "";
-  if (fs.existsSync(indexFilePath)) {
+  if (exists(indexFilePath)) {
     indexContent = read(indexFilePath);
   }
   const newContent = `\n    const ${capitalizedServiceName} = require('./${serviceName.toLowerCase()}');
 \n    module.exports.${capitalizedServiceName} = ${capitalizedServiceName};
 \n  `;
   if (!indexContent.includes(await format(newContent))) {
-    fs.appendFileSync(indexFilePath, await format(newContent));
-    console.log("New model appended to the models/index file.");
+    append(indexFilePath, await format(newContent));
+    console.log(`${serviceName} model appended to the models/index file.`);
   } else {
-    console.log("Index file already contains the new model. No changes made.");
+    console.log(
+      `Index file already contains the ${serviceName} model. No changes made.`
+    );
   }
 }
 
 export default {
-  generatePrismaModel: generatePrismaModel,
-  generateSequelizeModel: generateSequelizeModel,
+  generatePrismaModel,
+  generateSequelizeModel,
 };
