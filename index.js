@@ -8,15 +8,13 @@ import twilio from "./templates/twilio.js";
 import { createDirectory, read, write } from "./utils/fs.js";
 import genModel from "./model.js";
 import format from "./utils/format.js";
-import install from "./utils/install.js";
-import Handlebars from "handlebars";
+import { install, installSync } from "./utils/install.js";
 import { scaffold } from "./generate.js";
 // import { ask } from "./utils/prompt.js";
 import prisma from "./plugins/prisma.js";
 import sequelize from "./plugins/sequelize.js";
 import { tools, orms } from "./constants.js";
-
-const projectRoot = process.cwd();
+import compile from "./utils/compile.js";
 
 let userModel;
 let models = [];
@@ -122,12 +120,12 @@ async function generateProjectStructure(input) {
       "config",
     ];
 
-    const appJsTemplate = Handlebars.compile(appTemplate);
+    const appJsTemplate = compile(appTemplate);
 
     let files = [
       {
         path: "app.js",
-        content: await format(appJsTemplate({ input: input })),
+        content: appJsTemplate({ input: input }),
       },
       { path: ".env", content: "" },
       { path: ".gitignore", content: "node_modules\n.env\n" },
@@ -142,23 +140,23 @@ async function generateProjectStructure(input) {
           case "s3":
             files.push({
               path: "config/aws.js",
-              content: await format(aws.s3.config(input)),
+              content: aws.s3.config(input),
             });
             files.push({
               path: "utils/s3.js",
-              content: await format(aws.s3.utils(input)),
+              content: aws.s3.utils(input),
             });
             break;
           case "sns":
             files.push({
               path: "utils/sns.js",
-              content: await format(aws.sns(input)),
+              content: aws.sns(input),
             });
             break;
           case "twilio":
             files.push({
               path: "utils/twilio.js",
-              content: await format(twilio(input)),
+              content: twilio(input),
             });
             break;
         }
@@ -167,11 +165,11 @@ async function generateProjectStructure(input) {
     if (authentication) {
       files.push({
         path: "middlewares/passport.js",
-        content: await format(passport.middleware),
+        content: passport.middleware,
       });
       files.push({
         path: "utils/auth.js",
-        content: await format(passport.util(input, userModel)),
+        content: passport.util(input, userModel),
       });
     }
     if (logging) {
@@ -183,8 +181,13 @@ async function generateProjectStructure(input) {
     folders.forEach((folder) => {
       createDirectory(folder);
     });
-    files.forEach((file) => {
-      write(file.path, file.content);
+    files.forEach(async (file) => {
+      if ([".env", "README.md", ".gitignore"].includes(file.path)) {
+        write(file.path, file.content);
+      } else {
+        const formattedContent = await format(file.content);
+        write(file.path, formattedContent);
+      }
     });
     await runORMSetup(orm, db);
   } catch (error) {
@@ -235,7 +238,7 @@ async function promptModelForm(answers) {
   return formData;
 }
 
-function installDependencies(answers) {
+async function installDependencies(answers) {
   console.log("Installing dependencies");
   install("express", "cors", "dotenv", "helmet", "morgan", "compression");
   switch (answers.db) {
@@ -350,4 +353,6 @@ async function main() {
   }
 }
 
-main();
+console.time("Time taken");
+await main();
+console.timeEnd("Time taken");
