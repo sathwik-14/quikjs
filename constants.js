@@ -1,7 +1,7 @@
-import prisma from "./plugins/prisma.js";
-import sequelize from "./plugins/sequelize.js";
-import mongoose from "./plugins/mongoose.js";
-import typeorm from "./plugins/typeorm.js";
+import prisma from "./plugins/prisma/prisma.js";
+import sequelize from "./plugins/sequelize/sequelize.js";
+import mongoose from "./plugins/mongoose/mongoose.js";
+import typeorm from "./plugins/typeorm/typeorm.js";
 
 export const orms = {
   prisma: {

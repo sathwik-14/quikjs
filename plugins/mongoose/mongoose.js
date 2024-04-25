@@ -1,4 +1,5 @@
-import format from "../utils/format.js";
+import templates from "../../templates/content.js";
+import format from "../../utils/format.js";
 
 function type(input) {
   switch (input.toLowerCase()) {
@@ -32,10 +33,16 @@ function type(input) {
 }
 
 async function clientInit() {
-    write("config/db.js", await format(template.mongooseInit));
+    write("config/db.js", await format(templates.mongooseInit));
   }
 
+async function setup(db) {
+  installSync("mongoose");
+  await clientInit();
+}
+
 export default {
+  setup,
   type,
   clientInit
 };

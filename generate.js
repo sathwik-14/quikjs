@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 
 import template from "./templates/content.js";
-import genModel from "./model.js";
 import capitalize from "./utils/capitalize.js";
 import { append, read, write } from "./utils/fs.js";
 import { orms } from "./constants.js";
-import prisma from "./plugins/prisma.js";
+import prisma from "./plugins/prisma/prisma.js";
 import format from "./utils/format.js";
 import { ask } from "./utils/prompt.js";
 
@@ -168,9 +167,9 @@ async function promptSchemaModel(input, name = "") {
 async function setupPrisma(serviceName, model, db) {
   try {
     console.log("start orm model setup");
-    genModel.generatePrismaModel(serviceName, model, db);
+    prisma.model(serviceName, model, db);
     console.log("start migration");
-    await prisma.migrateAndGenerate();
+    await prisma.generate();
   } catch (error) {
     console.log("Error setting up Prisma:", error);
   }
@@ -404,10 +403,10 @@ async function scaffold(input) {
           allowNulls: false,
           unique: false,
           autoIncrement: false,
-          foreignKey: true,
-          refTable: "country",
-          refField: "id",
-          relationshipType: "Many-to-One",
+          // foreignKey: false,
+          // refTable: "country",
+          // refField: "id",
+          // relationshipType: "Many-to-One",
           add_another: true,
         },
         {

@@ -1,6 +1,7 @@
-import format from "../utils/format.js";
-import { write } from "../utils/fs.js";
-import template from "../templates/content.js";
+import format from "../../utils/format.js";
+import { write } from "../../utils/fs.js";
+import template from "../../templates/content.js";
+import { generateModel } from "./model.js";
 
 async function clientInit() {
   write("config/db.js", await format(template.sequelizeInitContent));
@@ -37,7 +38,14 @@ function type(input) {
   }
 }
 
+async function setup(db) {
+  installSync("sequelize", "sequelize-cli");
+  await clientInit()
+}
+
 export default {
+  setup,
   type,
   clientInit,
+  model: generateModel
 };
