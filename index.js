@@ -8,7 +8,7 @@ import twilio from "./templates/twilio.js";
 import { createDirectory, read, write } from "./utils/fs.js";
 import genModel from "./model.js";
 import format from "./utils/format.js";
-import { install, installSync } from "./utils/install.js";
+import { installSync } from "./utils/install.js";
 import { scaffold } from "./generate.js";
 // import { ask } from "./utils/prompt.js";
 import prisma from "./plugins/prisma.js";
@@ -92,16 +92,16 @@ async function runORMSetup(orm, db) {
   console.log(`Setting up ${orm}`);
   switch (orm) {
     case "prisma":
-      install("prisma", "@prisma/client");
+      installSync("prisma", "@prisma/client");
       await prisma.init(db);
       prisma.clientInit();
       break;
     case "sequelize":
-      install("sequelize", "sequelize-cli");
+      installSync("sequelize", "sequelize-cli");
       sequelize.clientInit();
       break;
     case "mongoose":
-      install("mongoose");
+      installSync("mongoose");
       generateMongooseClient();
       break;
   }
@@ -240,28 +240,28 @@ async function promptModelForm(answers) {
 
 async function installDependencies(answers) {
   console.log("Installing dependencies");
-  install("express", "cors", "dotenv", "helmet", "morgan", "compression");
+  installSync("express", "cors", "dotenv", "helmet", "morgan", "compression");
   switch (answers.db) {
     case "postgresQL":
-      install("pg", "pg-hstore");
+      installSync("pg", "pg-hstore");
       break;
     case "mySQL":
-      install("mysql2");
+      installSync("mysql2");
       break;
   }
   if (answers.authentication) {
     console.log("Setting up  passport,passport-jwt");
-    install("passport", "passport-jwt", "jsonwebtoken", "bcrypt");
+    installSync("passport", "passport-jwt", "jsonwebtoken", "bcrypt");
   }
   if (answers.tools.length) {
     for (const item of answers.tools) {
       switch (item) {
         case "s3":
         case "sns":
-          install("aws-sdk");
+          installSync("aws-sdk");
           break;
         case "twilio":
-          install("twilio");
+          installSync("twilio");
       }
     }
   }

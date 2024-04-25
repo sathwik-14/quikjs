@@ -1,6 +1,6 @@
 import Handlebars from "handlebars";
 
-Handlebars.registerHelper('errorHandlingMiddleware', () => {
+Handlebars.registerHelper("errorHandlingMiddleware", () => {
   return `
   app.use((err, req, res, next) => {
     console.error("Custom error handler - " + err.stack);
@@ -14,7 +14,7 @@ Handlebars.registerHelper('errorHandlingMiddleware', () => {
   });`;
 });
 
-Handlebars.registerHelper('defaultErrorHandlingMiddleware', () => {
+Handlebars.registerHelper("defaultErrorHandlingMiddleware", () => {
   return `
   app.use((err, req, res, next) => {
     console.error("Custom error handler - " + err.stack);
@@ -22,13 +22,13 @@ Handlebars.registerHelper('defaultErrorHandlingMiddleware', () => {
   });`;
 });
 
-Handlebars.registerHelper('logMiddleware', () => {
+Handlebars.registerHelper("logMiddleware", () => {
   return `
   app.use(morgan("combined", { stream: fs.createWriteStream(path.join(process.cwd(), 'access.log'), { flags: 'a' }) })); // Logging to file
   `;
 });
 
-Handlebars.registerHelper('authRoutes', (authentication) => {
+Handlebars.registerHelper("authRoutes", (authentication) => {
   if (authentication) {
     return `
 app.post("/auth/register", async (req,res) => await userRegister(req.body,res));
@@ -36,10 +36,10 @@ app.post("/auth/login", async (req,res) => await userLogin(req.body,res));
 app.get("/auth/profile", userAuth, (req,res) => res.status(200).json({ user: serializeUser(req.user) }));
     `;
   }
-  return '';
+  return "";
 });
 
-Handlebars.registerHelper('authImports', (authentication, roles) => {
+Handlebars.registerHelper("authImports", (authentication, roles) => {
   if (authentication && roles.length) {
     return `const passport = require("passport");
 const {userAuth, userRegister, userLogin, checkRole, serializeUser} = require("./utils/auth")`;
@@ -47,7 +47,7 @@ const {userAuth, userRegister, userLogin, checkRole, serializeUser} = require(".
     return `const passport = require("passport");
 const {userAuth, userRegister, userLogin, serializeUser} = require("./utils/auth")`;
   }
-  return '';
+  return "";
 });
 
 export const appTemplate = `
@@ -65,8 +65,6 @@ const path = require("path")
 {{{authImports input.authentication input.roles}}}
 
 const PORT = process.env.PORT || "3000";
-
-// Import routes
 
 // Load environment variables from .env file
 dotenv.config();
@@ -111,6 +109,8 @@ app.use((err, req, res, next) => {
 
 // Routes
 {{{authRoutes input.authentication}}}
+
+// Import routes
 
 // Start the server
 app.listen(PORT, () => {
