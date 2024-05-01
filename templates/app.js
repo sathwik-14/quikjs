@@ -64,6 +64,9 @@ const path = require("path")
 {{!-- Auth imports --}}
 {{{authImports input.authentication input.roles}}}
 
+// Import routes
+
+
 const PORT = process.env.PORT || "3000";
 
 // Load environment variables from .env file
@@ -110,7 +113,6 @@ app.use((err, req, res, next) => {
 // Routes
 {{{authRoutes input.authentication}}}
 
-// Import routes
 
 // Start the server
 app.listen(PORT, () => {

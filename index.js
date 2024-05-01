@@ -8,11 +8,12 @@ import twilio from "./templates/twilio.js";
 import { createDirectory, read, write } from "./utils/fs.js";
 import format from "./utils/format.js";
 import { installSync } from "./utils/install.js";
-import { scaffold, promptSchemaModel } from "./generate.js";
+import { scaffold } from "./generate.js";
+import { schemaPrompts } from "./prompt.js";
 // import { ask } from "./utils/prompt.js";
-import prisma from "./plugins/prisma/prisma.js";
-import sequelize from "./plugins/sequelize/sequelize.js";
-import mongoose from "./plugins/mongoose/mongoose.js";
+import prisma from "./plugins/prisma/index.js";
+import sequelize from "./plugins/sequelize/index.js";
+import mongoose from "./plugins/mongoose/index.js";
 import { tools } from "./constants.js";
 import compile from "./utils/compile.js";
 
@@ -98,15 +99,14 @@ async function generateProjectStructure(input) {
   }
 }
 
-
 async function installDependencies(answers) {
   console.log("Installing dependencies");
   installSync("express", "cors", "dotenv", "helmet", "morgan", "compression");
-  switch (answers.db) {
-    case "postgresQL":
+  switch (answers.db.toLowerCase()) {
+    case "postgresql":
       installSync("pg", "pg-hstore");
       break;
-    case "mySQL":
+    case "mysql":
       installSync("mysql2");
       break;
   }
@@ -180,8 +180,8 @@ async function main() {
     const answers = {
       name: "todos",
       description: "",
-      db: "postgresql",
-      orm: "prisma",
+      db: "mysql",
+      orm: "sequelize",
       logging: true,
       error_handling: true,
       tools: ["none"],
@@ -191,18 +191,18 @@ async function main() {
     if (answers.authentication) {
       if (answers.roles) answers.roles = await getRoleInput();
       console.log("Let us create User model with required fields");
-      const userModel = await promptSchemaModel(answers, "user");
+      const userModel = await schemaPrompts(answers, "user");
       const name = "user";
       switch (answers.orm) {
         case "prisma":
           prisma.model(name, userModel, answers.db);
           break;
         case "sequelize":
-          sequelize.mod(name, userModel);
+          sequelize.model(name, userModel);
           break;
       }
     }
-    // installDependencies(answers);
+    installDependencies(answers);
     await generateProjectStructure(answers);
     console.log("Started generating scaffold...");
     await scaffold(answers);

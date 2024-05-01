@@ -1,6 +1,6 @@
 import capitalize from "../../utils/capitalize.js";
 import { read, write } from "../../utils/fs.js";
-import prisma from "./prisma.js";
+import prisma from "./index.js";
 
 function convertOptions(options, db) {
   const directives = [];
@@ -20,9 +20,9 @@ function convertOptions(options, db) {
   }
 
   // Handle foreign key constraint
-  if (options.foreignKey) {
+  if (options.foreignKey && db == "mongodb") {
     directives.push(
-      `@db.${db}.foreignKey({ references: { table: "${options.refTable}", field: "${options.refField}" }})`
+      `@db.ObjectId`
     );
   }
 
@@ -41,6 +41,10 @@ export function generateModel(modelName, modelData, db) {
     const { name, type, defaultValue = "", ...otherOptions } = field;
     const convertedType = prisma.type(type, otherOptions,db);
     const prismaOptions = convertOptions(otherOptions, db);
+    if(otherOptions.foreignKey){
+      return `${otherOptions.refTable} ${capitalize(otherOptions.refTable)}${otherOptions.relationshipType == 'One-to-Many'?'[]':''}\n
+      ${name} ${convertedType}${otherOptions.allowNulls?'?':''} ${prismaOptions}`
+    }
     return `${name} ${convertedType}${otherOptions.allowNulls?'?':''} ${prismaOptions}`;
   });
 

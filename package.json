@@ -4,13 +4,12 @@
   "description": "Nodejs rest api generator built for pacewisdom solutions",
   "main": "index.js",
   "bin": {
-    "quik-g-p": "./index.js",
-    "quik-g-m": "./generate.js"
+    "quik-g-p": "./index.js"
   },
   "scripts": {
     "start": "node index.js",
     "generate": "node generate.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "author": "waglesathwik",
   "license": "MIT",

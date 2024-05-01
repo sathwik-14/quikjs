@@ -1,4 +1,4 @@
-export function projectQuestions() {
+export function projectPrompts() {
     return [
         {
           type: "input",
@@ -67,4 +67,146 @@ export function projectQuestions() {
           when: (answers) => answers.authentication,
         },
       ];
+}
+
+export async function schemaPrompts(input, name = "") {
+  try {
+    let schemaData = {};
+    let mappedTypes = orms[input.orm].types;
+
+    const schemaQuestions = [
+      {
+        type: "input",
+        name: "name",
+        message: "Enter the name of the attribute:",
+        when: name === "",
+        validate: function (value) {
+          return /^[a-zA-Z_]\w*$/.test(value)
+            ? true
+            : "Please enter a valid attribute name (alphanumeric characters and underscores only, and must start with a letter or underscore).";
+        },
+      },
+      {
+        type: "list",
+        name: "type",
+        message: "Select the data type:",
+        choices: mappedTypes,
+      },
+      {
+        type: "input",
+        name: "size",
+        message: "Enter the size (if applicable):",
+        when: (answers) =>
+          ["string", "binary"].includes(answers.type.toLowerCase()),
+        default: "",
+      },
+      {
+        type: "input",
+        name: "defaultValue",
+        message: "Enter the default value (if any):",
+        when: (answers) =>
+          ["string", "integer", "float", "boolean", "date", "decimal"].includes(
+            answers.type.toLowerCase()
+          ),
+        default: "",
+      },
+      {
+        type: "confirm",
+        name: "primaryKey",
+        message: "Is this attribute a primary key?",
+        default: true,
+      },
+      {
+        type: "confirm",
+        name: "allowNulls",
+        message: "Allow NULL values for this attribute?",
+        when: (answers) => !answers.primaryKey,
+        default: true,
+      },
+      {
+        type: "confirm",
+        name: "unique",
+        message: "Should this attribute have unique values?",
+        when: (answers) => !answers.primaryKey,
+        default: true,
+      },
+      {
+        type: "confirm",
+        name: "autoIncrement",
+        message: "Should this attribute auto-increment?",
+        default: true,
+      },
+      {
+        type: "confirm",
+        name: "foreignKey",
+        message: "Is this attribute a foreign key?",
+        default: true,
+      },
+      {
+        type: "list",
+        name: "refTable",
+        message: "Select the referenced table:",
+        choices: tables,
+        when: (answers) => answers.foreignKey,
+      },
+      {
+        type: "list",
+        name: "refField",
+        message: "Enter the referenced field:",
+        when: (answers) => answers.foreignKey,
+        choices: function (answers) {
+          const refTable = answers.refTable;
+          const fields = schemaData[refTable].map((field) => field.name);
+          return fields;
+        },
+      },
+      {
+        type: "list",
+        name: "relationshipType",
+        message: "Select the relationship type:",
+        choices: ["One-to-One", "One-to-Many", "Many-to-One", "Many-to-Many"],
+        when: (answers) => answers.foreignKey,
+      },
+      {
+        type: "confirm",
+        name: "add_another",
+        message: "Do you want to add another attribute?",
+        default: true,
+      },
+    ];
+
+    while (true) {
+      const ans = await ask([
+        {
+          type: "confirm",
+          name: "add_table",
+          message: "Do you want to add a table?",
+          default: true,
+        },
+        {
+          type: "input",
+          name: "table_name",
+          message: "Enter the table name?",
+          when: (answers) => answers.add_table,
+        },
+      ]);
+      if (!ans.add_table) {
+        break;
+      }
+      schemaData[ans.table_name] = [];
+      tables.push(ans.table_name);
+      while (true) {
+        const model = await ask(schemaQuestions);
+        if (!model.add_another) {
+          schemaData[ans.table_name].push(model);
+          break;
+        }
+        schemaData[ans.table_name].push(model);
+      }
+    }
+    return schemaData;
+  } catch (e) {
+    console.log(e);
+    console.log("error getting schema details\n" + e);
+  }
 }

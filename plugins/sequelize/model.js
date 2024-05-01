@@ -1,6 +1,6 @@
 import capitalize from "../../utils/capitalize.js";
 import format from "../../utils/format.js";
-import { createDirectory, exists, write } from "../../utils/fs.js";
+import { append, createDirectory, exists, read, write } from "../../utils/fs.js";
 
 async function updateIndex(
   modelsDirectory,
@@ -32,6 +32,9 @@ export async function generateModel(serviceName, model) {
   const customFields = model
     .map((field) => {
       let fieldDefinition = `  ${field.name}: { type: DataTypes.${field.type}`;
+      if(field.primaryKey){
+        fieldDefinition+=`, primaryKey:true`
+      }
       if (field.defaultValue !== null && field.defaultValue != "") {
         fieldDefinition += `, defaultValue: ${field.defaultValue}`;
       }
