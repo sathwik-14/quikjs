@@ -28,7 +28,7 @@ Contributors to the project are expected to follow the code of conduct in all pr
 
 ## Reporting Violations
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project team at [apigen](mailto:kywagle@gmail.com). All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project team at [quikjs](mailto:kywagle@gmail.com). All complaints will be reviewed and investigated promptly and fairly.
 
 Project maintainers are obligated to maintain confidentiality with regard to the reporter of an incident. Further details of specific enforcement policies may be posted separately.
 
