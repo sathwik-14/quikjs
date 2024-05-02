@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import format from "./format.js";
 
 function pathJoin(relPath) {
   return path.join(process.cwd(), relPath);
@@ -7,12 +8,22 @@ function pathJoin(relPath) {
 
 export function read(relativePath) {
   const absPath = pathJoin(relativePath);
-  return fs.readFileSync(absPath, "utf-8");
+  if (exists(relativePath)) {
+    return fs.readFileSync(absPath, "utf-8")
+  }else {
+    throw new Error('Path not found - ',absPath)
+  }
 }
 
-export function write(relativePath, content) {
+export async function write(relativePath, content, options = { format: true }) {
   try {
     const absPath = pathJoin(relativePath);
+    if (options.format) {
+      content = await format(content);
+    }
+    if(options?.parser){
+      content = await format(content,options.parser)
+    }
     fs.writeFileSync(absPath, content);
   } catch {
     console.error("FAILED WRITING TO FILE ", relativePath);

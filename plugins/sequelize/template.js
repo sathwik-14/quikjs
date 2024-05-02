@@ -1,19 +1,19 @@
 import capitalize from "../../utils/capitalize.js";
 import Handlebars from "handlebars";
 
-Handlebars.registerHelper('equals', function(variable, string, options) {
+Handlebars.registerHelper("equals", function (variable, string, options) {
   if (variable === string) {
-      return options.fn(this);
+    return options.fn(this);
   } else {
-      return options.inverse(this);
+    return options.inverse(this);
   }
 });
 
-Handlebars.registerHelper('notequals', function(variable, string, options) {
-  if (variable !== string) {
-      return options.fn(this);
+Handlebars.registerHelper("notequals", function (variable, string, options) {
+  if (variable != string) {
+    return options.fn(this);
   } else {
-      return options.inverse(this);
+    return options.inverse(this);
   }
 });
 
@@ -26,7 +26,7 @@ export default {
         )}.create(req.body);
         res.status(201).json(new${capitalize(serviceName)});
       } catch (error) {
-        console.error(error);
+        console.error(error.errors[0]);
         res.status(500).json({ error: 'Internal server error' });
       }
     }
@@ -126,15 +126,17 @@ export default {
     require("dotenv").config();
     {{#notequals db "mysql"}}
     const dbUri = process.env['DATABASE_URL']; 
-    {{/equals}}
+    {{/notequals}}
     const sequelize = new Sequelize(
     {{#equals db "mysql"}}
   process.env.DATABASE_NAME, process.env.DATABASE_USER,
   process.env.DATABASE_PASSWORD, {
 	host: process.env.DATABASE_HOST,
-	dialect: 'mysql'}
+	dialect: 'mysql',
+  logging:false
+}
   {{else}}
-    dbUri
+    dbUri,{logging:false}
     {{/equals}}
     );
     

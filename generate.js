@@ -115,10 +115,10 @@ function authMiddleware(roles) {
   return "";
 }
 
-function generateRoutes(serviceName, roles) {
-  write(`routes/${serviceName}.js`, template.routesContent(serviceName));
-  const importContent = `const ${serviceName}Routes = require("./routes/${serviceName}");`;
-  const routeContent = `app.use("/api/${serviceName}",${authMiddleware(roles)}${serviceName}Routes);`;
+function generateRoutes(routeName, roles) {
+  write(`routes/${routeName}.js`, template.routesContent(routeName));
+  const importContent = `const ${routeName}Routes = require("./routes/${routeName}");`;
+  const routeContent = `app.use("/api/${routeName}",${authMiddleware(roles)}${routeName}Routes);`;
   let mainFileContent = read("app.js");
   let lines = mainFileContent.split("\n");
   const importRoutesIndex = lines.findIndex((line) =>
@@ -131,8 +131,7 @@ function generateRoutes(serviceName, roles) {
     lines.splice(importRoutesIndex + 1, 0, importContent);
     write("app.js", lines.join("\n"));
   }
-  mainFileContent = read("app.js");
-  lines = mainFileContent.split("\n");
+
   const useRoutesIndex = lines.findIndex((line) => line.includes("// Routes"));
   if (
     useRoutesIndex !== -1 &&
@@ -190,6 +189,8 @@ async function scaffold(input) {
           type: "INTEGER",
           defaultValue: "",
           primaryKey: true,
+          allowNulls:false,
+          unique: true,
           autoIncrement: true,
           foreignKey: false,
           add_another: true,
@@ -220,6 +221,7 @@ async function scaffold(input) {
         {
           name: "name",
           type: "TEXT",
+          defaultValue:"",
           primaryKey: false,
           allowNulls: false,
           unique: false,
@@ -246,7 +248,7 @@ async function scaffold(input) {
           type: "DATE",
           defaultValue: "",
           primaryKey: false,
-          allowNulls: true,
+          allowNulls: false,
           unique: false,
           autoIncrement: false,
           foreignKey: false,
@@ -270,7 +272,7 @@ async function scaffold(input) {
       roles,
       schemaData,
     };
-    write("config.json", await format(JSON.stringify(config), "json"));
+    write("config.json", JSON.stringify(config),{parser: "json"});
   } catch (err) {
     console.error(err);
     console.error("something went wrong");

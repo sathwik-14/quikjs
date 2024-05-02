@@ -6,15 +6,12 @@ import passport from "./templates/passport.js";
 import aws from "./templates/aws.js";
 import twilio from "./templates/twilio.js";
 import { createDirectory, read, write } from "./utils/fs.js";
-import format from "./utils/format.js";
 import { installSync } from "./utils/install.js";
 import { scaffold } from "./generate.js";
 import { schemaPrompts } from "./prompt.js";
-// import { ask } from "./utils/prompt.js";
 import prisma from "./plugins/prisma/index.js";
 import sequelize from "./plugins/sequelize/index.js";
 import mongoose from "./plugins/mongoose/index.js";
-import { tools } from "./constants.js";
 import compile from "./utils/compile.js";
 
 let userModel;
@@ -36,7 +33,6 @@ async function runORMSetup(orm, db) {
 async function generateProjectStructure(input) {
   try {
     const { db, orm, tools, authentication, logging, error_handling } = input;
-
     const folders = [
       "controllers",
       "models",
@@ -45,14 +41,12 @@ async function generateProjectStructure(input) {
       "utils",
       "config",
     ];
-
     const files = [
       { path: "app.js", content: compile(appTemplate)({ input }) },
-      { path: ".env", content: "" },
+      { path: ".env", content: "DATABASE_URL=\"\"" },
       { path: ".gitignore", content: "node_modules\n.env\n" },
       { path: "README.md", content: "# Your Project Name\n\nProject documentation goes here." },
     ];
-
     const toolFiles = {
       "s3": [
         { path: "config/aws.js", content: aws.s3.config(input) },
@@ -86,11 +80,9 @@ async function generateProjectStructure(input) {
     folders.forEach(createDirectory);
 
     await Promise.all(files.map(async (file) => {
-      const formattedContent = [".env", "README.md", ".gitignore", "prisma/schema.prisma"].includes(file.path)
-        ? file.content
-        : await format(file.content);
-
-      write(file.path, formattedContent);
+      [".env", "README.md", ".gitignore",].includes(file.path)
+        ? await write(file.path, file.content, {format:false})
+        : await write(file.path, file.content);
     }));
 
     await runORMSetup(orm, db);
@@ -99,17 +91,27 @@ async function generateProjectStructure(input) {
   }
 }
 
+function installDbDriver(db) {
+  const drivers = {
+    "postgresql": ["pg", "pg-hstore"],
+    "mysql": ["mysql2"],
+    "mariadb": ["mariadb"],
+    "sqlite": ["sqlite3"],
+    "mssql": ["tedious"],
+    "oracledb": ["oracledb"]
+  };
+
+  const driver = drivers[db.toLowerCase()];
+  if (driver) {
+    installSync(...driver);
+  }
+}
+
+
 async function installDependencies(answers) {
   console.log("Installing dependencies");
   installSync("express", "cors", "dotenv", "helmet", "morgan", "compression");
-  switch (answers.db.toLowerCase()) {
-    case "postgresql":
-      installSync("pg", "pg-hstore");
-      break;
-    case "mysql":
-      installSync("mysql2");
-      break;
-  }
+  installDbDriver(answers.db)
   if (answers.authentication) {
     console.log("Setting up  passport,passport-jwt");
     installSync("passport", "passport-jwt", "jsonwebtoken", "bcrypt");
@@ -176,7 +178,6 @@ async function getRoleInput() {
 
 async function main() {
   try {
-    // const answers = await ask(projectQuestions);
     const answers = {
       name: "todos",
       description: "",
@@ -215,5 +216,5 @@ async function main() {
 }
 
 console.time("Time taken");
-await main();
+await main(); 
 console.timeEnd("Time taken");
