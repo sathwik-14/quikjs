@@ -1,7 +1,7 @@
 {
   "name": "quikjs",
   "version": "1.0.15",
-  "description": "Nodejs rest api generator built for pacewisdom solutions",
+  "description": "A a powerful tool designed to streamline the process of building APIs for Express.js applications",
   "main": "index.js",
   "bin": {
     "quik-g-p": "./index.js"
