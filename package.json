@@ -1,6 +1,6 @@
 {
   "name": "quikjs",
-  "version": "1.0.15",
+  "version": "2.0.0",
   "description": "A a powerful tool designed to streamline the process of building APIs for Express.js applications",
   "main": "index.js",
   "bin": {
