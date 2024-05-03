@@ -1,12 +1,12 @@
 function whatsTaken(userModel) {
   let content = ``;
-  if (Object.hasOwn(userModel, "username")) {
+  if (Object.hasOwn(userModel, 'username')) {
     content += `const usernameTaken = async (username) => {
 const user = await db.User.findOne({ where: { username } });
 return !!user;
   };`;
   }
-  if (Object.hasOwn(userModel, "email")) {
+  if (Object.hasOwn(userModel, 'email')) {
     content += `const emailTaken = async (email) => {
 const user = await db.User.findOne({ where: { email } });
 return !!user;
@@ -17,10 +17,10 @@ return !!user;
 
 function loginThrough(userModel) {
   let content = ``;
-  if (Object.hasOwn(userModel, "username")) {
+  if (Object.hasOwn(userModel, 'username')) {
     content += `const userData = await db.User.findOne({ where: { username: user.username } });`;
   }
-  if (Object.hasOwn(userModel, "email")) {
+  if (Object.hasOwn(userModel, 'email')) {
     content += `const userData = await db.User.findOne({ where: { email: user.email } });`;
   }
   return content;
@@ -28,15 +28,17 @@ function loginThrough(userModel) {
 
 function serializeUserContent(userModel) {
   const keys = Object.keys(userModel);
-  const validKeys = keys.filter(key => !['password', 'id', 'createdAt', 'updatedAt'].includes(key));
+  const validKeys = keys.filter(
+    (key) => !['password', 'id', 'createdAt', 'updatedAt'].includes(key),
+  );
 
   let content = `const serializeUser = (user) => {
     return {      
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       id: user.id,`;
-  
-  validKeys.forEach(key => {
+
+  validKeys.forEach((key) => {
     content += `
       ${key}: user.${key},`;
   });
@@ -76,7 +78,7 @@ module.exports = (passport) => {
 };
 
     `,
-  util: (input,userModel) => `
+  util: (input, userModel) => `
 const passport = require("passport");
 const db = require("../models/index");
 const userAuth = passport.authenticate("jwt", { session: false });
@@ -163,7 +165,7 @@ const userLogin = async (user, res) => {
   }
 };
 
-${input.roles.length?'const checkRole = roles => (req,res,next) => !roles.includes(req.user.role) ? res.status(401).json("unauthorized"):next();':''}
+${input.roles.length ? 'const checkRole = roles => (req,res,next) => !roles.includes(req.user.role) ? res.status(401).json("unauthorized"):next();' : ''}
 
 ${serializeUserContent(userModel)}
 

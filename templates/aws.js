@@ -1,4 +1,3 @@
-
 export default {
   s3: {
     config: (input) => `
@@ -183,5 +182,5 @@ const sendMessageToSnsTopic = async (message, topicArn, region = "ap-south-1") =
   module.exports = {
     sendMessageToSnsTopic
   }
-  `
+  `,
 };
