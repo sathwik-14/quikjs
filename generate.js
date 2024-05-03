@@ -20,21 +20,21 @@ const loadState = async (input) => {
   }
 };
 
-async function setupPrisma(serviceName, model, db) {
+async function setupPrisma(modelName, model, db) {
   try {
-    prisma.model(serviceName, model, db);
+    prisma.model(modelName, model, db);
     prisma.generate();
   } catch (error) {
     console.log('Error setting up Prisma:', error);
   }
 }
 
-async function setupSequalize(serviceName, model, relations = []) {
+async function setupSequalize(modelName, model, relations = []) {
   try {
-    await sequelize.model(serviceName, model);
+    await sequelize.model(modelName, model);
     if (isArrayNotEmpty(relations))
-      generateAssociations(serviceName, relations);
-    console.log('Model generation complete - ' + serviceName);
+      generateAssociations(modelName, relations);
+    console.log('Model generation complete - ' + modelName);
   } catch (error) {
     console.log('Error setting up Prisma:', error);
   }
@@ -150,7 +150,7 @@ function updateState(data) {
 }
 
 async function generateScaffold(
-  serviceName,
+  modelName,
   model,
   relations = [],
   roles = [],
@@ -160,16 +160,16 @@ async function generateScaffold(
     const orm = state.orm;
     switch (orm) {
       case 'prisma':
-        await setupPrisma(serviceName, model, db);
-        prisma.controller(serviceName);
+        await setupPrisma(modelName, model, db);
+        prisma.controller(modelName);
         break;
       case 'sequelize':
-        await setupSequalize(serviceName, model, relations);
-        sequelize.controller(serviceName);
+        await setupSequalize(modelName, model, relations);
+        sequelize.controller(modelName);
         break;
     }
-    generateRoutes(serviceName, roles);
-    console.log('Generated routes and controllers for ', serviceName);
+    generateRoutes(modelName, roles);
+    console.log('Generated routes and controllers for ', modelName);
   } catch (error) {
     console.error('Error generating scaffold:', error);
   }

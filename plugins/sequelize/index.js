@@ -47,20 +47,20 @@ async function setup(db) {
   await clientInit(db);
 }
 
-function controller(serviceName) {
+function controller(modelName) {
   const controllerContent = `\n  const db = require('../models/index');
-\n  ${templates.createSequelizeContent(serviceName)}\n 
- ${templates.getAllSequelizeContent(serviceName)}\n 
-  ${templates.getByIdSequelizeContent(serviceName)}\n
-    ${templates.updateSequelizeContent(serviceName)}\n  
-    ${templates.deleteSequelizeContent(serviceName)}\n  
+\n  ${templates.createSequelizeContent(modelName)}\n 
+ ${templates.getAllSequelizeContent(modelName)}\n 
+  ${templates.getByIdSequelizeContent(modelName)}\n
+    ${templates.updateSequelizeContent(modelName)}\n  
+    ${templates.deleteSequelizeContent(modelName)}\n  
     \n module.exports = {\n  
-          create${capitalize(serviceName)},\n 
-  getAll${capitalize(serviceName)},\n  
-    get${capitalize(serviceName)}ById,\n  
-      update${capitalize(serviceName)}ById,\n  
-        delete${capitalize(serviceName)}ById\n  };`;
-  write(`controllers/${serviceName}.js`, controllerContent);
+          create${capitalize(modelName)},\n 
+  getAll${capitalize(modelName)},\n  
+    get${capitalize(modelName)}ById,\n  
+      update${capitalize(modelName)}ById,\n  
+        delete${capitalize(modelName)}ById\n  };`;
+  write(`controllers/${modelName}.js`, controllerContent);
 }
 
 export default {

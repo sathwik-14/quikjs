@@ -104,22 +104,22 @@ async function setup(db) {
   await clientInit();
 }
 
-function controller(serviceName) {
+function controller(modelName) {
   const controllerContent = `const prisma = require('../config/db');
-\n\n  ${templates.createPrismaContent(serviceName)}\n
-${templates.getAllPrismaContent(serviceName)}\n
-${templates.getByIdPrismaContent(serviceName)}\n
-${templates.updatePrismaContent(serviceName)}\n
-${templates.deletePrismaContent(serviceName)}\n
+\n\n  ${templates.createPrismaContent(modelName)}\n
+${templates.getAllPrismaContent(modelName)}\n
+${templates.getByIdPrismaContent(modelName)}\n
+${templates.updatePrismaContent(modelName)}\n
+${templates.deletePrismaContent(modelName)}\n
 \n
 module.exports = {\n
-create${capitalize(serviceName)},\n
-getAll${capitalize(serviceName)},\n
-get${capitalize(serviceName)}ById,\n
-update${capitalize(serviceName)}ById,\n
-delete${capitalize(serviceName)}ById\n
+create${capitalize(modelName)},\n
+getAll${capitalize(modelName)},\n
+get${capitalize(modelName)}ById,\n
+update${capitalize(modelName)}ById,\n
+delete${capitalize(modelName)}ById\n
 };`;
-  write(`controllers/${serviceName}.js`, controllerContent);
+  write(`controllers/${modelName}.js`, controllerContent);
 }
 
 export default {

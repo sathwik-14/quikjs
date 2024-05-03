@@ -18,21 +18,21 @@ Handlebars.registerHelper('notequals', function (variable, string, options) {
 });
 
 export default {
-  createSequelizeContent: (serviceName) => `
-    async function create${capitalize(serviceName)}(req, res) {
+  createSequelizeContent: (modelName) => `
+    async function create${capitalize(modelName)}(req, res) {
       try {
-        const new${capitalize(serviceName)} = await db.${capitalize(
-          serviceName,
+        const new${capitalize(modelName)} = await db.${capitalize(
+          modelName,
         )}.create(req.body);
-        res.status(201).json(new${capitalize(serviceName)});
+        res.status(201).json(new${capitalize(modelName)});
       } catch (error) {
         console.error(error.errors[0]);
         res.status(500).json({ error: 'Internal server error' });
       }
     }
     `,
-  getAllSequelizeContent: (serviceName) => `
-    async function getAll${capitalize(serviceName)}(req, res) {
+  getAllSequelizeContent: (modelName) => `
+    async function getAll${capitalize(modelName)}(req, res) {
       try {
         let { page = 1, limit = 10, sortBy, sortOrder } = req.query;
     
@@ -52,69 +52,69 @@ export default {
           order: sortBy ? [[sortBy, sortOrder || 'ASC']] : [] // Sorting order
         };
     
-        const ${serviceName}List = await db.${capitalize(
-          serviceName,
+        const ${modelName}List = await db.${capitalize(
+          modelName,
         )}.findAll(options);
     
         // Respond with the retrieved data
-        res.status(200).json(${serviceName}List);
+        res.status(200).json(${modelName}List);
       } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
       }
     }
     `,
-  getByIdSequelizeContent: (serviceName) => `
-    async function get${capitalize(serviceName)}ById(req, res) {
+  getByIdSequelizeContent: (modelName) => `
+    async function get${capitalize(modelName)}ById(req, res) {
       try {
         const { id } = req.params;
-        const ${serviceName} = await db.${capitalize(serviceName)}.findByPk(id);
-        if (!${serviceName}) {
+        const ${modelName} = await db.${capitalize(modelName)}.findByPk(id);
+        if (!${modelName}) {
           return res.status(404).json({ error: '${capitalize(
-            serviceName,
+            modelName,
           )} not found' });
         }
-        res.status(200).json(${serviceName});
+        res.status(200).json(${modelName});
       } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
       }
     }
     `,
-  updateSequelizeContent: (serviceName) => `
-    async function update${capitalize(serviceName)}ById(req, res) {
+  updateSequelizeContent: (modelName) => `
+    async function update${capitalize(modelName)}ById(req, res) {
       try {
         const { id } = req.params;
         const [updatedCount] = await db.${capitalize(
-          serviceName,
+          modelName,
         )}.update(req.body, { where: { id } });
         if (updatedCount === 0) {
           return res.status(404).json({ error: '${capitalize(
-            serviceName,
+            modelName,
           )} not found' });
         }
         res.status(200).json({ message: '${capitalize(
-          serviceName,
+          modelName,
         )} updated successfully' });
       } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
       }
     }`,
-  deleteSequelizeContent: (serviceName) => `
-    async function delete${capitalize(serviceName)}ById(req, res) {
+  deleteSequelizeContent: (modelName) => `
+    async function delete${capitalize(modelName)}ById(req, res) {
       try {
         const { id } = req.params;
         const deletedCount = await db.${capitalize(
-          serviceName,
+          modelName,
         )}.destroy({ where: { id } });
         if (deletedCount === 0) {
           return res.status(404).json({ error: '${capitalize(
-            serviceName,
+            modelName,
           )} not found' });
         }
         res.status(200).json({ message: '${capitalize(
-          serviceName,
+          modelName,
         )} deleted successfully' });
       } catch (error) {
         console.error(error);
