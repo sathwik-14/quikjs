@@ -2,14 +2,12 @@
 
 import template from './templates/content.js';
 import { append, read, write } from './utils/fs.js';
-import { orms } from './constants.js';
 import prisma from './plugins/prisma/index.js';
-import format from './utils/format.js';
-import { ask } from './utils/prompt.js';
 import sequelize from './plugins/sequelize/index.js';
+import sampledata from './sampledata.js';
+import { schemaPrompts } from './prompt.js';
 
 let state;
-let tables = [];
 
 const loadState = async (input) => {
   try {
@@ -25,14 +23,10 @@ const loadState = async (input) => {
 async function setupPrisma(serviceName, model, db) {
   try {
     prisma.model(serviceName, model, db);
-    await prisma.generate();
+    prisma.generate();
   } catch (error) {
     console.log('Error setting up Prisma:', error);
   }
-}
-
-function isArrayNotEmpty(arr) {
-  return Array.isArray(arr) && arr.length > 0;
 }
 
 async function setupSequalize(serviceName, model, relations = []) {
@@ -44,6 +38,10 @@ async function setupSequalize(serviceName, model, relations = []) {
   } catch (error) {
     console.log('Error setting up Prisma:', error);
   }
+}
+
+function isArrayNotEmpty(arr) {
+  return Array.isArray(arr) && arr.length > 0;
 }
 
 function generateAssociations(modelName, relations = []) {
@@ -180,81 +178,8 @@ async function generateScaffold(
 async function scaffold(input) {
   try {
     await loadState(input);
-    // const schemaData = await promptSchemaModel(input);
-    const schemaData = {
-      country: [
-        {
-          name: 'id',
-          type: 'INTEGER',
-          defaultValue: '',
-          primaryKey: true,
-          allowNulls: false,
-          unique: true,
-          autoIncrement: true,
-          foreignKey: false,
-          add_another: true,
-        },
-        {
-          name: 'name',
-          type: 'STRING',
-          size: '',
-          defaultValue: '',
-          primaryKey: false,
-          allowNulls: false,
-          unique: false,
-          autoIncrement: false,
-          foreignKey: false,
-          add_another: false,
-        },
-      ],
-      employee: [
-        {
-          name: 'id',
-          type: 'INTEGER',
-          defaultValue: '',
-          primaryKey: true,
-          autoIncrement: true,
-          foreignKey: false,
-          add_another: true,
-        },
-        {
-          name: 'name',
-          type: 'TEXT',
-          defaultValue: '',
-          primaryKey: false,
-          allowNulls: false,
-          unique: false,
-          autoIncrement: false,
-          foreignKey: false,
-          add_another: true,
-        },
-        {
-          name: 'country_id',
-          type: 'INTEGER',
-          defaultValue: '',
-          primaryKey: false,
-          allowNulls: false,
-          unique: false,
-          autoIncrement: false,
-          foreignKey: true,
-          refTable: 'country',
-          refField: 'id',
-          relationshipType: 'Many-to-One',
-          add_another: true,
-        },
-        {
-          name: 'start_date',
-          type: 'DATE',
-          defaultValue: '',
-          primaryKey: false,
-          allowNulls: false,
-          unique: false,
-          autoIncrement: false,
-          foreignKey: false,
-          add_another: false,
-        },
-      ],
-    };
+    const schemaData = await schemaPrompts(input);
+    // const schemaData = sampledata.s1;
     if (Object.keys(schemaData).length) {
       for (const [key, value] of Object.entries(schemaData)) {
         await generateScaffold(key, value);

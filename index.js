@@ -8,11 +8,13 @@ import twilio from './templates/twilio.js';
 import { createDirectory, read, write } from './utils/fs.js';
 import { installSync } from './utils/install.js';
 import { scaffold } from './generate.js';
-import { schemaPrompts } from './prompt.js';
+import { projectPrompts, schemaPrompts } from './prompt.js';
 import prisma from './plugins/prisma/index.js';
 import sequelize from './plugins/sequelize/index.js';
 import mongoose from './plugins/mongoose/index.js';
 import compile from './utils/compile.js';
+import { ask } from './utils/prompt.js';
+import sampledata from './sampledata.js';
 
 let userModel;
 let models = [];
@@ -50,16 +52,16 @@ async function generateProjectStructure(input) {
         content: '# Your Project Name\n\nProject documentation goes here.',
       },
     ];
-    const toolFiles = {
-      s3: [
-        { path: 'config/aws.js', content: aws.s3.config(input) },
-        { path: 'utils/s3.js', content: aws.s3.utils(input) },
-      ],
-      sns: [{ path: 'utils/sns.js', content: aws.sns(input) }],
-      twilio: [{ path: 'utils/twilio.js', content: twilio(input) }],
-    };
 
     if (tools.length) {
+      const toolFiles = {
+        s3: [
+          { path: 'config/aws.js', content: aws.s3.config(input) },
+          { path: 'utils/s3.js', content: aws.s3.utils(input) },
+        ],
+        sns: [{ path: 'utils/sns.js', content: aws.sns(input) }],
+        twilio: [{ path: 'utils/twilio.js', content: twilio(input) }],
+      };
       tools.forEach((tool) => {
         files.push(...(toolFiles[tool] || []));
       });
@@ -89,8 +91,6 @@ async function generateProjectStructure(input) {
           : await write(file.path, file.content);
       }),
     );
-
-    await runORMSetup(orm, db);
   } catch (error) {
     console.error('Error creating project structure:', error);
   }
@@ -132,11 +132,12 @@ async function installDependencies(answers) {
       }
     }
   }
+  await runORMSetup(answers.orm, answers.db);
 }
 
-async function CheckProjectExist() {
+async function CheckProjectExist(answers) {
   try {
-    const data = await read('config.json');
+    const data = read('config.json');
     if (data) {
       const config = JSON.parse(data);
       if (!config?.name) {
@@ -182,17 +183,9 @@ async function getRoleInput() {
 
 async function main() {
   try {
-    const answers = {
-      name: 'todos',
-      description: '',
-      db: 'mysql',
-      orm: 'sequelize',
-      logging: true,
-      error_handling: true,
-      tools: ['none'],
-      authentication: false,
-    };
-    await CheckProjectExist();
+    const answers = await ask(projectPrompts());
+    // const answers = sampledata.p1;
+    await CheckProjectExist(answers);
     if (answers.authentication) {
       if (answers.roles) answers.roles = await getRoleInput();
       console.log('Let us create User model with required fields');
@@ -207,7 +200,7 @@ async function main() {
           break;
       }
     }
-    installDependencies(answers);
+    await installDependencies(answers);
     await generateProjectStructure(answers);
     console.log('Started generating scaffold...');
     await scaffold(answers);

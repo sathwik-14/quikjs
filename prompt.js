@@ -1,3 +1,6 @@
+import { orms, tools } from './constants.js';
+import { ask } from './utils/prompt.js';
+
 export function projectPrompts() {
   return [
     {
@@ -71,6 +74,7 @@ export function projectPrompts() {
 
 export async function schemaPrompts(input, name = '') {
   try {
+    let tables = [];
     let schemaData = {};
     let mappedTypes = orms[input.orm].types;
 
