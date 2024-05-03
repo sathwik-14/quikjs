@@ -1,5 +1,5 @@
 export default {
-  mongooseInit: `
+	mongooseInit: `
     const mongoose = require('mongoose');
     
     const dbURI = process.env.DATABASE_URL 

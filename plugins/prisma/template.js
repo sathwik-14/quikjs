@@ -1,18 +1,18 @@
-import capitalize from "../../utils/capitalize.js";
+import capitalize from '../../utils/capitalize.js';
 
 export default {
-  prismaInitContent: `
+	prismaInitContent: `
     const { PrismaClient } = require('@prisma/client');
     const prisma = new PrismaClient();
     module.exports = prisma;
     `,
-  createPrismaContent: (serviceName) => `
+	createPrismaContent: (serviceName) => `
     async function create${capitalize(serviceName)}(req, res) {
         try {
           req.body = req.body || {}
             const new${capitalize(
-              serviceName
-            )} = await prisma.${serviceName}.create({
+							serviceName
+						)} = await prisma.${serviceName}.create({
                 data: req.body
             });
             res.status(201).json(new${capitalize(serviceName)});
@@ -21,7 +21,7 @@ export default {
         }
     }
     `,
-  getAllPrismaContent: (serviceName) => `
+	getAllPrismaContent: (serviceName) => `
       async function getAll${capitalize(serviceName)}(req, res) {
           try {
               let { page = 1, limit = 10, sortBy, sortOrder } = req.query;
@@ -51,7 +51,7 @@ export default {
           }
       }
       `,
-  getByIdPrismaContent: (serviceName) => `
+	getByIdPrismaContent: (serviceName) => `
     async function get${capitalize(serviceName)}ById(req, res) {
     try {
         const ${serviceName.toLowerCase()} = await prisma.${serviceName}.findFirst({
@@ -61,8 +61,8 @@ export default {
         });
         if (!${serviceName.toLowerCase()}) {
             return res.status(404).json({ error: '${capitalize(
-              serviceName
-            )} not found' });
+							serviceName
+						)} not found' });
         }
         res.json(${serviceName.toLowerCase()});
     } catch (error) {
@@ -71,12 +71,12 @@ export default {
     }
     }
       `,
-  updatePrismaContent: (serviceName) => `
+	updatePrismaContent: (serviceName) => `
     async function update${capitalize(serviceName)}ById(req, res) {
     try {
         const updated${capitalize(
-          serviceName
-        )} = await prisma.${serviceName}.update({
+					serviceName
+				)} = await prisma.${serviceName}.update({
             where: {
                 id: req.params.id
             },
@@ -84,8 +84,8 @@ export default {
         });
         if (!updated${capitalize(serviceName)}) {
             return res.status(404).json({ error: '${capitalize(
-              serviceName
-            )} not found' });
+							serviceName
+						)} not found' });
         }
         res.json(updated${capitalize(serviceName)});
     } catch (error) {
@@ -94,20 +94,20 @@ export default {
     }
     }
       `,
-  deletePrismaContent: (serviceName) => `
+	deletePrismaContent: (serviceName) => `
     async function delete${capitalize(serviceName)}ById(req, res) {
     try {
         const deleted${capitalize(
-          serviceName
-        )} = await prisma.${serviceName}.delete({
+					serviceName
+				)} = await prisma.${serviceName}.delete({
             where: {
                 id: req.params.id
             }
         });
         if (!deleted${capitalize(serviceName)}) {
             return res.status(404).json({ error: '${capitalize(
-              serviceName
-            )} not found' });
+							serviceName
+						)} not found' });
         }
         res.json({ message: '${capitalize(serviceName)} deleted successfully' });
     } catch (error) {

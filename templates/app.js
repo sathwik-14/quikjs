@@ -1,7 +1,7 @@
-import Handlebars from "handlebars";
+import Handlebars from 'handlebars';
 
-Handlebars.registerHelper("errorHandlingMiddleware", () => {
-  return `
+Handlebars.registerHelper('errorHandlingMiddleware', () => {
+	return `
   app.use((err, req, res, next) => {
     console.error("Custom error handler - " + err.stack);
   
@@ -14,40 +14,40 @@ Handlebars.registerHelper("errorHandlingMiddleware", () => {
   });`;
 });
 
-Handlebars.registerHelper("defaultErrorHandlingMiddleware", () => {
-  return `
+Handlebars.registerHelper('defaultErrorHandlingMiddleware', () => {
+	return `
   app.use((err, req, res, next) => {
     console.error("Custom error handler - " + err.stack);
     res.status(500).send("Something went wrong!");
   });`;
 });
 
-Handlebars.registerHelper("logMiddleware", () => {
-  return `
+Handlebars.registerHelper('logMiddleware', () => {
+	return `
   app.use(morgan("combined", { stream: fs.createWriteStream(path.join(process.cwd(), 'access.log'), { flags: 'a' }) })); // Logging to file
   `;
 });
 
-Handlebars.registerHelper("authRoutes", (authentication) => {
-  if (authentication) {
-    return `
+Handlebars.registerHelper('authRoutes', (authentication) => {
+	if (authentication) {
+		return `
 app.post("/auth/register", async (req,res) => await userRegister(req.body,res));
 app.post("/auth/login", async (req,res) => await userLogin(req.body,res));
 app.get("/auth/profile", userAuth, (req,res) => res.status(200).json({ user: serializeUser(req.user) }));
     `;
-  }
-  return "";
+	}
+	return '';
 });
 
-Handlebars.registerHelper("authImports", (authentication, roles) => {
-  if (authentication && roles.length) {
-    return `const passport = require("passport");
+Handlebars.registerHelper('authImports', (authentication, roles) => {
+	if (authentication && roles.length) {
+		return `const passport = require("passport");
 const {userAuth, userRegister, userLogin, checkRole, serializeUser} = require("./utils/auth")`;
-  } else if (authentication) {
-    return `const passport = require("passport");
+	} else if (authentication) {
+		return `const passport = require("passport");
 const {userAuth, userRegister, userLogin, serializeUser} = require("./utils/auth")`;
-  }
-  return "";
+	}
+	return '';
 });
 
 export const appTemplate = `

@@ -1,29 +1,29 @@
-import capitalize from "../../utils/capitalize.js";
-import Handlebars from "handlebars";
+import capitalize from '../../utils/capitalize.js';
+import Handlebars from 'handlebars';
 
-Handlebars.registerHelper("equals", function (variable, string, options) {
-  if (variable === string) {
-    return options.fn(this);
-  } else {
-    return options.inverse(this);
-  }
+Handlebars.registerHelper('equals', function (variable, string, options) {
+	if (variable === string) {
+		return options.fn(this);
+	} else {
+		return options.inverse(this);
+	}
 });
 
-Handlebars.registerHelper("notequals", function (variable, string, options) {
-  if (variable != string) {
-    return options.fn(this);
-  } else {
-    return options.inverse(this);
-  }
+Handlebars.registerHelper('notequals', function (variable, string, options) {
+	if (variable != string) {
+		return options.fn(this);
+	} else {
+		return options.inverse(this);
+	}
 });
 
 export default {
-  createSequelizeContent: (serviceName) => `
+	createSequelizeContent: (serviceName) => `
     async function create${capitalize(serviceName)}(req, res) {
       try {
         const new${capitalize(serviceName)} = await db.${capitalize(
-          serviceName
-        )}.create(req.body);
+					serviceName
+				)}.create(req.body);
         res.status(201).json(new${capitalize(serviceName)});
       } catch (error) {
         console.error(error.errors[0]);
@@ -31,7 +31,7 @@ export default {
       }
     }
     `,
-  getAllSequelizeContent: (serviceName) => `
+	getAllSequelizeContent: (serviceName) => `
     async function getAll${capitalize(serviceName)}(req, res) {
       try {
         let { page = 1, limit = 10, sortBy, sortOrder } = req.query;
@@ -53,8 +53,8 @@ export default {
         };
     
         const ${serviceName}List = await db.${capitalize(
-          serviceName
-        )}.findAll(options);
+					serviceName
+				)}.findAll(options);
     
         // Respond with the retrieved data
         res.status(200).json(${serviceName}List);
@@ -64,15 +64,15 @@ export default {
       }
     }
     `,
-  getByIdSequelizeContent: (serviceName) => `
+	getByIdSequelizeContent: (serviceName) => `
     async function get${capitalize(serviceName)}ById(req, res) {
       try {
         const { id } = req.params;
         const ${serviceName} = await db.${capitalize(serviceName)}.findByPk(id);
         if (!${serviceName}) {
           return res.status(404).json({ error: '${capitalize(
-            serviceName
-          )} not found' });
+						serviceName
+					)} not found' });
         }
         res.status(200).json(${serviceName});
       } catch (error) {
@@ -81,47 +81,47 @@ export default {
       }
     }
     `,
-  updateSequelizeContent: (serviceName) => `
+	updateSequelizeContent: (serviceName) => `
     async function update${capitalize(serviceName)}ById(req, res) {
       try {
         const { id } = req.params;
         const [updatedCount] = await db.${capitalize(
-          serviceName
-        )}.update(req.body, { where: { id } });
+					serviceName
+				)}.update(req.body, { where: { id } });
         if (updatedCount === 0) {
           return res.status(404).json({ error: '${capitalize(
-            serviceName
-          )} not found' });
+						serviceName
+					)} not found' });
         }
         res.status(200).json({ message: '${capitalize(
-          serviceName
-        )} updated successfully' });
+					serviceName
+				)} updated successfully' });
       } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
       }
     }`,
-  deleteSequelizeContent: (serviceName) => `
+	deleteSequelizeContent: (serviceName) => `
     async function delete${capitalize(serviceName)}ById(req, res) {
       try {
         const { id } = req.params;
         const deletedCount = await db.${capitalize(
-          serviceName
-        )}.destroy({ where: { id } });
+					serviceName
+				)}.destroy({ where: { id } });
         if (deletedCount === 0) {
           return res.status(404).json({ error: '${capitalize(
-            serviceName
-          )} not found' });
+						serviceName
+					)} not found' });
         }
         res.status(200).json({ message: '${capitalize(
-          serviceName
-        )} deleted successfully' });
+					serviceName
+				)} deleted successfully' });
       } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
       }
     }`,
-  sequelizeInitContent: `
+	sequelizeInitContent: `
     const { Sequelize } = require("sequelize");
     require("dotenv").config();
     {{#notequals db "mysql"}}

@@ -3,3 +3,5 @@
 
 npm run pre-commit
 npx lint-staged
+npm run format
+npm run lint
