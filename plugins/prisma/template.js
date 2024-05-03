@@ -1,4 +1,4 @@
-import capitalize from "../../utils/capitalize.js";
+import capitalize from '../../utils/capitalize.js';
 
 export default {
   prismaInitContent: `
@@ -11,7 +11,7 @@ export default {
         try {
           req.body = req.body || {}
             const new${capitalize(
-              serviceName
+              serviceName,
             )} = await prisma.${serviceName}.create({
                 data: req.body
             });
@@ -61,7 +61,7 @@ export default {
         });
         if (!${serviceName.toLowerCase()}) {
             return res.status(404).json({ error: '${capitalize(
-              serviceName
+              serviceName,
             )} not found' });
         }
         res.json(${serviceName.toLowerCase()});
@@ -75,7 +75,7 @@ export default {
     async function update${capitalize(serviceName)}ById(req, res) {
     try {
         const updated${capitalize(
-          serviceName
+          serviceName,
         )} = await prisma.${serviceName}.update({
             where: {
                 id: req.params.id
@@ -84,7 +84,7 @@ export default {
         });
         if (!updated${capitalize(serviceName)}) {
             return res.status(404).json({ error: '${capitalize(
-              serviceName
+              serviceName,
             )} not found' });
         }
         res.json(updated${capitalize(serviceName)});
@@ -98,7 +98,7 @@ export default {
     async function delete${capitalize(serviceName)}ById(req, res) {
     try {
         const deleted${capitalize(
-          serviceName
+          serviceName,
         )} = await prisma.${serviceName}.delete({
             where: {
                 id: req.params.id
@@ -106,7 +106,7 @@ export default {
         });
         if (!deleted${capitalize(serviceName)}) {
             return res.status(404).json({ error: '${capitalize(
-              serviceName
+              serviceName,
             )} not found' });
         }
         res.json({ message: '${capitalize(serviceName)} deleted successfully' });

@@ -1,4 +1,4 @@
-import { execSync, exec } from "child_process";
+import { execSync, exec } from 'child_process';
 
 export const install = (...packages) => {
   try {
@@ -6,7 +6,7 @@ export const install = (...packages) => {
       exec(`npm install ${pkg}`);
     });
   } catch (error) {
-    console.error("Error installing packages:", ...packages);
+    console.error('Error installing packages:', ...packages);
   }
 };
 export const installSync = (...packages) => {
@@ -15,6 +15,6 @@ export const installSync = (...packages) => {
       execSync(`npm install ${pkg}`);
     });
   } catch (error) {
-    console.error("Error installing packages:", ...packages);
+    console.error('Error installing packages:', ...packages);
   }
 };

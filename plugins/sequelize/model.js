@@ -1,12 +1,12 @@
-import capitalize from "../../utils/capitalize.js";
-import format from "../../utils/format.js";
-import { createDirectory, exists, read, write } from "../../utils/fs.js";
+import capitalize from '../../utils/capitalize.js';
+import format from '../../utils/format.js';
+import { createDirectory, exists, read, write } from '../../utils/fs.js';
 
 async function updateIndex(
   modelsDirectory,
   serviceName,
   capitalizedServiceName,
-  model
+  model,
 ) {
   const indexFilePath = `${modelsDirectory}/index.js`;
   let indexContent = `
@@ -25,11 +25,11 @@ module.exports = {
   const exportLine = `    ${capitalizedServiceName},`;
   const associationLines = generateAssociationLine(serviceName, model);
 
-  const importsCommentIndex = indexContent.indexOf("// imports");
+  const importsCommentIndex = indexContent.indexOf('// imports');
   if (importsCommentIndex !== -1) {
     const nextLineIndex = indexContent.indexOf(
-      "\n",
-      importsCommentIndex + "// imports".length
+      '\n',
+      importsCommentIndex + '// imports'.length,
     );
     const importLines = `\n${importLine}`;
     indexContent =
@@ -37,17 +37,17 @@ module.exports = {
       importLines +
       indexContent.slice(nextLineIndex);
     console.log(
-      `${serviceName} model appended to the models/index file under imports.`
+      `${serviceName} model appended to the models/index file under imports.`,
     );
   } else {
-    console.log("Missing comment for imports. Unable to append.");
+    console.log('Missing comment for imports. Unable to append.');
   }
 
-  const moduleExportsIndex = indexContent.indexOf("module.exports = {");
+  const moduleExportsIndex = indexContent.indexOf('module.exports = {');
   if (moduleExportsIndex !== -1) {
     const nextLineIndex = indexContent.indexOf(
-      "\n",
-      moduleExportsIndex + "module.exports = {".length
+      '\n',
+      moduleExportsIndex + 'module.exports = {'.length,
     );
     const exportLines = `\n${exportLine}`;
     indexContent =
@@ -55,19 +55,19 @@ module.exports = {
       exportLines +
       indexContent.slice(nextLineIndex);
     console.log(
-      `${serviceName} model appended to the models/index file under module.exports.`
+      `${serviceName} model appended to the models/index file under module.exports.`,
     );
   } else {
     console.log(
-      "Unable to find module.exports = { ... } block. Cannot append exports."
+      'Unable to find module.exports = { ... } block. Cannot append exports.',
     );
   }
 
-  const associationCommentIndex = indexContent.indexOf("// associations");
+  const associationCommentIndex = indexContent.indexOf('// associations');
   if (associationCommentIndex !== -1) {
     const nextAssociationIndex = indexContent.indexOf(
-      "\n",
-      associationCommentIndex + "// associations".length
+      '\n',
+      associationCommentIndex + '// associations'.length,
     );
     const associationLinesFormatted = `\n${associationLines}`;
     if (!indexContent.includes(associationLines)) {
@@ -76,15 +76,15 @@ module.exports = {
         associationLinesFormatted +
         indexContent.slice(nextAssociationIndex);
       console.log(
-        `${serviceName} model associations appended to the models/index file.`
+        `${serviceName} model associations appended to the models/index file.`,
       );
     } else {
       console.log(
-        `${serviceName} model associations already exist in the models/index file. Skipped.`
+        `${serviceName} model associations already exist in the models/index file. Skipped.`,
       );
     }
   } else {
-    console.log("Missing comment for associations. Unable to append.");
+    console.log('Missing comment for associations. Unable to append.');
   }
 
   write(indexFilePath, indexContent);
@@ -123,7 +123,7 @@ function inverseMapRelationshipType(relationshipType) {
 function generateAssociationLine(modalName, modalData) {
   const associationLines = [];
   let reverseAssociationLine = '';
-  modalData.forEach(field => {
+  modalData.forEach((field) => {
     if (field.foreignKey) {
       const associationType = mapRelationshipType(field.relationshipType);
       const associationLine = `${capitalize(modalName)}.${associationType}(${capitalize(field.refTable)}, { foreignKey: '${field.name}' });`;
@@ -139,7 +139,7 @@ function generateAssociationLine(modalName, modalData) {
 }
 
 export async function generateModel(serviceName, model) {
-  const modelsDirectory = "./models";
+  const modelsDirectory = './models';
   const capitalizedServiceName = capitalize(serviceName);
   if (!model.length) return;
   const customFields = model
@@ -148,7 +148,7 @@ export async function generateModel(serviceName, model) {
       if (field.primaryKey) {
         fieldDefinition += `, primaryKey:true`;
       }
-      if (field.defaultValue !== null && field.defaultValue != "") {
+      if (field.defaultValue !== null && field.defaultValue != '') {
         fieldDefinition += `, defaultValue: ${field.defaultValue}`;
       }
       if (field.foreignKey) {
@@ -157,10 +157,10 @@ export async function generateModel(serviceName, model) {
       if (field.foreignKey && field.relationshipType) {
         fieldDefinition += `, as: '${field.refTable}', onDelete: 'CASCADE'`;
       }
-      fieldDefinition += " }";
+      fieldDefinition += ' }';
       return fieldDefinition;
     })
-    .join(",\n");
+    .join(',\n');
   const modelContent = `\n    // Sequelize schema for ${serviceName}\n    const { sequelize } = require("../config/db");
 \n    const { DataTypes } = require("sequelize");
 \n\n    const ${capitalizedServiceName} = sequelize.define('${serviceName.toLowerCase()}', {\n      ${customFields}\n    });
@@ -172,12 +172,12 @@ export async function generateModel(serviceName, model) {
   }
   write(
     `${modelsDirectory}/${serviceName.toLowerCase()}.js`,
-    await format(modelContent)
+    await format(modelContent),
   );
   await updateIndex(
     modelsDirectory,
     serviceName,
     capitalizedServiceName,
-    model
+    model,
   );
 }

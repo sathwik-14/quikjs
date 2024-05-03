@@ -1,4 +1,4 @@
-import capitalize from "../utils/capitalize.js";
+import capitalize from '../utils/capitalize.js';
 
 export default {
   routesContent: (serviceName) => `const express = require('express');
@@ -13,11 +13,11 @@ router.get('/:id', ${serviceName}Controller.get${capitalize(serviceName)}ById);
 router.post('/', ${serviceName}Controller.create${capitalize(serviceName)});
 // Update ${serviceName} by ID
 router.put('/:id', ${serviceName}Controller.update${capitalize(
-    serviceName
+    serviceName,
   )}ById);
 // Delete ${serviceName} by ID
 router.delete('/:id', ${serviceName}Controller.delete${capitalize(
-    serviceName
+    serviceName,
   )}ById);
 
 module.exports = router;`,

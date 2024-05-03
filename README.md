@@ -19,7 +19,9 @@ npm install -g @waglesathwik/quikjs
 ```
 
 ## Usage
+
 ### Generating a New Project
+
 To generate a new project with QUICKJS API Generator, run:
 
 ```bash
@@ -27,20 +29,25 @@ npx quikjs-g-p
 ```
 
 ## Generating APIs
+
 Once your project is set up, you can generate APIs for your models using the following command:
 
 ```bash
 npx quikjs-g-m
 ```
+
 ## Configuring Database
 
 QUICKJS API Generator doesn't automatically sets up PostgreSQL database using Sequelize ORM. You have to provide the database connection string to .env file.(ex: DATABASE_URL="postgre.......)
 
 ## Planned Features
+
 Support for other ORMs (e.g., Mongoose, TypeORM).
 Support for various databases (e.g., MySQL, MongoDB).
 Integration with 3rd party services for messaging, mail services, and storage services (e.g., AWS S3).
+
 ## Contributing
+
 Contributions are welcome! If you'd like to contribute to QUICKJS API Generator, please fork the repository and submit a pull request.
 
 ## License
