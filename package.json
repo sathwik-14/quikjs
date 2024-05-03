@@ -35,7 +35,13 @@
     "prettier": "^3.2.5"
   },
   "lint-staged": {
-    "*.js": "npm run lint",
-    "*.{js,css,md,html,json}": "npm run format"
+    "*.js": [
+      "npm run lint",
+      "git add"
+    ],
+    "*.{js,css,md,html,json}": [
+      "npm run format",
+      "git add"
+    ]
   }
 }
