@@ -124,6 +124,7 @@ export default {
   sequelizeInitContent: `
     const { Sequelize } = require("sequelize");
     require("dotenv").config();
+    
     {{#notequals db "mysql"}}
     const dbUri = process.env['DATABASE_URL']; 
     {{/notequals}}

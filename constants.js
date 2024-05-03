@@ -23,7 +23,7 @@ export const orms = {
   },
   id: 2,
   sequelize: {
-    name: 'sequalize',
+    name: 'sequelize',
     types: [
       'STRING',
       'CHAR',

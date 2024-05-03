@@ -55,11 +55,11 @@ function controller(modelName) {
     ${templates.updateSequelizeContent(modelName)}\n  
     ${templates.deleteSequelizeContent(modelName)}\n  
     \n module.exports = {\n  
-          create${capitalize(modelName)},\n 
-  getAll${capitalize(modelName)},\n  
-    get${capitalize(modelName)}ById,\n  
-      update${capitalize(modelName)}ById,\n  
-        delete${capitalize(modelName)}ById\n  };`;
+          create${capitalize(modelName)}, 
+  getAll${capitalize(modelName)}, 
+    get${capitalize(modelName)}ById,
+      update${capitalize(modelName)}ById,
+        delete${capitalize(modelName)}ById};`;
   write(`controllers/${modelName}.js`, controllerContent);
 }
 

@@ -24,7 +24,7 @@ export function projectPrompts() {
       type: 'list',
       name: 'db',
       message: 'Which database would you like to use?',
-      choices: ['postgresQL', 'mySQL'],
+      choices: ['postgresql', 'mysql'],
     },
     {
       type: 'list',
