@@ -1,7 +1,7 @@
-import capitalize from "../../utils/capitalize.js";
-import Handlebars from "handlebars";
+import capitalize from '../../utils/capitalize.js';
+import Handlebars from 'handlebars';
 
-Handlebars.registerHelper("equals", function (variable, string, options) {
+Handlebars.registerHelper('equals', function (variable, string, options) {
   if (variable === string) {
     return options.fn(this);
   } else {
@@ -9,7 +9,7 @@ Handlebars.registerHelper("equals", function (variable, string, options) {
   }
 });
 
-Handlebars.registerHelper("notequals", function (variable, string, options) {
+Handlebars.registerHelper('notequals', function (variable, string, options) {
   if (variable != string) {
     return options.fn(this);
   } else {
@@ -22,7 +22,7 @@ export default {
     async function create${capitalize(serviceName)}(req, res) {
       try {
         const new${capitalize(serviceName)} = await db.${capitalize(
-          serviceName
+          serviceName,
         )}.create(req.body);
         res.status(201).json(new${capitalize(serviceName)});
       } catch (error) {
@@ -53,7 +53,7 @@ export default {
         };
     
         const ${serviceName}List = await db.${capitalize(
-          serviceName
+          serviceName,
         )}.findAll(options);
     
         // Respond with the retrieved data
@@ -71,7 +71,7 @@ export default {
         const ${serviceName} = await db.${capitalize(serviceName)}.findByPk(id);
         if (!${serviceName}) {
           return res.status(404).json({ error: '${capitalize(
-            serviceName
+            serviceName,
           )} not found' });
         }
         res.status(200).json(${serviceName});
@@ -86,15 +86,15 @@ export default {
       try {
         const { id } = req.params;
         const [updatedCount] = await db.${capitalize(
-          serviceName
+          serviceName,
         )}.update(req.body, { where: { id } });
         if (updatedCount === 0) {
           return res.status(404).json({ error: '${capitalize(
-            serviceName
+            serviceName,
           )} not found' });
         }
         res.status(200).json({ message: '${capitalize(
-          serviceName
+          serviceName,
         )} updated successfully' });
       } catch (error) {
         console.error(error);
@@ -106,15 +106,15 @@ export default {
       try {
         const { id } = req.params;
         const deletedCount = await db.${capitalize(
-          serviceName
+          serviceName,
         )}.destroy({ where: { id } });
         if (deletedCount === 0) {
           return res.status(404).json({ error: '${capitalize(
-            serviceName
+            serviceName,
           )} not found' });
         }
         res.status(200).json({ message: '${capitalize(
-          serviceName
+          serviceName,
         )} deleted successfully' });
       } catch (error) {
         console.error(error);

@@ -1,41 +1,41 @@
 {
-	"name": "quikjs",
-	"version": "1.0.15",
-	"description": "Nodejs rest api generator built for pacewisdom solutions",
-	"main": "index.js",
-	"bin": {
-		"quik-g-p": "./index.js"
-	},
-	"scripts": {
-		"start": "node index.js",
-		"generate": "node generate.js",
-		"test": "jest",
-		"prepare": "husky install",
-		"pre-commit": "lint-staged",
-		"lint": "eslint . --fix --max-warnings=0",
-		"format": "prettier . --write"
-	},
-	"author": "waglesathwik",
-	"license": "MIT",
-	"dependencies": {
-		"handlebars": "^4.7.8",
-		"inquirer": "^9.2.16"
-	},
-	"type": "module",
-	"devDependencies": {
-		"@commitlint/cli": "^19.3.0",
-		"@commitlint/config-conventional": "^19.2.2",
-		"@eslint/js": "^9.1.1",
-		"eslint": "^9.1.1",
-		"eslint-config-prettier": "^9.1.0",
-		"globals": "^15.1.0",
-		"husky": "^8.0.3",
-		"jest": "^29.7.0",
-		"lint-staged": "^15.2.2",
-		"prettier": "^3.2.5"
-	},
-	"lint-staged": {
-		"*.js": "npm run lint",
-		"*.{js,css,md,html,json}": "npm run format"
-	}
+  "name": "quikjs",
+  "version": "1.0.15",
+  "description": "Nodejs rest api generator built for pacewisdom solutions",
+  "main": "index.js",
+  "bin": {
+    "quik-g-p": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "generate": "node generate.js",
+    "test": "jest",
+    "prepare": "husky install",
+    "pre-commit": "lint-staged",
+    "lint": "eslint . --fix --max-warnings=0",
+    "format": "prettier . --write"
+  },
+  "author": "waglesathwik",
+  "license": "MIT",
+  "dependencies": {
+    "handlebars": "^4.7.8",
+    "inquirer": "^9.2.16"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@commitlint/cli": "^19.3.0",
+    "@commitlint/config-conventional": "^19.2.2",
+    "@eslint/js": "^9.1.1",
+    "eslint": "^9.1.1",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.1.0",
+    "husky": "^8.0.3",
+    "jest": "^29.7.0",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5"
+  },
+  "lint-staged": {
+    "*.js": "npm run lint",
+    "*.{js,css,md,html,json}": "npm run format"
+  }
 }
