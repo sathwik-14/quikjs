@@ -1,6 +1,4 @@
-import capitalize from '../../utils/capitalize.js';
-import format from '../../utils/format.js';
-import { createDirectory, exists, read, write } from '../../utils/fs.js';
+import { createDirectory, exists, read, write, capitalize, format } from '../../utils/index.js';
 
 async function updateIndex(
   modelsDirectory,
@@ -22,7 +20,7 @@ module.exports = {
   }
 
   const importLine = `const ${capitalizedServiceName} = require('./${modelName.toLowerCase()}');`;
-  const exportLine = `    ${capitalizedServiceName},`;
+  const exportLine = `${capitalizedServiceName},`;
   const associationLines = generateAssociationLine(modelName, model);
 
   const importsCommentIndex = indexContent.indexOf('// imports');
@@ -138,6 +136,11 @@ function generateAssociationLine(modalName, modalData) {
   return associationLines.join('\n') + '\n';
 }
 
+function formatDefaultValue(type, value) {
+  if (type.toLowerCase() == 'date' || type.toLowerCase() == 'datetime')
+    return `sequelize.literal('${value}')`;
+}
+
 export async function generateModel(modelName, model) {
   const modelsDirectory = './models';
   const capitalizedServiceName = capitalize(modelName);
@@ -149,7 +152,7 @@ export async function generateModel(modelName, model) {
         fieldDefinition += `, primaryKey:true`;
       }
       if (field.defaultValue !== null && field.defaultValue != '') {
-        fieldDefinition += `, defaultValue: ${field.defaultValue}`;
+        fieldDefinition += `, defaultValue: ${formatDefaultValue(field.type, field.defaultValue)}`;
       }
       if (field.foreignKey) {
         fieldDefinition += `, references: { model: '${field.refTable}', key: '${field.refField}' }`;
@@ -161,11 +164,19 @@ export async function generateModel(modelName, model) {
       return fieldDefinition;
     })
     .join(',\n');
-  const modelContent = `\n    // Sequelize schema for ${modelName}\n    const { sequelize } = require("../config/db");
-\n    const { DataTypes } = require("sequelize");
-\n\n    const ${capitalizedServiceName} = sequelize.define('${modelName.toLowerCase()}', {\n      ${customFields}\n    });
-\n\n    ${capitalizedServiceName}.sync()\n      .then(() => console.log('${modelName} model synced successfully'))\n      .catch(err => console.log('${modelName} model sync failed'));
-\n\n    module.exports = ${capitalizedServiceName};
+  const modelContent = `\n
+  // Sequelize schema for ${modelName}\n
+  const { sequelize } = require("../config/db");
+ const { DataTypes } = require("sequelize");\n
+   const ${capitalizedServiceName} = sequelize.define('${modelName.toLowerCase()}', {\n
+          ${customFields}\n
+            });
+\n
+   ${capitalizedServiceName}.sync()
+   .then(() => console.log('${modelName} model synced successfully'))
+   .catch(err => console.log('${modelName} model sync failed',err));
+
+   module.exports = ${capitalizedServiceName};
 \n  `;
   if (!exists(modelsDirectory)) {
     createDirectory(modelsDirectory);
@@ -174,10 +185,5 @@ export async function generateModel(modelName, model) {
     `${modelsDirectory}/${modelName.toLowerCase()}.js`,
     await format(modelContent),
   );
-  await updateIndex(
-    modelsDirectory,
-    modelName,
-    capitalizedServiceName,
-    model,
-  );
+  await updateIndex(modelsDirectory, modelName, capitalizedServiceName, model);
 }

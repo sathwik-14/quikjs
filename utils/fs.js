@@ -10,8 +10,6 @@ export function read(relativePath) {
   const absPath = pathJoin(relativePath);
   if (exists(relativePath)) {
     return fs.readFileSync(absPath, 'utf-8');
-  } else {
-    throw new Error('Path not found - ', absPath);
   }
 }
 
@@ -46,4 +44,16 @@ export function exists(path) {
 
 export function createDirectory(path) {
   fs.mkdirSync(path);
+}
+
+export function saveConfig(data) {
+  const path = 'config.json';
+  if (exists(path)){
+  let configData = JSON.parse(read(path))
+    configData = {...configData,...data}
+    write(path, JSON.stringify(configData), {parser:'json'})
+  }
+  else{
+  write(path, JSON.stringify(data), {parser:'json'})
+  }
 }

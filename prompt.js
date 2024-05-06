@@ -1,8 +1,8 @@
 import { orms, tools } from './constants.js';
-import { ask } from './utils/prompt.js';
+import prompt from './utils/prompt.js';
 
-export function projectPrompts() {
-  return [
+export async function projectPrompts() {
+  return await prompt([
     {
       type: 'input',
       name: 'name',
@@ -34,7 +34,7 @@ export function projectPrompts() {
         if (answers.db === 'mongoDB') {
           return ['prisma', 'mongoose'];
         } else {
-          return ['prisma', 'sequelize'];
+          return ['sequelize'];
         }
       },
     },
@@ -56,12 +56,12 @@ export function projectPrompts() {
       message: 'Select third-party tools you would like to configure',
       choices: tools,
     },
-    {
-      type: 'confirm',
-      name: 'authentication',
-      message: 'Do you want authentication for your project?(passport-jwt)',
-      default: true,
-    },
+    // {
+    //   type: 'confirm',
+    //   name: 'authentication',
+    //   message: 'Do you want authentication for your project?(passport-jwt)',
+    //   default: true,
+    // },
     {
       type: 'confirm',
       name: 'roles',
@@ -69,7 +69,7 @@ export function projectPrompts() {
       default: true,
       when: (answers) => answers.authentication,
     },
-  ];
+  ]);
 }
 
 export async function schemaPrompts(input, name = '') {
@@ -180,7 +180,7 @@ export async function schemaPrompts(input, name = '') {
     ];
 
     while (true) {
-      const ans = await ask([
+      const ans = await prompt([
         {
           type: 'confirm',
           name: 'add_table',
@@ -200,7 +200,7 @@ export async function schemaPrompts(input, name = '') {
       schemaData[ans.table_name] = [];
       tables.push(ans.table_name);
       while (true) {
-        const model = await ask(schemaQuestions);
+        const model = await prompt(schemaQuestions);
         if (!model.add_another) {
           schemaData[ans.table_name].push(model);
           break;

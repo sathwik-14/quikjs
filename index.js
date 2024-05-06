@@ -1,19 +1,10 @@
 #!/usr/bin/env node
 
-import inquirer from 'inquirer';
-import { appTemplate } from './templates/app.js';
-import passport from './templates/passport.js';
-import aws from './templates/aws.js';
-import twilio from './templates/twilio.js';
-import { createDirectory, read, write } from './utils/fs.js';
-import { installSync } from './utils/install.js';
+import { appTemplate, passport, aws, twilio } from './templates/index.js';
 import { scaffold } from './generate.js';
 import { projectPrompts, schemaPrompts } from './prompt.js';
-import prisma from './plugins/prisma/index.js';
-import sequelize from './plugins/sequelize/index.js';
-import mongoose from './plugins/mongoose/index.js';
-import compile from './utils/compile.js';
-import { ask } from './utils/prompt.js';
+import { prisma, sequelize, mongoose } from './plugins/index.js';
+import {compile,createDirectory,read,write,installSync, saveConfig} from './utils/index.js'
 import sampledata from './sampledata.js';
 
 let userModel;
@@ -34,7 +25,7 @@ async function runORMSetup(orm, db) {
 
 async function generateProjectStructure(input) {
   try {
-    const { db, orm, tools, authentication, logging, error_handling } = input;
+    const { tools, authentication, logging, error_handling } = input;
     const folders = [
       'controllers',
       'models',
@@ -149,6 +140,7 @@ async function CheckProjectExist(answers) {
       }
     }
   } catch (error) {
+    console.log(error)
     console.log('Initializing project setup');
   }
 }
@@ -158,7 +150,7 @@ async function getRoleInput() {
     const roleAnswers = [];
     let confirm = true;
     while (confirm) {
-      const { addRole } = await inquirer.prompt([
+      const { addRole } = await prompt([
         {
           type: 'confirm',
           name: 'addRole',
@@ -169,7 +161,7 @@ async function getRoleInput() {
       if (!addRole) {
         confirm = false;
       }
-      const { role } = await inquirer.prompt([
+      const { role } = await prompt([
         { type: 'input', name: 'role', message: 'Enter the role:' },
       ]);
       roleAnswers.push(role);
@@ -183,8 +175,10 @@ async function getRoleInput() {
 
 async function main() {
   try {
-    const answers = await ask(projectPrompts());
-    // const answers = sampledata.p1;
+    // uncomment below line if you want to provide custom input
+    // const answers = await projectPrompts();
+    // DEFAULT - below line to choose from preset inputs - faster development
+    const answers = sampledata.p1;
     await CheckProjectExist(answers);
     if (answers.authentication) {
       if (answers.roles) answers.roles = await getRoleInput();
@@ -200,11 +194,12 @@ async function main() {
           break;
       }
     }
-    await installDependencies(answers);
     await generateProjectStructure(answers);
+    saveConfig(answers);
     console.log('Started generating scaffold...');
     await scaffold(answers);
     if (userModel) models.push({ name: 'user', model: userModel });
+    await installDependencies(answers);
     console.log('Project setup successful\n');
   } catch (error) {
     console.log(error);

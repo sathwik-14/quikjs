@@ -1,13 +1,9 @@
-import format from '../../utils/format.js';
-import { write } from '../../utils/fs.js';
+import {format, write, capitalize, installSync, compile } from '../../utils/index.js';
 import templates from './template.js';
 import { generateModel } from './model.js';
-import capitalize from '../../utils/capitalize.js';
-import { installSync } from '../../utils/install.js';
-import compile from '../../utils/compile.js';
 
 async function clientInit(db) {
-  const compiledTemplate = compile(templates.sequelizeInitContent);
+  const compiledTemplate = compile(templates.init);
   write('config/db.js', await format(compiledTemplate({ db })));
 }
 
@@ -48,13 +44,13 @@ async function setup(db) {
 }
 
 function controller(modelName) {
-  const controllerContent = `\n  const db = require('../models/index');
-\n  ${templates.createSequelizeContent(modelName)}\n 
- ${templates.getAllSequelizeContent(modelName)}\n 
-  ${templates.getByIdSequelizeContent(modelName)}\n
-    ${templates.updateSequelizeContent(modelName)}\n  
-    ${templates.deleteSequelizeContent(modelName)}\n  
-    \n module.exports = {\n  
+  const controllerContent = `const db = require('../models/index');\n
+ ${templates.create(modelName)}\n 
+ ${templates.getAll(modelName)}\n 
+  ${templates.getById(modelName)}\n
+    ${templates.update(modelName)}\n  
+    ${templates.delete(modelName)}\n  
+     module.exports = {\n  
           create${capitalize(modelName)}, 
   getAll${capitalize(modelName)}, 
     get${capitalize(modelName)}ById,
