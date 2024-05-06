@@ -303,7 +303,7 @@ export default {
       },
       {
         "name": "order_date",
-        "type": "DATETIME",
+        "type": "DATE",
         "defaultValue": "",
         "primaryKey": false,
         "allowNulls": false,

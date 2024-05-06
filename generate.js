@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 
 import template from './templates/content.js';
-import { append, read, write } from './utils/fs.js';
-import prisma from './plugins/prisma/index.js';
-import sequelize from './plugins/sequelize/index.js';
+import { read, saveConfig, write } from './utils/index.js';
+import { prisma, sequelize} from './plugins/index.js';
 import sampledata from './sampledata.js';
 import { schemaPrompts } from './prompt.js';
 
@@ -19,89 +18,6 @@ const loadState = async (input) => {
     state = input;
   }
 };
-
-async function setupPrisma(modelName, model, db) {
-  try {
-    prisma.model(modelName, model, db);
-    prisma.generate();
-  } catch (error) {
-    console.log('Error setting up Prisma:', error);
-  }
-}
-
-async function setupSequalize(modelName, model, relations = []) {
-  try {
-    await sequelize.model(modelName, model);
-    if (isArrayNotEmpty(relations))
-      generateAssociations(modelName, relations);
-    console.log('Model generation complete - ' + modelName);
-  } catch (error) {
-    console.log('Error setting up Prisma:', error);
-  }
-}
-
-function isArrayNotEmpty(arr) {
-  return Array.isArray(arr) && arr.length > 0;
-}
-
-function generateAssociations(modelName, relations = []) {
-  relations.forEach(({ model_name, relation_type }) => {
-    const associationCode = generateAssociationCode(
-      modelName,
-      model_name,
-      relation_type,
-    );
-    appendToFile(`${modelName}.js`, associationCode);
-    appendToFile(
-      `${model_name}.js`,
-      generateInverseAssociationCode(modelName, model_name, relation_type),
-    );
-  });
-}
-
-function generateAssociationCode(modelName, relatedModelName, type) {
-  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
-  let associationCode = `// Define association with ${capitalize(relatedModelName)}\n\n  const ${capitalize(relatedModelName)} = require('./${relatedModelName.toLowerCase()}');
-\n\n  `;
-  if (type.toLowerCase() === 'one-to-many') {
-    associationCode += `${capitalize(modelName)}.hasMany(${capitalize(relatedModelName)});
-\n`;
-  } else if (type.toLowerCase() === 'many-to-one') {
-    associationCode += `${capitalize(modelName)}.belongsTo(${capitalize(relatedModelName)});
-\n`;
-  } else if (type.toLowerCase() === 'many-to-many') {
-    associationCode += `${capitalize(modelName)}.belongsToMany(${capitalize(relatedModelName)});
-\n`;
-  } else if (type.toLowerCase() === 'one-to-one') {
-    associationCode += `${capitalize(modelName)}.hasOne(${capitalize(relatedModelName)});
-\n`;
-  }
-  return associationCode;
-}
-
-function generateInverseAssociationCode(modelName, relatedModelName, type) {
-  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
-  let inverseAssociationCode = `// Define inverse association with ${capitalize(modelName)}\n\n  const ${capitalize(modelName)} = require('./${modelName.toLowerCase()}');
-\n\n  `;
-  if (type.toLowerCase() === 'one-to-many') {
-    inverseAssociationCode += `${capitalize(relatedModelName)}.belongsTo(${capitalize(modelName)});
-\n`;
-  } else if (type.toLowerCase() === 'many-to-one') {
-    inverseAssociationCode += `${capitalize(relatedModelName)}.hasMany(${capitalize(modelName)});
-\n`;
-  } else if (type.toLowerCase() === 'many-to-many') {
-    inverseAssociationCode += `${capitalize(relatedModelName)}.belongsToMany(${capitalize(modelName)});
-\n`;
-  } else if (type.toLowerCase() === 'one-to-one') {
-    inverseAssociationCode += `${capitalize(relatedModelName)}.hasOne(${capitalize(modelName)});
-\n`;
-  }
-  return inverseAssociationCode;
-}
-
-function appendToFile(fileName, content) {
-  append(`models/${fileName}`, content);
-}
 
 function authMiddleware(roles) {
   if (state.authentication && roles.length) {
@@ -139,67 +55,38 @@ function generateRoutes(routeName, roles) {
   }
 }
 
-function updateState(data) {
-  console.log('Updating project state');
-  let config = read('config.json');
-  config = JSON.parse(config);
-  config.models.push(data);
-  console.log(config);
-  write('config.json', JSON.stringify(config));
-  return config;
-}
-
-async function generateScaffold(
-  modelName,
-  model,
-  relations = [],
-  roles = [],
-) {
-  try {
-    const db = state.db;
-    const orm = state.orm;
-    switch (orm) {
-      case 'prisma':
-        await setupPrisma(modelName, model, db);
-        prisma.controller(modelName);
-        break;
-      case 'sequelize':
-        await setupSequalize(modelName, model, relations);
-        sequelize.controller(modelName);
-        break;
-    }
-    generateRoutes(modelName, roles);
-    console.log('Generated routes and controllers for ', modelName);
-  } catch (error) {
-    console.error('Error generating scaffold:', error);
-  }
-}
-
 async function scaffold(input) {
   try {
     await loadState(input);
+    // uncomment the below code to enter schema manually
     // const schemaData = await schemaPrompts(input);
-    const schemaData = sampledata.alltypes;
+    // DEFAULT - predefined schemas - faster development
+    const schemaData = sampledata.ecommerce;
     if (Object.keys(schemaData).length) {
       for (const [key, value] of Object.entries(schemaData)) {
-        await generateScaffold(key, value);
+        const modelName = key;
+        const model = value;
+        const db = state.db;
+        const orm = state.orm;
+        switch (orm) {
+          case 'prisma':
+            prisma.model(modelName, model, db);
+            prisma.generate();
+            prisma.controller(modelName);
+            break;
+          case 'sequelize':
+            await sequelize.model(modelName, model);
+            sequelize.controller(modelName);
+            break;
+        }
+        generateRoutes(modelName, []);
+        console.log('Generated routes and controllers for ', modelName);
       }
     }
-    // let relations = isArrayNotEmpty(relations) ? relations : [];
-    const { name, description, db, orm, authentication, roles } = input;
-    const config = {
-      name,
-      description,
-      db,
-      orm,
-      authentication,
-      roles,
-      schemaData,
-    };
-    write('config.json', JSON.stringify(config), { parser: 'json' });
+    saveConfig({schema:schemaData});
   } catch (err) {
-    console.error('something went wrong');
+    console.error('something went wrong',err);
   }
 }
 
-export { scaffold };
+export { scaffold, generateRoutes };

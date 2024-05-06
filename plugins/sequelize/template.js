@@ -1,4 +1,4 @@
-import capitalize from '../../utils/capitalize.js';
+import {capitalize} from '../../utils/index.js';
 import Handlebars from 'handlebars';
 
 Handlebars.registerHelper('equals', function (variable, string, options) {
@@ -18,7 +18,7 @@ Handlebars.registerHelper('notequals', function (variable, string, options) {
 });
 
 export default {
-  createSequelizeContent: (modelName) => `
+  create: (modelName) => `
     async function create${capitalize(modelName)}(req, res) {
       try {
         const new${capitalize(modelName)} = await db.${capitalize(
@@ -31,7 +31,7 @@ export default {
       }
     }
     `,
-  getAllSequelizeContent: (modelName) => `
+  getAll: (modelName) => `
     async function getAll${capitalize(modelName)}(req, res) {
       try {
         let { page = 1, limit = 10, sortBy, sortOrder } = req.query;
@@ -64,7 +64,7 @@ export default {
       }
     }
     `,
-  getByIdSequelizeContent: (modelName) => `
+  getById: (modelName) => `
     async function get${capitalize(modelName)}ById(req, res) {
       try {
         const { id } = req.params;
@@ -81,7 +81,7 @@ export default {
       }
     }
     `,
-  updateSequelizeContent: (modelName) => `
+  update: (modelName) => `
     async function update${capitalize(modelName)}ById(req, res) {
       try {
         const { id } = req.params;
@@ -101,7 +101,7 @@ export default {
         res.status(500).json({ error: 'Internal server error' });
       }
     }`,
-  deleteSequelizeContent: (modelName) => `
+  delete: (modelName) => `
     async function delete${capitalize(modelName)}ById(req, res) {
       try {
         const { id } = req.params;
@@ -121,7 +121,7 @@ export default {
         res.status(500).json({ error: 'Internal server error' });
       }
     }`,
-  sequelizeInitContent: `
+  init: `
     const { Sequelize } = require("sequelize");
     require("dotenv").config();
     

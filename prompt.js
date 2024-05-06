@@ -1,8 +1,8 @@
 import { orms, tools } from './constants.js';
-import { ask } from './utils/prompt.js';
+import prompt from './utils/prompt.js';
 
 export async function projectPrompts() {
-  return await ask([
+  return await prompt([
     {
       type: 'input',
       name: 'name',
@@ -56,12 +56,12 @@ export async function projectPrompts() {
       message: 'Select third-party tools you would like to configure',
       choices: tools,
     },
-    {
-      type: 'confirm',
-      name: 'authentication',
-      message: 'Do you want authentication for your project?(passport-jwt)',
-      default: true,
-    },
+    // {
+    //   type: 'confirm',
+    //   name: 'authentication',
+    //   message: 'Do you want authentication for your project?(passport-jwt)',
+    //   default: true,
+    // },
     {
       type: 'confirm',
       name: 'roles',
@@ -180,7 +180,7 @@ export async function schemaPrompts(input, name = '') {
     ];
 
     while (true) {
-      const ans = await ask([
+      const ans = await prompt([
         {
           type: 'confirm',
           name: 'add_table',
@@ -200,7 +200,7 @@ export async function schemaPrompts(input, name = '') {
       schemaData[ans.table_name] = [];
       tables.push(ans.table_name);
       while (true) {
-        const model = await ask(schemaQuestions);
+        const model = await prompt(schemaQuestions);
         if (!model.add_another) {
           schemaData[ans.table_name].push(model);
           break;

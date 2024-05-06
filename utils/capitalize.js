@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * This is a utility function for string titlecase
  * @param {any} str

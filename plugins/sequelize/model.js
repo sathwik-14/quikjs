@@ -1,6 +1,4 @@
-import capitalize from '../../utils/capitalize.js';
-import format from '../../utils/format.js';
-import { createDirectory, exists, read, write } from '../../utils/fs.js';
+import { createDirectory, exists, read, write, capitalize, format } from '../../utils/index.js';
 
 async function updateIndex(
   modelsDirectory,
