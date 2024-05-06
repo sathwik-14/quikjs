@@ -34,7 +34,7 @@ async function runORMSetup(orm, db) {
 
 async function generateProjectStructure(input) {
   try {
-    const { db, orm, tools, authentication, logging, error_handling } = input;
+    const { tools, authentication, logging, error_handling } = input;
     const folders = [
       'controllers',
       'models',
@@ -149,6 +149,7 @@ async function CheckProjectExist(answers) {
       }
     }
   } catch (error) {
+    console.log(error)
     console.log('Initializing project setup');
   }
 }
@@ -183,8 +184,10 @@ async function getRoleInput() {
 
 async function main() {
   try {
-    const answers = await ask(projectPrompts());
-    // const answers = sampledata.p1;
+    // uncomment below line if you want to provide custom input
+    // const answers = await ask(projectPrompts());
+    // User below line to choose from preset inputs - faster development
+    const answers = sampledata.p1;
     await CheckProjectExist(answers);
     if (answers.authentication) {
       if (answers.roles) answers.roles = await getRoleInput();

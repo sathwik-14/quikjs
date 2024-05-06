@@ -34,7 +34,7 @@ export function projectPrompts() {
         if (answers.db === 'mongoDB') {
           return ['prisma', 'mongoose'];
         } else {
-          return ['prisma', 'sequelize'];
+          return ['sequelize'];
         }
       },
     },

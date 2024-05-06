@@ -161,11 +161,18 @@ export async function generateModel(modelName, model) {
       return fieldDefinition;
     })
     .join(',\n');
-  const modelContent = `\n    // Sequelize schema for ${modelName}\n    const { sequelize } = require("../config/db");
-\n    const { DataTypes } = require("sequelize");
-\n\n    const ${capitalizedServiceName} = sequelize.define('${modelName.toLowerCase()}', {\n      ${customFields}\n    });
-\n\n    ${capitalizedServiceName}.sync()\n      .then(() => console.log('${modelName} model synced successfully'))\n      .catch(err => console.log('${modelName} model sync failed'));
-\n\n    module.exports = ${capitalizedServiceName};
+  const modelContent = `\n
+  // Sequelize schema for ${modelName}\n
+  const { sequelize } = require("../config/db");\n
+ const { DataTypes } = require("sequelize");\n
+   const ${capitalizedServiceName} = sequelize.define('${modelName.toLowerCase()}', {\n
+          ${customFields}\n
+            });
+\n
+   ${capitalizedServiceName}.sync()\n
+   .then(() => console.log('${modelName} model synced successfully'))\n
+   .catch(err => console.log('${modelName} model sync failed',err));\n
+   module.exports = ${capitalizedServiceName};
 \n  `;
   if (!exists(modelsDirectory)) {
     createDirectory(modelsDirectory);

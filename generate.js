@@ -178,8 +178,8 @@ async function generateScaffold(
 async function scaffold(input) {
   try {
     await loadState(input);
-    const schemaData = await schemaPrompts(input);
-    // const schemaData = sampledata.s1;
+    // const schemaData = await schemaPrompts(input);
+    const schemaData = sampledata.blogs;
     if (Object.keys(schemaData).length) {
       for (const [key, value] of Object.entries(schemaData)) {
         await generateScaffold(key, value);
