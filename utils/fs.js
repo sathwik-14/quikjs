@@ -11,7 +11,7 @@ export function read(relativePath) {
   if (exists(relativePath)) {
     return fs.readFileSync(absPath, 'utf-8');
   } else {
-    throw new Error('Path not found - ', absPath);
+    console.log('Path not found - ', absPath);
   }
 }
 

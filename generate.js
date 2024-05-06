@@ -179,7 +179,7 @@ async function scaffold(input) {
   try {
     await loadState(input);
     // const schemaData = await schemaPrompts(input);
-    const schemaData = sampledata.blogs;
+    const schemaData = sampledata.alltypes;
     if (Object.keys(schemaData).length) {
       for (const [key, value] of Object.entries(schemaData)) {
         await generateScaffold(key, value);
@@ -198,7 +198,6 @@ async function scaffold(input) {
     };
     write('config.json', JSON.stringify(config), { parser: 'json' });
   } catch (err) {
-    console.error(err);
     console.error('something went wrong');
   }
 }

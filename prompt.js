@@ -1,8 +1,8 @@
 import { orms, tools } from './constants.js';
 import { ask } from './utils/prompt.js';
 
-export function projectPrompts() {
-  return [
+export async function projectPrompts() {
+  return await ask([
     {
       type: 'input',
       name: 'name',
@@ -69,7 +69,7 @@ export function projectPrompts() {
       default: true,
       when: (answers) => answers.authentication,
     },
-  ];
+  ]);
 }
 
 export async function schemaPrompts(input, name = '') {

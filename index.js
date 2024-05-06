@@ -13,7 +13,6 @@ import prisma from './plugins/prisma/index.js';
 import sequelize from './plugins/sequelize/index.js';
 import mongoose from './plugins/mongoose/index.js';
 import compile from './utils/compile.js';
-import { ask } from './utils/prompt.js';
 import sampledata from './sampledata.js';
 
 let userModel;
@@ -185,7 +184,7 @@ async function getRoleInput() {
 async function main() {
   try {
     // uncomment below line if you want to provide custom input
-    // const answers = await ask(projectPrompts());
+    // const answers = await projectPrompts();
     // User below line to choose from preset inputs - faster development
     const answers = sampledata.p1;
     await CheckProjectExist(answers);

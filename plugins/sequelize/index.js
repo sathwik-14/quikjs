@@ -48,7 +48,7 @@ async function setup(db) {
 }
 
 function controller(modelName) {
-  const controllerContent = `\n  const db = require('../models/index');
+  const controllerContent = `const db = require('../models/index');
 \n  ${templates.createSequelizeContent(modelName)}\n 
  ${templates.getAllSequelizeContent(modelName)}\n 
   ${templates.getByIdSequelizeContent(modelName)}\n

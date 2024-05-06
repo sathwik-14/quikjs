@@ -13,15 +13,6 @@ export default {
   employee: {
     "employees": [
       {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
-      {
         "name": "name",
         "type": "STRING",
         "size": "",
@@ -77,15 +68,6 @@ export default {
   blogs: {
     "users": [
       {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
-      {
         "name": "username",
         "type": "STRING",
         "size": "",
@@ -124,15 +106,6 @@ export default {
     ],
     "posts": [
       {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
-      {
         "name": "title",
         "type": "STRING",
         "size": "",
@@ -169,39 +142,8 @@ export default {
         "relationshipType": "Many-to-One",
         "add_another": false
       },
-      {
-        "name": "created_at",
-        "type": "DATETIME",
-        "defaultValue": "CURRENT_TIMESTAMP",
-        "primaryKey": false,
-        "allowNulls": true,
-        "unique": false,
-        "autoIncrement": false,
-        "foreignKey": false,
-        "add_another": false
-      },
-      {
-        "name": "updated_at",
-        "type": "DATETIME",
-        "defaultValue": "CURRENT_TIMESTAMP",
-        "primaryKey": false,
-        "allowNulls": true,
-        "unique": false,
-        "autoIncrement": false,
-        "foreignKey": false,
-        "add_another": false
-      }
     ],
     "comments": [
-      {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
       {
         "name": "content",
         "type": "TEXT",
@@ -241,31 +183,12 @@ export default {
         "relationshipType": "Many-to-One",
         "add_another": false
       },
-      {
-        "name": "created_at",
-        "type": "DATETIME",
-        "defaultValue": "CURRENT_TIMESTAMP",
-        "primaryKey": false,
-        "allowNulls": true,
-        "unique": false,
-        "autoIncrement": false,
-        "foreignKey": false,
-        "add_another": false
-      }
+      
     ]
   },
 
   ecommerce: {
     "products": [
-      {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
       {
         "name": "name",
         "type": "STRING",
@@ -314,15 +237,6 @@ export default {
     ],
     "categories": [
       {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
-      {
         "name": "name",
         "type": "STRING",
         "size": "",
@@ -336,15 +250,6 @@ export default {
       }
     ],
     "customers": [
-      {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
       {
         "name": "name",
         "type": "STRING",
@@ -382,15 +287,6 @@ export default {
       }
     ],
     "orders": [
-      {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
       {
         "name": "customer_id",
         "type": "INTEGER",
@@ -430,15 +326,6 @@ export default {
       }
     ],
     "order_items": [
-      {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
       {
         "name": "order_id",
         "type": "INTEGER",
@@ -495,15 +382,6 @@ export default {
   sociamedia: {
     "users": [
       {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
-      {
         "name": "username",
         "type": "STRING",
         "size": "",
@@ -542,15 +420,6 @@ export default {
     ],
     "posts": [
       {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
-      {
         "name": "content",
         "type": "TEXT",
         "defaultValue": "",
@@ -575,28 +444,9 @@ export default {
         "relationshipType": "Many-to-One",
         "add_another": false
       },
-      {
-        "name": "created_at",
-        "type": "DATETIME",
-        "defaultValue": "CURRENT_TIMESTAMP",
-        "primaryKey": false,
-        "allowNulls": true,
-        "unique": false,
-        "autoIncrement": false,
-        "foreignKey": false,
-        "add_another": false
-      }
+      
     ],
     "comments": [
-      {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
       {
         "name": "content",
         "type": "TEXT",
@@ -636,31 +486,12 @@ export default {
         "relationshipType": "Many-to-One",
         "add_another": false
       },
-      {
-        "name": "created_at",
-        "type": "DATETIME",
-        "defaultValue": "CURRENT_TIMESTAMP",
-        "primaryKey": false,
-        "allowNulls": true,
-        "unique": false,
-        "autoIncrement": false,
-        "foreignKey": false,
-        "add_another": false
-      }
+      
     ]
   },
   
   tasks: {
     "users": [
-      {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
       {
         "name": "username",
         "type": "STRING",
@@ -699,15 +530,6 @@ export default {
       }
     ],
     "tasks": [
-      {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
       {
         "name": "title",
         "type": "STRING",
@@ -797,15 +619,6 @@ export default {
     ],
     "projects": [
       {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
-      {
         "name": "name",
         "type": "STRING",
         "size": "",
@@ -845,15 +658,6 @@ export default {
    
   alltypes: {
     "users": [
-      {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
       {
         "name": "username",
         "type": "STRING",
@@ -896,15 +700,6 @@ export default {
     ],
     "posts": [
       {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
-      {
         "name": "content",
         "type": "TEXT",
         "defaultValue": "",
@@ -931,15 +726,6 @@ export default {
       }
     ],
     "tags": [
-      {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
       {
         "name": "name",
         "type": "STRING",
@@ -985,15 +771,6 @@ export default {
     ],
     "employees": [
       {
-        "name": "id",
-        "type": "INTEGER",
-        "defaultValue": "",
-        "primaryKey": true,
-        "autoIncrement": true,
-        "foreignKey": false,
-        "add_another": true
-      },
-      {
         "name": "name",
         "type": "STRING",
         "size": "",
@@ -1021,6 +798,5 @@ export default {
       }
     ]
   }
-  
 
 };
