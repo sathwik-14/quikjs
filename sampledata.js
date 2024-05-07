@@ -721,7 +721,7 @@ export default {
         "foreignKey": true,
         "refTable": "users",
         "refField": "id",
-        "relationshipType": "One-to-Many",
+        "relationshipType": "Many-to-One",
         "add_another": false
       }
     ],
@@ -752,6 +752,8 @@ export default {
         "refTable": "posts",
         "refField": "id",
         "relationshipType": "Many-to-Many",
+        "selfMapping":true,
+        "mapRef": 'tags',
         "add_another": false
       },
       {
@@ -766,6 +768,8 @@ export default {
         "refTable": "tags",
         "refField": "id",
         "relationshipType": "Many-to-Many",
+        "selfMapping":true,
+        "mapRef": 'posts',
         "add_another": false
       }
     ],

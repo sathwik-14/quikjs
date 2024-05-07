@@ -91,9 +91,9 @@ module.exports = {
 function mapRelationshipType(relationshipType) {
   switch (relationshipType.toLowerCase()) {
     case 'one-to-one':
-      return 'hasOne';
+      return 'belongsTo';
     case 'one-to-many':
-      return 'hasMany';
+      return 'belongsToMany';
     case 'many-to-one':
       return 'belongsTo';
     case 'many-to-many':
@@ -120,19 +120,24 @@ function inverseMapRelationshipType(relationshipType) {
 
 function generateAssociationLine(modalName, modalData) {
   const associationLines = [];
-  let reverseAssociationLine = '';
+  // let reverseAssociationLine = '';
   modalData.forEach((field) => {
     if (field.foreignKey) {
       const associationType = mapRelationshipType(field.relationshipType);
-      const associationLine = `${capitalize(modalName)}.${associationType}(${capitalize(field.refTable)}, { foreignKey: '${field.name}' });`;
+      let associationLine;
+      if(field.selfMapping && field.mapRef){
+        associationLine = `${capitalize(field.refTable)}.${associationType}(${capitalize(field.mapRef)}, { through:${capitalize(modalName)}, foreignKey: '${field.name}' });`;
+      }else{
+        associationLine = `${capitalize(modalName)}.${associationType}(${capitalize(field.refTable)}, { foreignKey: '${field.name}' });`;
+      }
       associationLines.push(associationLine);
       // const inverseAssociationType = inverseMapRelationshipType(field.relationshipType);
       // reverseAssociationLine = `${capitalize(field.refTable)}.${inverseAssociationType}(${capitalize(field.refTable)}, { foreignKey: '${field.refField}' });`;
     }
   });
-  if (reverseAssociationLine) {
-    associationLines.push(reverseAssociationLine);
-  }
+  // if (reverseAssociationLine) {
+  //   associationLines.push(reverseAssociationLine);
+  // }
   return associationLines.join('\n') + '\n';
 }
 
