@@ -1,6 +1,37 @@
-import capitalize from '../../utils/capitalize.js';
-import { read, write } from '../../utils/fs.js';
-import prisma from './index.js';
+import { read, write, capitalize } from '../../utils/index.js';
+
+export function getType(input, options, db) {
+  switch (input.toLowerCase()) {
+    case 'string':
+      return 'String';
+    case 'integer':
+      return (options.primaryKey || options.foreignKey) && db == 'mongodb'
+        ? 'String'
+        : 'Int';
+    case 'float':
+      return 'Float';
+    case 'boolean':
+      return 'Boolean';
+    case 'date':
+      return 'DateTime';
+    case 'uuid':
+      return 'String';
+    case 'text':
+      return 'String';
+    case 'json':
+      return 'Json';
+    case 'enum':
+      return 'Enum';
+    case 'array':
+      return 'String[]';
+    case 'binary':
+      return 'Bytes';
+    case 'decimal':
+      return 'Decimal';
+    default:
+      return 'Unknown';
+  }
+}
 
 function convertOptions(options, db) {
   const directives = [];
@@ -32,12 +63,12 @@ function convertOptions(options, db) {
   return directives.join(' ');
 }
 
-export function generateModel(modelName, modelData, db) {
+export async function generateModel(modelName, modelData, db) {
   let prismaModelContent = read('prisma/schema.prisma');
 
   const processedFields = modelData.map((field) => {
-    const { name, type, defaultValue = '', ...otherOptions } = field;
-    const convertedType = prisma.type(type, otherOptions, db);
+    const { name, type, ...otherOptions } = field;
+    const convertedType = getType(type, otherOptions, db);
     const prismaOptions = convertOptions(otherOptions, db);
     if (otherOptions.foreignKey) {
       return `${otherOptions.refTable} ${capitalize(otherOptions.refTable)}${otherOptions.relationshipType == 'One-to-Many' ? '[]' : ''}\n
@@ -53,7 +84,7 @@ model ${capitalize(modelName)} {
 }`;
 
   if (!prismaModelContent.includes(modelContent.trim())) {
-    write('prisma/schema.prisma', prismaModelContent + modelContent);
+    await write('prisma/schema.prisma', prismaModelContent + modelContent);
   } else {
     return;
   }

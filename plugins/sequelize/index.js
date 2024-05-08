@@ -1,10 +1,10 @@
-import {format, write, capitalize, installSync, compile } from '../../utils/index.js';
+import { write, capitalize, installSync, compile } from '../../utils/index.js';
 import templates from './template.js';
 import { generateModel } from './model.js';
 
 async function clientInit(db) {
   const compiledTemplate = compile(templates.init);
-  write('config/db.js', await format(compiledTemplate({ db })));
+  await write('config/db.js', compiledTemplate({ db }));
 }
 
 function type(input) {
@@ -43,7 +43,7 @@ async function setup(db) {
   await clientInit(db);
 }
 
-function controller(modelName) {
+async function controller(modelName) {
   const controllerContent = `const db = require('../models/index');\n
  ${templates.create(modelName)}\n 
  ${templates.getAll(modelName)}\n 
@@ -56,7 +56,7 @@ function controller(modelName) {
     get${capitalize(modelName)}ById,
       update${capitalize(modelName)}ById,
         delete${capitalize(modelName)}ById};`;
-  write(`controllers/${modelName}.js`, controllerContent);
+  await write(`controllers/${modelName}.js`, controllerContent);
 }
 
 export default {

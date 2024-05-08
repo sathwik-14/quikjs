@@ -3,7 +3,9 @@ import path from 'path';
 import format from './format.js';
 
 function pathJoin(relPath) {
-  return path.join(process.cwd(), relPath);
+  /* eslint-disable no-undef */
+  const projectRoot = process.cwd();
+  return path.join(projectRoot, relPath);
 }
 
 export function read(relativePath) {
@@ -17,10 +19,7 @@ export async function write(relativePath, content, options = { format: true }) {
   try {
     const absPath = pathJoin(relativePath);
     if (options.format) {
-      content = await format(content);
-    }
-    if (options?.parser) {
-      content = await format(content, options.parser);
+      content = await format(content, options?.parser);
     }
     fs.writeFileSync(absPath, content);
   } catch {
@@ -48,12 +47,11 @@ export function createDirectory(path) {
 
 export function saveConfig(data) {
   const path = 'config.json';
-  if (exists(path)){
-  let configData = JSON.parse(read(path))
-    configData = {...configData,...data}
-    write(path, JSON.stringify(configData), {parser:'json'})
-  }
-  else{
-  write(path, JSON.stringify(data), {parser:'json'})
+  if (exists(path)) {
+    let configData = JSON.parse(read(path));
+    configData = { ...configData, ...data };
+    write(path, JSON.stringify(configData), { parser: 'json' });
+  } else {
+    write(path, JSON.stringify(data), { parser: 'json' });
   }
 }

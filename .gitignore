@@ -1,10 +1,6 @@
 node_modules
 .env
 package-lock.json
-Dockerfile
-.dockerignore
 notes.txt
-_index.js
-_generate.js
-_model.js
-_types.js
+dist
+build

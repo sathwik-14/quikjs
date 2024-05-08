@@ -2,9 +2,9 @@
 
 import template from './templates/content.js';
 import { read, saveConfig, write } from './utils/index.js';
-import { prisma, sequelize} from './plugins/index.js';
+import { prisma, sequelize } from './plugins/index.js';
 import sampledata from './sampledata.js';
-import { schemaPrompts } from './prompt.js';
+// import { schemaPrompts } from './prompt.js';
 
 let state;
 
@@ -14,7 +14,7 @@ const loadState = async (input) => {
     if (config.length !== 0) {
       state = JSON.parse(config);
     }
-  } catch (error) {
+  } catch {
     state = input;
   }
 };
@@ -61,7 +61,7 @@ async function scaffold(input) {
     // uncomment the below code to enter schema manually
     // const schemaData = await schemaPrompts(input);
     // DEFAULT - predefined schemas - faster development
-    const schemaData = sampledata.ecommerce;
+    const schemaData = sampledata.alltypes;
     if (Object.keys(schemaData).length) {
       for (const [key, value] of Object.entries(schemaData)) {
         const modelName = key;
@@ -83,9 +83,9 @@ async function scaffold(input) {
         console.log('Generated routes and controllers for ', modelName);
       }
     }
-    saveConfig({schema:schemaData});
+    saveConfig({ schema: schemaData });
   } catch (err) {
-    console.error('something went wrong',err);
+    console.error('something went wrong', err);
   }
 }
 
