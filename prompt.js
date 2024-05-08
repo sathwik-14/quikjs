@@ -1,5 +1,5 @@
 import { orms, tools } from './constants.js';
-import prompt from './utils/prompt.js';
+import {prompt} from './utils/index.js';
 
 export async function projectPrompts() {
   return await prompt([

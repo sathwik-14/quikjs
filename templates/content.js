@@ -1,4 +1,4 @@
-import capitalize from '../utils/capitalize.js';
+import {capitalize} from '../utils/index.js';
 
 export default {
   routesContent: (modelName) => `const express = require('express');

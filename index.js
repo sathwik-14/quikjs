@@ -4,7 +4,7 @@ import { appTemplate, passport, aws, twilio } from './templates/index.js';
 import { scaffold } from './generate.js';
 import { projectPrompts, schemaPrompts } from './prompt.js';
 import { prisma, sequelize, mongoose } from './plugins/index.js';
-import {compile,createDirectory,read,write,installSync, saveConfig} from './utils/index.js'
+import {compile,createDirectory,read,write,installSync, saveConfig, prompt} from './utils/index.js'
 import sampledata from './sampledata.js';
 
 let userModel;
