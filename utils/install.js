@@ -5,16 +5,17 @@ export const install = (...packages) => {
     packages.forEach((pkg) => {
       exec(`npm install ${pkg}`);
     });
-  } catch (error) {
+  } catch {
     console.error('Error installing packages:', ...packages);
   }
 };
+
 export const installSync = (...packages) => {
   try {
     packages.forEach((pkg) => {
       execSync(`npm install ${pkg}`);
     });
-  } catch (error) {
+  } catch {
     console.error('Error installing packages:', ...packages);
   }
 };

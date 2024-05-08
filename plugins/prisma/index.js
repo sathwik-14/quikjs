@@ -4,16 +4,18 @@ import { execSync, spawnSync } from 'child_process';
 import { generateModel, getType } from './model.js';
 
 function init(db) {
-    const initialization = execSync(`npx prisma init --datasource-provider ${db.toLowerCase()}`,);
-  if(initialization.error){
-    console.log('Error initializing prisma')
-  }else {
+  const initialization = execSync(
+    `npx prisma init --datasource-provider ${db.toLowerCase()}`,
+  );
+  if (initialization.error) {
+    console.log('Error initializing prisma');
+  } else {
     console.log('Prisma initialization completed successfully');
   }
-  }
+}
 
 async function clientInit() {
-  write('config/db.js', await format(templates.prismaInitContent));
+  await write('config/db.js', await format(templates.prismaInitContent));
 }
 
 function formatPrisma() {
@@ -60,7 +62,7 @@ async function setup(db) {
   await clientInit();
 }
 
-function controller(modelName) {
+async function controller(modelName) {
   const controllerContent = `const prisma = require('../config/db');
 \n\n  ${templates.createPrismaContent(modelName)}\n
 ${templates.getAllPrismaContent(modelName)}\n
@@ -75,7 +77,7 @@ get${capitalize(modelName)}ById,\n
 update${capitalize(modelName)}ById,\n
 delete${capitalize(modelName)}ById\n
 };`;
-  write(`controllers/${modelName}.js`, controllerContent);
+  await write(`controllers/${modelName}.js`, controllerContent);
 }
 
 export default {
@@ -85,6 +87,6 @@ export default {
   type: getType,
   generate,
   migrate,
-  model:generateModel,
+  model: generateModel,
   controller,
 };

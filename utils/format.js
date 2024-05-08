@@ -20,8 +20,7 @@ export default async (unformattedText, parser = 'babel') => {
       prettierOptions,
     );
     return formattedText;
-  } catch (error) {
-    console.log(error);
+  } catch {
     return unformattedText;
   }
 };

@@ -63,7 +63,7 @@ function convertOptions(options, db) {
   return directives.join(' ');
 }
 
-export function generateModel(modelName, modelData, db) {
+export async function generateModel(modelName, modelData, db) {
   let prismaModelContent = read('prisma/schema.prisma');
 
   const processedFields = modelData.map((field) => {
@@ -84,7 +84,7 @@ model ${capitalize(modelName)} {
 }`;
 
   if (!prismaModelContent.includes(modelContent.trim())) {
-    write('prisma/schema.prisma', prismaModelContent + modelContent);
+    await write('prisma/schema.prisma', prismaModelContent + modelContent);
   } else {
     return;
   }

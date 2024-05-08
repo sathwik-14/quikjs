@@ -1,4 +1,10 @@
-import { createDirectory, exists, read, write, capitalize, format } from '../../utils/index.js';
+import {
+  createDirectory,
+  exists,
+  read,
+  write,
+  capitalize,
+} from '../../utils/index.js';
 
 async function updateIndex(
   modelsDirectory,
@@ -21,7 +27,7 @@ module.exports = {
 
   const importLine = `const ${capitalizedServiceName} = require('./${modelName.toLowerCase()}');`;
   const exportLine = `${capitalizedServiceName},`;
-  const associationLines = generateAssociationLine(modelName, model);
+  const association = generateAssociation(modelName, model);
 
   const importsCommentIndex = indexContent.indexOf('// imports');
   if (importsCommentIndex !== -1) {
@@ -67,11 +73,11 @@ module.exports = {
       '\n',
       associationCommentIndex + '// associations'.length,
     );
-    const associationLinesFormatted = `\n${associationLines}`;
-    if (!indexContent.includes(associationLines)) {
+    const associationFormatted = `\n${association}`;
+    if (!indexContent.includes(association)) {
       indexContent =
         indexContent.slice(0, nextAssociationIndex) +
-        associationLinesFormatted +
+        associationFormatted +
         indexContent.slice(nextAssociationIndex);
       console.log(
         `${modelName} model associations appended to the models/index file.`,
@@ -85,7 +91,7 @@ module.exports = {
     console.log('Missing comment for associations. Unable to append.');
   }
 
-  write(indexFilePath, indexContent);
+  await write(indexFilePath, indexContent);
 }
 
 function mapRelationshipType(relationshipType) {
@@ -93,9 +99,9 @@ function mapRelationshipType(relationshipType) {
     case 'one-to-one':
       return 'belongsTo';
     case 'one-to-many':
-      return 'belongsToMany';
-    case 'many-to-one':
       return 'belongsTo';
+    case 'many-to-one':
+      return 'hasMany';
     case 'many-to-many':
       return 'belongsToMany';
     default:
@@ -106,39 +112,40 @@ function mapRelationshipType(relationshipType) {
 function inverseMapRelationshipType(relationshipType) {
   switch (relationshipType.toLowerCase()) {
     case 'one-to-one':
-      return 'belongsTo';
+      return 'hasOne';
     case 'one-to-many':
-      return 'belongsTo';
+      return 'hasMany';
     case 'many-to-one':
-      return 'hasMany';
+      return 'belongsTo';
     case 'many-to-many':
-      return 'hasMany';
+      return 'belongsToMany';
     default:
       throw new Error('Unsupported relationship type.');
   }
 }
 
-function generateAssociationLine(modalName, modalData) {
-  const associationLines = [];
-  // let reverseAssociationLine = '';
+function generateAssociation(modalName, modalData) {
+  let inverseAssociation = '';
+  let association = '';
   modalData.forEach((field) => {
     if (field.foreignKey) {
       const associationType = mapRelationshipType(field.relationshipType);
-      let associationLine;
-      if(field.selfMapping && field.mapRef){
-        associationLine = `${capitalize(field.refTable)}.${associationType}(${capitalize(field.mapRef)}, { through:${capitalize(modalName)}, foreignKey: '${field.name}' });`;
-      }else{
-        associationLine = `${capitalize(modalName)}.${associationType}(${capitalize(field.refTable)}, { foreignKey: '${field.name}' });`;
+      if (field.selfMapping && field.mapRef) {
+        association = `${capitalize(modalName)}.${associationType}(${capitalize(field.mapRef)}, { through:${capitalize(modalName)}, foreignKey: '${field.name}' });`;
+      } else {
+        association = `${capitalize(modalName)}.${associationType}(${capitalize(field.refTable)}, { foreignKey: '${field.name}' });`;
       }
-      associationLines.push(associationLine);
-      // const inverseAssociationType = inverseMapRelationshipType(field.relationshipType);
-      // reverseAssociationLine = `${capitalize(field.refTable)}.${inverseAssociationType}(${capitalize(field.refTable)}, { foreignKey: '${field.refField}' });`;
+      const inverseAssociationType = inverseMapRelationshipType(
+        field.relationshipType,
+      );
+      if (field.selfMapping && field.mapRef) {
+        inverseAssociation = `${capitalize(field.refTable)}.${inverseAssociationType}(${capitalize(field.mapRef)}, { through:${capitalize(modalName)}, foreignKey: '${field.name}' });`;
+      } else {
+        inverseAssociation = `${capitalize(field.refTable)}.${inverseAssociationType}(${capitalize(modalName)}, { foreignKey: '${field.name}' });`;
+      }
     }
   });
-  // if (reverseAssociationLine) {
-  //   associationLines.push(reverseAssociationLine);
-  // }
-  return associationLines.join('\n') + '\n';
+  return `${association}\n${inverseAssociation}`;
 }
 
 function formatDefaultValue(type, value) {
@@ -186,9 +193,6 @@ export async function generateModel(modelName, model) {
   if (!exists(modelsDirectory)) {
     createDirectory(modelsDirectory);
   }
-  write(
-    `${modelsDirectory}/${modelName.toLowerCase()}.js`,
-    await format(modelContent),
-  );
+  await write(`${modelsDirectory}/${modelName.toLowerCase()}.js`, modelContent);
   await updateIndex(modelsDirectory, modelName, capitalizedServiceName, model);
 }

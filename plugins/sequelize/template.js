@@ -1,4 +1,4 @@
-import {capitalize} from '../../utils/index.js';
+import { capitalize } from '../../utils/index.js';
 import Handlebars from 'handlebars';
 
 Handlebars.registerHelper('equals', function (variable, string, options) {

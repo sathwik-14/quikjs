@@ -1,4 +1,4 @@
-import {capitalize} from '../utils/index.js';
+import { capitalize } from '../utils/index.js';
 
 export default {
   routesContent: (modelName) => `const express = require('express');
@@ -12,9 +12,7 @@ router.get('/:id', ${modelName}Controller.get${capitalize(modelName)}ById);
 // Create a new ${modelName}
 router.post('/', ${modelName}Controller.create${capitalize(modelName)});
 // Update ${modelName} by ID
-router.put('/:id', ${modelName}Controller.update${capitalize(
-    modelName,
-  )}ById);
+router.put('/:id', ${modelName}Controller.update${capitalize(modelName)}ById);
 // Delete ${modelName} by ID
 router.delete('/:id', ${modelName}Controller.delete${capitalize(
     modelName,

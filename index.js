@@ -2,9 +2,18 @@
 
 import { appTemplate, passport, aws, twilio } from './templates/index.js';
 import { scaffold } from './generate.js';
-import { projectPrompts, schemaPrompts } from './prompt.js';
+// import { projectPrompts } from './prompt.js';
+import { schemaPrompts } from './prompt.js';
 import { prisma, sequelize, mongoose } from './plugins/index.js';
-import {compile,createDirectory,read,write,installSync, saveConfig, prompt} from './utils/index.js'
+import {
+  compile,
+  createDirectory,
+  read,
+  write,
+  installSync,
+  saveConfig,
+  prompt,
+} from './utils/index.js';
 import sampledata from './sampledata.js';
 
 let userModel;
@@ -47,11 +56,11 @@ async function generateProjectStructure(input) {
     if (tools.length) {
       const toolFiles = {
         s3: [
-          { path: 'config/aws.js', content: aws.s3.config(input) },
-          { path: 'utils/s3.js', content: aws.s3.utils(input) },
+          { path: 'config/aws.js', content: aws.s3.config() },
+          { path: 'utils/s3.js', content: aws.s3.utils() },
         ],
-        sns: [{ path: 'utils/sns.js', content: aws.sns(input) }],
-        twilio: [{ path: 'utils/twilio.js', content: twilio(input) }],
+        sns: [{ path: 'utils/sns.js', content: aws.sns() }],
+        twilio: [{ path: 'utils/twilio.js', content: twilio() }],
       };
       tools.forEach((tool) => {
         files.push(...(toolFiles[tool] || []));
@@ -75,15 +84,13 @@ async function generateProjectStructure(input) {
 
     folders.forEach(createDirectory);
 
-    await Promise.all(
-      files.map(async (file) => {
-        ['.env', 'README.md', '.gitignore'].includes(file.path)
-          ? await write(file.path, file.content, { format: false })
-          : await write(file.path, file.content);
-      }),
-    );
-  } catch (error) {
-    console.error('Error creating project structure:', error);
+    files.map(async (file) => {
+      ['.env', 'README.md', '.gitignore'].includes(file.path)
+        ? await write(file.path, file.content, { format: false })
+        : await write(file.path, file.content);
+    });
+  } catch {
+    console.error('Unable to create project structure');
   }
 }
 
@@ -139,8 +146,7 @@ async function CheckProjectExist(answers) {
         return;
       }
     }
-  } catch (error) {
-    console.log(error)
+  } catch {
     console.log('Initializing project setup');
   }
 }
@@ -167,9 +173,8 @@ async function getRoleInput() {
       roleAnswers.push(role);
     }
     return roleAnswers;
-  } catch (error) {
-    console.error('Error getting role input:', error);
-    throw error;
+  } catch {
+    console.error('Unable to get roles');
   }
 }
 
@@ -200,10 +205,9 @@ async function main() {
     await scaffold(answers);
     if (userModel) models.push({ name: 'user', model: userModel });
     await installDependencies(answers);
-    console.log('Project setup successful\n');
+    console.log('Project setup successful');
   } catch (error) {
-    console.log(error);
-    console.log('Unable to generate project.');
+    console.log('Unable to generate project due to .', error);
   }
 }
 
