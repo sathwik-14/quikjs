@@ -4,12 +4,10 @@ Handlebars.registerHelper('errorHandlingMiddleware', () => {
   return `
   app.use((err, req, res, next) => {
     console.error("Custom error handler - " + err.stack);
-  
     // Log the error to a file
     const logStream = fs.createWriteStream(path.join(__dirname, 'error.log'), { flags: 'a' });
     logStream.write(new Date().toISOString() + ': ' + err.stack + '\\n');
     logStream.end();
-  
     res.status(500).send("Something went wrong!");
   });`;
 });
@@ -24,7 +22,8 @@ Handlebars.registerHelper('defaultErrorHandlingMiddleware', () => {
 
 Handlebars.registerHelper('logMiddleware', () => {
   return `
-  app.use(morgan("combined", { stream: fs.createWriteStream(path.join(process.cwd(), 'access.log'), { flags: 'a' }) })); // Logging to file
+  // write access log to file
+  app.use(morgan("combined", { stream: fs.createWriteStream(path.join(process.cwd(), 'access.log'), { flags: 'a' }) }));
   `;
 });
 
@@ -111,6 +110,11 @@ app.use((err, req, res, next) => {
 {{/if}}
 
 // Routes
+
+app.get('/',(req,res)=>{
+  res.status(200).send("Welcome ! to {{input.name}}")
+})
+
 {{{authRoutes input.authentication}}}
 
 
