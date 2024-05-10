@@ -2,20 +2,20 @@ import fs from 'fs';
 import path from 'path';
 import format from './format.js';
 
-function pathJoin(relPath) {
+const pathJoin = (relPath) => {
   /* eslint-disable no-undef */
   const projectRoot = process.cwd();
   return path.join(projectRoot, relPath);
-}
+};
 
-export function read(relativePath) {
+const read = (relativePath) => {
   const absPath = pathJoin(relativePath);
   if (exists(relativePath)) {
     return fs.readFileSync(absPath, 'utf-8');
   }
-}
+};
 
-export async function write(relativePath, content, options = { format: true }) {
+const write = async (relativePath, content, options = { format: true }) => {
   try {
     const absPath = pathJoin(relativePath);
     if (options.format) {
@@ -25,27 +25,27 @@ export async function write(relativePath, content, options = { format: true }) {
   } catch {
     console.error('FAILED WRITING TO FILE ', relativePath);
   }
-}
+};
 
-export function append(relativePath, content) {
+const append = (relativePath, content) => {
   try {
     const absPath = pathJoin(relativePath);
     fs.appendFileSync(absPath, content);
   } catch {
     console.error('FAILED WRITING TO FILE ', relativePath);
   }
-}
+};
 
-export function exists(path) {
+const exists = (path) => {
   const absPath = pathJoin(path);
   return fs.existsSync(absPath, { recursive: true });
-}
+};
 
-export function createDirectory(path) {
+const createDirectory = (path) => {
   fs.mkdirSync(path);
-}
+};
 
-export function saveConfig(data) {
+const saveConfig = (data) => {
   const path = 'config.json';
   if (exists(path)) {
     let configData = JSON.parse(read(path));
@@ -54,4 +54,6 @@ export function saveConfig(data) {
   } else {
     write(path, JSON.stringify(data), { parser: 'json' });
   }
-}
+};
+
+export { read, write, append, exists, createDirectory, saveConfig };

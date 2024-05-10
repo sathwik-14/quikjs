@@ -1,4 +1,4 @@
-function whatsTaken(userModel) {
+const whatsTaken = (userModel) => {
   let content = ``;
   if (Object.hasOwn(userModel, 'username')) {
     content += `const usernameTaken = async (username) => {
@@ -13,9 +13,9 @@ return !!user;
   };`;
   }
   return content;
-}
+};
 
-function loginThrough(userModel) {
+const loginThrough = (userModel) => {
   let content = ``;
   if (Object.hasOwn(userModel, 'username')) {
     content += `const userData = await db.User.findOne({ where: { username: user.username } });`;
@@ -24,9 +24,9 @@ function loginThrough(userModel) {
     content += `const userData = await db.User.findOne({ where: { email: user.email } });`;
   }
   return content;
-}
+};
 
-function serializeUserContent(userModel) {
+const serializeUserContent = (userModel) => {
   const keys = Object.keys(userModel);
   const validKeys = keys.filter(
     (key) => !['password', 'id', 'createdAt', 'updatedAt'].includes(key),
@@ -48,7 +48,7 @@ function serializeUserContent(userModel) {
   };`;
 
   return content;
-}
+};
 
 export default {
   middleware: `

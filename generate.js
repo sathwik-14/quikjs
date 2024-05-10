@@ -8,7 +8,7 @@ import sampledata from './sampledata.js';
 
 let state;
 
-const loadState = async (input) => {
+const loadState = (input) => {
   try {
     const config = read('config.json');
     if (config.length !== 0) {
@@ -19,17 +19,17 @@ const loadState = async (input) => {
   }
 };
 
-function authMiddleware(roles) {
+const authMiddleware = (roles) => {
   if (state.authentication && roles.length) {
     return `userAuth, checkRole(${JSON.stringify(roles)}), `;
   } else if (state.authentication) {
     return 'userAuth, ';
   }
   return '';
-}
+};
 
-function generateRoutes(routeName, roles) {
-  write(`routes/${routeName}.js`, template.routesContent(routeName));
+const generateRoutes = async (routeName, roles) => {
+  await write(`routes/${routeName}.js`, template.routesContent(routeName));
   const importContent = `const ${routeName}Routes = require("./routes/${routeName}");`;
   const routeContent = `app.use("/api/${routeName}",${authMiddleware(roles)}${routeName}Routes);`;
   let mainFileContent = read('app.js');
@@ -42,7 +42,7 @@ function generateRoutes(routeName, roles) {
     !lines.some((line) => line.includes(importContent))
   ) {
     lines.splice(importRoutesIndex + 1, 0, importContent);
-    write('app.js', lines.join('\n'));
+    await write('app.js', lines.join('\n'));
   }
 
   const useRoutesIndex = lines.findIndex((line) => line.includes('// Routes'));
@@ -51,17 +51,17 @@ function generateRoutes(routeName, roles) {
     !lines.some((line) => line.includes(routeContent))
   ) {
     lines.splice(useRoutesIndex + 1, 0, routeContent);
-    write('app.js', lines.join('\n'));
+    await write('app.js', lines.join('\n'));
   }
-}
+};
 
-async function scaffold(input) {
+const scaffold = async (input) => {
   try {
-    await loadState(input);
-    // uncomment the below code to enter schema manually
+    loadState(input);
+    // uncomment the below code to enter schema manually and uncommer import also for schemaPrompts
     // const schemaData = await schemaPrompts(input);
-    // DEFAULT - predefined schemas - faster development
-    const schemaData = sampledata.alltypes;
+    // checkout sampledata.js for predefined schemas - faster development
+    const schemaData = sampledata.tasks;
     if (Object.keys(schemaData).length) {
       for (const [key, value] of Object.entries(schemaData)) {
         const modelName = key;
@@ -79,7 +79,7 @@ async function scaffold(input) {
             sequelize.controller(modelName);
             break;
         }
-        generateRoutes(modelName, []);
+        await generateRoutes(modelName, []);
         console.log('Generated routes and controllers for ', modelName);
       }
     }
@@ -87,6 +87,6 @@ async function scaffold(input) {
   } catch (err) {
     console.error('something went wrong', err);
   }
-}
+};
 
 export { scaffold, generateRoutes };

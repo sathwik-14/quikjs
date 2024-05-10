@@ -1,9 +1,9 @@
 import templates from './template.js';
-import { format, write, installSync, capitalize } from '../../utils/index.js';
+import { format, write, install, capitalize } from '../../utils/index.js';
 import { execSync, spawnSync } from 'child_process';
 import { generateModel, getType } from './model.js';
 
-function init(db) {
+const init = (db) => {
   const initialization = execSync(
     `npx prisma init --datasource-provider ${db.toLowerCase()}`,
   );
@@ -12,17 +12,14 @@ function init(db) {
   } else {
     console.log('Prisma initialization completed successfully');
   }
-}
+};
 
-async function clientInit() {
+const clientInit = async () =>
   await write('config/db.js', await format(templates.prismaInitContent));
-}
 
-function formatPrisma() {
-  execSync('npx prisma format');
-}
+const formatPrisma = () => execSync('npx prisma format');
 
-function migrate() {
+const migrate = () => {
   formatPrisma();
   const migrateDevProcess = spawnSync('npx', ['prisma', 'migrate', 'dev'], {
     input: '\n',
@@ -38,9 +35,9 @@ function migrate() {
   } else {
     console.log('Prisma migrate dev completed');
   }
-}
+};
 
-function generate() {
+const generate = () => {
   formatPrisma();
   const generateProcess = spawnSync('npx', ['prisma', 'generate'], {
     stdio: 'inherit',
@@ -54,15 +51,15 @@ function generate() {
   } else {
     console.log('Prisma generate completed');
   }
-}
+};
 
-async function setup(db) {
-  installSync('prisma', '@prisma/client');
+const setup = async (db) => {
+  install(['prisma', '@prisma/client']);
   init(db);
   await clientInit();
-}
+};
 
-async function controller(modelName) {
+const controller = async (modelName) => {
   const controllerContent = `const prisma = require('../config/db');
 \n\n  ${templates.createPrismaContent(modelName)}\n
 ${templates.getAllPrismaContent(modelName)}\n
@@ -78,7 +75,7 @@ update${capitalize(modelName)}ById,\n
 delete${capitalize(modelName)}ById\n
 };`;
   await write(`controllers/${modelName}.js`, controllerContent);
-}
+};
 
 export default {
   setup,

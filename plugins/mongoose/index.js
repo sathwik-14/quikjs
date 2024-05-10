@@ -1,8 +1,7 @@
 import templates from '../../templates/content.js';
-import format from '../../utils/format.js';
-import { write, installSync } from '../../utils/index.js';
+import { write, install, format } from '../../utils/index.js';
 
-function type(input) {
+const type = (input) => {
   switch (input.toLowerCase()) {
     case 'string':
       return 'String';
@@ -31,19 +30,14 @@ function type(input) {
     default:
       return 'Unknown';
   }
-}
-
-async function clientInit() {
-  await write('config/db.js', await format(templates.mongooseInit));
-}
-
-async function setup() {
-  installSync('mongoose');
-  await clientInit();
-}
-
-export default {
-  setup,
-  type,
-  clientInit,
 };
+
+const clientInit = async () =>
+  await write('config/db.js', await format(templates.mongooseInit));
+
+const setup = async () => {
+  install(['mongoose']);
+  await clientInit();
+};
+
+export default { setup, type, clientInit };

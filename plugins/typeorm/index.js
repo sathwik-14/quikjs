@@ -1,4 +1,4 @@
-function type(input) {
+const type = (input) => {
   switch (input.toLowerCase()) {
     case 'string':
       return 'String';
@@ -27,7 +27,7 @@ function type(input) {
     default:
       return 'Unknown';
   }
-}
+};
 
 export default {
   type,

@@ -9,7 +9,7 @@ import {
   write,
   saveConfig,
 } from './fs.js';
-import { install, installSync } from './install.js';
+import { install } from './install.js';
 import prompt from './prompt.js';
 
 export {
@@ -17,7 +17,6 @@ export {
   compile,
   format,
   install,
-  installSync,
   prompt,
   read,
   write,

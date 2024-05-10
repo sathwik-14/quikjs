@@ -10,7 +10,7 @@ import {
   createDirectory,
   read,
   write,
-  installSync,
+  install,
   saveConfig,
   prompt,
 } from './utils/index.js';
@@ -19,7 +19,7 @@ import sampledata from './sampledata.js';
 let userModel;
 let models = [];
 
-async function runORMSetup(orm, db) {
+const runORMSetup = async (orm, db) => {
   console.log(`Setting up ${orm}`);
   const ormSetupFunctions = {
     prisma: prisma.setup,
@@ -30,9 +30,9 @@ async function runORMSetup(orm, db) {
     throw new Error(`Unsupported ORM: ${orm}`);
   }
   await ormSetupFunctions[orm](db);
-}
+};
 
-async function generateProjectStructure(input) {
+const generateProjectStructure = async (input) => {
   try {
     const { tools, authentication, logging, error_handling } = input;
     const folders = [
@@ -92,9 +92,9 @@ async function generateProjectStructure(input) {
   } catch {
     console.error('Unable to create project structure');
   }
-}
+};
 
-function installDbDriver(db) {
+const installDbDriver = (db) => {
   const drivers = {
     postgresql: ['pg', 'pg-hstore'],
     mysql: ['mysql2'],
@@ -103,37 +103,45 @@ function installDbDriver(db) {
     mssql: ['tedious'],
     oracledb: ['oracledb'],
   };
-
   const driver = drivers[db.toLowerCase()];
   if (driver) {
-    installSync(...driver);
+    install([driver]);
   }
-}
+};
 
-async function installDependencies(answers) {
+const installDependencies = async (answers) => {
   console.log('Installing dependencies');
-  installSync('express', 'cors', 'dotenv', 'helmet', 'morgan', 'compression');
-  installDbDriver(answers.db);
+  const packages = [
+    'express',
+    'cors',
+    'dotenv',
+    'helmet',
+    'winston',
+    'compression',
+  ];
+  if (answers.production) packages.push('winston', 'pm2', 'express-rate-limit');
   if (answers.authentication) {
     console.log('Setting up  passport,passport-jwt');
-    installSync('passport', 'passport-jwt', 'jsonwebtoken', 'bcrypt');
+    packages.push('passport', 'passport-jwt', 'jsonwebtoken', 'bcrypt');
   }
   if (answers.tools.length) {
     for (const item of answers.tools) {
       switch (item) {
         case 's3':
         case 'sns':
-          installSync('aws-sdk');
+          packages.push('aws-sdk');
           break;
         case 'twilio':
-          installSync('twilio');
+          packages.push('twilio');
       }
     }
   }
+  install(packages);
+  installDbDriver(answers.db);
   await runORMSetup(answers.orm, answers.db);
-}
+};
 
-async function CheckProjectExist(answers) {
+const CheckProjectExist = (answers) => {
   try {
     const data = read('config.json');
     if (data) {
@@ -149,9 +157,9 @@ async function CheckProjectExist(answers) {
   } catch {
     console.log('Initializing project setup');
   }
-}
+};
 
-async function getRoleInput() {
+const getRoleInput = async () => {
   try {
     const roleAnswers = [];
     let confirm = true;
@@ -176,15 +184,15 @@ async function getRoleInput() {
   } catch {
     console.error('Unable to get roles');
   }
-}
+};
 
-async function main() {
+const main = async () => {
   try {
-    // uncomment below line if you want to provide custom input
+    // uncomment below line and import line on top if you want to provide custom input
     // const answers = await projectPrompts();
-    // DEFAULT - below line to choose from preset inputs - faster development
+    // checkout sampledata.js for preset inputs - faster development
     const answers = sampledata.p1;
-    await CheckProjectExist(answers);
+    CheckProjectExist(answers);
     if (answers.authentication) {
       if (answers.roles) answers.roles = await getRoleInput();
       console.log('Let us create User model with required fields');
@@ -209,7 +217,7 @@ async function main() {
   } catch (error) {
     console.log('Unable to generate project due to .', error);
   }
-}
+};
 
 console.time('Time taken');
 await main();

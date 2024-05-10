@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import prettier from 'prettier';
 
 export default async (unformattedText, parser = 'babel') => {

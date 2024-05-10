@@ -1,6 +1,36 @@
 import { read, write, capitalize } from '../../utils/index.js';
 
-export function getType(input, options, db) {
+const convertOptions = (options, db) => {
+  const directives = [];
+
+  // Handle primaryKey with appropriate default based on database
+  if (options.primaryKey) {
+    if (db === 'postgresql') {
+      directives.push('@id @default(autoincrement())'); // Use autoincrement for PostgreSQL
+    } else {
+      directives.push(`@id @default(auto()) @map("_id") @db.ObjectId`); // Default behavior for other databases
+    }
+  }
+
+  // Handle unique constraint
+  if (options.unique) {
+    directives.push('@unique');
+  }
+
+  // Handle foreign key constraint
+  if (options.foreignKey && db == 'mongodb') {
+    directives.push(`@db.ObjectId`);
+  }
+
+  // Handle default value
+  if (options.defaultValue) {
+    directives.push(`@default("${options.defaultValue}")`);
+  }
+
+  return directives.join(' ');
+};
+
+const getType = (input, options, db) => {
   switch (input.toLowerCase()) {
     case 'string':
       return 'String';
@@ -31,39 +61,9 @@ export function getType(input, options, db) {
     default:
       return 'Unknown';
   }
-}
+};
 
-function convertOptions(options, db) {
-  const directives = [];
-
-  // Handle primaryKey with appropriate default based on database
-  if (options.primaryKey) {
-    if (db === 'postgresql') {
-      directives.push('@id @default(autoincrement())'); // Use autoincrement for PostgreSQL
-    } else {
-      directives.push(`@id @default(auto()) @map("_id") @db.ObjectId`); // Default behavior for other databases
-    }
-  }
-
-  // Handle unique constraint
-  if (options.unique) {
-    directives.push('@unique');
-  }
-
-  // Handle foreign key constraint
-  if (options.foreignKey && db == 'mongodb') {
-    directives.push(`@db.ObjectId`);
-  }
-
-  // Handle default value
-  if (options.defaultValue) {
-    directives.push(`@default("${options.defaultValue}")`);
-  }
-
-  return directives.join(' ');
-}
-
-export async function generateModel(modelName, modelData, db) {
+const generateModel = async (modelName, modelData, db) => {
   let prismaModelContent = read('prisma/schema.prisma');
 
   const processedFields = modelData.map((field) => {
@@ -88,4 +88,6 @@ model ${capitalize(modelName)} {
   } else {
     return;
   }
-}
+};
+
+export { getType, generateModel };

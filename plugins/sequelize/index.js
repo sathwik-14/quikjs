@@ -1,13 +1,13 @@
-import { write, capitalize, installSync, compile } from '../../utils/index.js';
+import { write, capitalize, install, compile } from '../../utils/index.js';
 import templates from './template.js';
 import { generateModel } from './model.js';
 
-async function clientInit(db) {
+const clientInit = async (db) => {
   const compiledTemplate = compile(templates.init);
   await write('config/db.js', compiledTemplate({ db }));
-}
+};
 
-function type(input) {
+const type = (input) => {
   switch (input.toLowerCase()) {
     case 'string':
       return 'STRING';
@@ -36,14 +36,14 @@ function type(input) {
     default:
       return 'Unknown';
   }
-}
+};
 
-async function setup(db) {
-  installSync('sequelize', 'sequelize-cli');
+const setup = async (db) => {
+  install(['sequelize', 'sequelize-cli']);
   await clientInit(db);
-}
+};
 
-async function controller(modelName) {
+const controller = async (modelName) => {
   const controllerContent = `const db = require('../models/index');\n
  ${templates.create(modelName)}\n 
  ${templates.getAll(modelName)}\n 
@@ -57,7 +57,7 @@ async function controller(modelName) {
       update${capitalize(modelName)}ById,
         delete${capitalize(modelName)}ById};`;
   await write(`controllers/${modelName}.js`, controllerContent);
-}
+};
 
 export default {
   setup,

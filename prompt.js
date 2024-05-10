@@ -1,7 +1,7 @@
 import { orms, tools } from './constants.js';
 import { prompt } from './utils/index.js';
 
-export async function projectPrompts() {
+export const projectPrompts = async () => {
   return await prompt([
     {
       type: 'input',
@@ -70,9 +70,9 @@ export async function projectPrompts() {
       when: (answers) => answers.authentication,
     },
   ]);
-}
+};
 
-export async function schemaPrompts(input, name = '') {
+export const schemaPrompts = async (input, name = '') => {
   try {
     let tables = [];
     let schemaData = {};
@@ -213,4 +213,4 @@ export async function schemaPrompts(input, name = '') {
     console.log(e);
     console.log('error getting schema details\n' + e);
   }
-}
+};

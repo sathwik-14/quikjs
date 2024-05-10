@@ -4,8 +4,9 @@ export default {
     description: '',
     db: 'mysql', // choose among [mysql,postgresql]
     orm: 'sequelize',
-    logging: true,
-    error_handling: true,
+    logging: false,
+    error_handling: false,
+    production: false,
     tools: ['none'],
     authentication: false,
   },
@@ -596,7 +597,7 @@ export default {
         foreignKey: true,
         refTable: 'users',
         refField: 'id',
-        relationshipType: 'Many-to-One',
+        // relationshipType: 'Many-to-One',
         add_another: false,
       },
       {

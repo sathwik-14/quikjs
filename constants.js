@@ -1,6 +1,6 @@
 import { prisma, sequelize, mongoose, typeorm } from './plugins/index.js';
 
-export const orms = {
+const orms = {
   prisma: {
     id: 1,
     name: 'prisma',
@@ -100,7 +100,7 @@ export const orms = {
   },
 };
 
-export const genericTypes = [
+const genericTypes = [
   'string',
   'integer',
   'float',
@@ -114,7 +114,7 @@ export const genericTypes = [
   'decimal',
 ];
 
-export const tools = [
+const tools = [
   { name: 'none' },
   { name: 's3' },
   { name: 'sns' },
@@ -122,3 +122,5 @@ export const tools = [
   { name: 'msg91' },
   { name: 'sendgrid' },
 ];
+
+export { orms, genericTypes, tools };
