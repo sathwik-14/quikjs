@@ -1,4 +1,4 @@
-export default (input) => `
+export default () => `
 const sgMail = require("@sendgrid/mail");
 
 const apiKey = process.env.SENDGRID_API_KEY;
@@ -19,4 +19,4 @@ module.exports = {
   sendEmail
 };
 
-`
+`;

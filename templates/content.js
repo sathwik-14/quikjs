@@ -1,23 +1,21 @@
-import capitalize from "../utils/capitalize.js";
+import { capitalize } from '../utils/index.js';
 
 export default {
-  routesContent: (serviceName) => `const express = require('express');
+  routesContent: (modelName) => `const express = require('express');
 const router = express.Router();
-const ${serviceName}Controller = require('../controllers/${serviceName}');
+const ${modelName}Controller = require('../controllers/${modelName}');
 
-// GET all ${serviceName}
-router.get('/', ${serviceName}Controller.getAll${capitalize(serviceName)});
-// GET ${serviceName} by ID
-router.get('/:id', ${serviceName}Controller.get${capitalize(serviceName)}ById);
-// Create a new ${serviceName}
-router.post('/', ${serviceName}Controller.create${capitalize(serviceName)});
-// Update ${serviceName} by ID
-router.put('/:id', ${serviceName}Controller.update${capitalize(
-    serviceName
-  )}ById);
-// Delete ${serviceName} by ID
-router.delete('/:id', ${serviceName}Controller.delete${capitalize(
-    serviceName
+// GET all ${modelName}
+router.get('/', ${modelName}Controller.getAll${capitalize(modelName)});
+// GET ${modelName} by ID
+router.get('/:id', ${modelName}Controller.get${capitalize(modelName)}ById);
+// Create a new ${modelName}
+router.post('/', ${modelName}Controller.create${capitalize(modelName)});
+// Update ${modelName} by ID
+router.put('/:id', ${modelName}Controller.update${capitalize(modelName)}ById);
+// Delete ${modelName} by ID
+router.delete('/:id', ${modelName}Controller.delete${capitalize(
+    modelName,
   )}ById);
 
 module.exports = router;`,

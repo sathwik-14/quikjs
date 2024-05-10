@@ -1,4 +1,4 @@
-export default (input) => `
+export default () => `
 const msg91 = require('msg91');
 
 const authKey = process.env.MSG_AUTH_KEY;
@@ -63,4 +63,4 @@ module.exports = {
 };
 
 
-`
+`;

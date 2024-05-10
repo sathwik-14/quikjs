@@ -1,7 +1,5 @@
-#!/usr/bin/env node
-
 /**
- * This is a utility function for string titlecase
+ * This is a utility for string titlecase
  * @param {any} str
  * @returns {any} str
  */

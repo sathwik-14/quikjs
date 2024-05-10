@@ -1,20 +1,14 @@
-import { execSync, exec } from "child_process";
+import { execSync, exec } from 'child_process';
 
-export const install = (...packages) => {
+const install = (packages, options = { sync: true }) => {
   try {
     packages.forEach((pkg) => {
-      exec(`npm install ${pkg}`);
+      if (options.sync) execSync(`npm install ${pkg}`);
+      else exec(`npm install ${pkg}`);
     });
-  } catch (error) {
-    console.error("Error installing packages:", ...packages);
+  } catch {
+    console.error('Error installing packages:', ...packages);
   }
 };
-export const installSync = (...packages) => {
-  try {
-    packages.forEach((pkg) => {
-      execSync(`npm install ${pkg}`);
-    });
-  } catch (error) {
-    console.error("Error installing packages:", ...packages);
-  }
-};
+
+export { install };

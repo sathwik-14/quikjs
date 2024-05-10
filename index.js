@@ -1,23 +1,25 @@
 #!/usr/bin/env node
 
-import inquirer from "inquirer";
-import { appTemplate } from "./templates/app.js";
-import passport from "./templates/passport.js";
-import aws from "./templates/aws.js";
-import twilio from "./templates/twilio.js";
-import { createDirectory, read, write } from "./utils/fs.js";
-import { installSync } from "./utils/install.js";
-import { scaffold } from "./generate.js";
-import { schemaPrompts } from "./prompt.js";
-import prisma from "./plugins/prisma/index.js";
-import sequelize from "./plugins/sequelize/index.js";
-import mongoose from "./plugins/mongoose/index.js";
-import compile from "./utils/compile.js";
+import { appTemplate, passport, aws, twilio } from './templates/index.js';
+import { scaffold } from './generate.js';
+// import { projectPrompts } from './prompt.js';
+import { schemaPrompts } from './prompt.js';
+import { prisma, sequelize, mongoose } from './plugins/index.js';
+import {
+  compile,
+  createDirectory,
+  read,
+  write,
+  install,
+  saveConfig,
+  prompt,
+} from './utils/index.js';
+import sampledata from './sampledata.js';
 
 let userModel;
 let models = [];
 
-async function runORMSetup(orm, db) {
+const runORMSetup = async (orm, db) => {
   console.log(`Setting up ${orm}`);
   const ormSetupFunctions = {
     prisma: prisma.setup,
@@ -28,35 +30,38 @@ async function runORMSetup(orm, db) {
     throw new Error(`Unsupported ORM: ${orm}`);
   }
   await ormSetupFunctions[orm](db);
-}
+};
 
-async function generateProjectStructure(input) {
+const generateProjectStructure = async (input) => {
   try {
-    const { db, orm, tools, authentication, logging, error_handling } = input;
+    const { tools, authentication, logging, error_handling } = input;
     const folders = [
-      "controllers",
-      "models",
-      "routes",
-      "middlewares",
-      "utils",
-      "config",
+      'controllers',
+      'models',
+      'routes',
+      'middlewares',
+      'utils',
+      'config',
     ];
     const files = [
-      { path: "app.js", content: compile(appTemplate)({ input }) },
-      { path: ".env", content: "DATABASE_URL=\"\"" },
-      { path: ".gitignore", content: "node_modules\n.env\n" },
-      { path: "README.md", content: "# Your Project Name\n\nProject documentation goes here." },
+      { path: 'app.js', content: compile(appTemplate)({ input }) },
+      { path: '.env', content: 'DATABASE_URL=""' },
+      { path: '.gitignore', content: 'node_modules\n.env\n' },
+      {
+        path: 'README.md',
+        content: '# Your Project Name\n\nProject documentation goes here.',
+      },
     ];
-    const toolFiles = {
-      "s3": [
-        { path: "config/aws.js", content: aws.s3.config(input) },
-        { path: "utils/s3.js", content: aws.s3.utils(input) }
-      ],
-      "sns": [{ path: "utils/sns.js", content: aws.sns(input) }],
-      "twilio": [{ path: "utils/twilio.js", content: twilio(input) }]
-    };
 
     if (tools.length) {
+      const toolFiles = {
+        s3: [
+          { path: 'config/aws.js', content: aws.s3.config() },
+          { path: 'utils/s3.js', content: aws.s3.utils() },
+        ],
+        sns: [{ path: 'utils/sns.js', content: aws.sns() }],
+        twilio: [{ path: 'utils/twilio.js', content: twilio() }],
+      };
       tools.forEach((tool) => {
         files.push(...(toolFiles[tool] || []));
       });
@@ -64,157 +69,156 @@ async function generateProjectStructure(input) {
 
     if (authentication) {
       files.push(
-        { path: "middlewares/passport.js", content: passport.middleware },
-        { path: "utils/auth.js", content: passport.util(input, userModel) }
+        { path: 'middlewares/passport.js', content: passport.middleware },
+        { path: 'utils/auth.js', content: passport.util(input, userModel) },
       );
     }
 
     if (logging) {
-      files.push({ path: "access.log", content: "" });
+      files.push({ path: 'access.log', content: '' });
     }
 
     if (error_handling) {
-      files.push({ path: "error.log", content: "" });
+      files.push({ path: 'error.log', content: '' });
     }
 
     folders.forEach(createDirectory);
 
-    await Promise.all(files.map(async (file) => {
-      [".env", "README.md", ".gitignore",].includes(file.path)
-        ? await write(file.path, file.content, {format:false})
+    files.map(async (file) => {
+      ['.env', 'README.md', '.gitignore'].includes(file.path)
+        ? await write(file.path, file.content, { format: false })
         : await write(file.path, file.content);
-    }));
-
-    await runORMSetup(orm, db);
-  } catch (error) {
-    console.error("Error creating project structure:", error);
+    });
+  } catch {
+    console.error('Unable to create project structure');
   }
-}
+};
 
-function installDbDriver(db) {
+const installDbDriver = (db) => {
   const drivers = {
-    "postgresql": ["pg", "pg-hstore"],
-    "mysql": ["mysql2"],
-    "mariadb": ["mariadb"],
-    "sqlite": ["sqlite3"],
-    "mssql": ["tedious"],
-    "oracledb": ["oracledb"]
+    postgresql: ['pg', 'pg-hstore'],
+    mysql: ['mysql2'],
+    mariadb: ['mariadb'],
+    sqlite: ['sqlite3'],
+    mssql: ['tedious'],
+    oracledb: ['oracledb'],
   };
-
   const driver = drivers[db.toLowerCase()];
   if (driver) {
-    installSync(...driver);
+    install([driver]);
   }
-}
+};
 
-
-async function installDependencies(answers) {
-  console.log("Installing dependencies");
-  installSync("express", "cors", "dotenv", "helmet", "morgan", "compression");
-  installDbDriver(answers.db)
+const installDependencies = async (answers) => {
+  console.log('Installing dependencies');
+  const packages = [
+    'express',
+    'cors',
+    'dotenv',
+    'helmet',
+    'winston',
+    'compression',
+  ];
+  if (answers.production) packages.push('winston', 'pm2', 'express-rate-limit');
   if (answers.authentication) {
-    console.log("Setting up  passport,passport-jwt");
-    installSync("passport", "passport-jwt", "jsonwebtoken", "bcrypt");
+    console.log('Setting up  passport,passport-jwt');
+    packages.push('passport', 'passport-jwt', 'jsonwebtoken', 'bcrypt');
   }
   if (answers.tools.length) {
     for (const item of answers.tools) {
       switch (item) {
-        case "s3":
-        case "sns":
-          installSync("aws-sdk");
+        case 's3':
+        case 'sns':
+          packages.push('aws-sdk');
           break;
-        case "twilio":
-          installSync("twilio");
+        case 'twilio':
+          packages.push('twilio');
       }
     }
   }
-}
+  install(packages);
+  installDbDriver(answers.db);
+  await runORMSetup(answers.orm, answers.db);
+};
 
-async function CheckProjectExist() {
+const CheckProjectExist = (answers) => {
   try {
-    const data = await read("config.json");
+    const data = read('config.json');
     if (data) {
       const config = JSON.parse(data);
       if (!config?.name) {
-        console.log("Config file is empty or missing name property");
+        console.log('Config file is empty or missing name property');
       }
       if (answers.name === config.name) {
-        console.log("Project already created");
+        console.log('Project already created');
         return;
       }
     }
-  } catch (error) {
-    console.log("Initializing project setup");
+  } catch {
+    console.log('Initializing project setup');
   }
-}
+};
 
-async function getRoleInput() {
+const getRoleInput = async () => {
   try {
     const roleAnswers = [];
     let confirm = true;
     while (confirm) {
-      const { addRole } = await inquirer.prompt([
+      const { addRole } = await prompt([
         {
-          type: "confirm",
-          name: "addRole",
-          message: "Do you want to add a role?",
+          type: 'confirm',
+          name: 'addRole',
+          message: 'Do you want to add a role?',
           default: true,
         },
       ]);
       if (!addRole) {
         confirm = false;
       }
-      const { role } = await inquirer.prompt([
-        { type: "input", name: "role", message: "Enter the role:" },
+      const { role } = await prompt([
+        { type: 'input', name: 'role', message: 'Enter the role:' },
       ]);
       roleAnswers.push(role);
     }
     return roleAnswers;
-  } catch (error) {
-    console.error("Error getting role input:", error);
-    throw error;
+  } catch {
+    console.error('Unable to get roles');
   }
-}
+};
 
-async function main() {
+const main = async () => {
   try {
-    const answers = {
-      name: "todos",
-      description: "",
-      db: "mysql",
-      orm: "sequelize",
-      logging: true,
-      error_handling: true,
-      tools: ["none"],
-      authentication: false,
-    };
-    await CheckProjectExist();
+    // uncomment below line and import line on top if you want to provide custom input
+    // const answers = await projectPrompts();
+    // checkout sampledata.js for preset inputs - faster development
+    const answers = sampledata.p1;
+    CheckProjectExist(answers);
     if (answers.authentication) {
       if (answers.roles) answers.roles = await getRoleInput();
-      console.log("Let us create User model with required fields");
-      const userModel = await schemaPrompts(answers, "user");
-      const name = "user";
+      console.log('Let us create User model with required fields');
+      const userModel = await schemaPrompts(answers, 'user');
+      const name = 'user';
       switch (answers.orm) {
-        case "prisma":
+        case 'prisma':
           prisma.model(name, userModel, answers.db);
           break;
-        case "sequelize":
+        case 'sequelize':
           sequelize.model(name, userModel);
           break;
       }
     }
-    installDependencies(answers);
     await generateProjectStructure(answers);
-    console.log("Started generating scaffold...");
+    saveConfig(answers);
+    console.log('Started generating scaffold...');
     await scaffold(answers);
-    if (userModel) models.push({ name: "user", model: userModel });
-    console.log("Project setup successful\n");
+    if (userModel) models.push({ name: 'user', model: userModel });
+    await installDependencies(answers);
+    console.log('Project setup successful');
   } catch (error) {
-    console.log(error);
-    console.log("Unable to generate project.");
+    console.log('Unable to generate project due to .', error);
   }
-}
+};
 
-console.time("Time taken");
-await main(); 
-console.timeEnd("Time taken");
+console.time('Time taken');
+await main();
+console.timeEnd('Time taken');

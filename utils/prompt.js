@@ -1,6 +1,6 @@
-import inquirer from "inquirer";
+import inquirer from 'inquirer';
 
-export const ask = async (questions) => {
+export default async (questions) => {
   const answers = await inquirer.prompt(questions);
   return answers;
 };

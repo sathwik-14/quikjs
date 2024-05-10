@@ -1,7 +1,6 @@
-
 export default {
   s3: {
-    config: (input) => `
+    config: () => `
 const AWS = require('aws-sdk');
 
 const s3 = new AWS.S3({
@@ -16,7 +15,7 @@ module.exports = {
     BUCKET
 }
     `,
-    utils: (input) => `
+    utils: () => `
     const {s3,BUCKET} = require("../config/aws.js");
     const path = require('path');
 
@@ -151,7 +150,7 @@ module.exports = {
         }
     `,
   },
-  sns: (input) => `
+  sns: () => `
 const AWS = require("aws-sdk");
 
 const sendMessageToSnsTopic = async (message, topicArn, region = "ap-south-1") => {
@@ -183,5 +182,5 @@ const sendMessageToSnsTopic = async (message, topicArn, region = "ap-south-1") =
   module.exports = {
     sendMessageToSnsTopic
   }
-  `
+  `,
 };

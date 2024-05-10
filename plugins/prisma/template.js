@@ -1,4 +1,4 @@
-import capitalize from "../../utils/capitalize.js";
+import { capitalize } from '../../utils/index.js';
 
 export default {
   prismaInitContent: `
@@ -6,23 +6,23 @@ export default {
     const prisma = new PrismaClient();
     module.exports = prisma;
     `,
-  createPrismaContent: (serviceName) => `
-    async function create${capitalize(serviceName)}(req, res) {
+  createPrismaContent: (modelName) => `
+    async function create${capitalize(modelName)}(req, res) {
         try {
           req.body = req.body || {}
             const new${capitalize(
-              serviceName
-            )} = await prisma.${serviceName}.create({
+              modelName,
+            )} = await prisma.${modelName}.create({
                 data: req.body
             });
-            res.status(201).json(new${capitalize(serviceName)});
+            res.status(201).json(new${capitalize(modelName)});
         } catch (error) {
           res.status(400).json({ error });
         }
     }
     `,
-  getAllPrismaContent: (serviceName) => `
-      async function getAll${capitalize(serviceName)}(req, res) {
+  getAllPrismaContent: (modelName) => `
+      async function getAll${capitalize(modelName)}(req, res) {
           try {
               let { page = 1, limit = 10, sortBy, sortOrder } = req.query;
       
@@ -42,74 +42,74 @@ export default {
                   orderBy: sortBy ? { [sortBy]: sortOrder || 'asc' } : undefined, // Sort results
               };
       
-              const ${serviceName.toLowerCase()} = await prisma.${serviceName}.findMany(options);
+              const ${modelName.toLowerCase()} = await prisma.${modelName}.findMany(options);
       
-              res.json(${serviceName.toLowerCase()});
+              res.json(${modelName.toLowerCase()});
           } catch (error) {
               console.error(error);
               res.status(500).json({ error: error.meta.message });
           }
       }
       `,
-  getByIdPrismaContent: (serviceName) => `
-    async function get${capitalize(serviceName)}ById(req, res) {
+  getByIdPrismaContent: (modelName) => `
+    async function get${capitalize(modelName)}ById(req, res) {
     try {
-        const ${serviceName.toLowerCase()} = await prisma.${serviceName}.findFirst({
+        const ${modelName.toLowerCase()} = await prisma.${modelName}.findFirst({
             where: {
                 id: req.params.id
             }
         });
-        if (!${serviceName.toLowerCase()}) {
+        if (!${modelName.toLowerCase()}) {
             return res.status(404).json({ error: '${capitalize(
-              serviceName
+              modelName,
             )} not found' });
         }
-        res.json(${serviceName.toLowerCase()});
+        res.json(${modelName.toLowerCase()});
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: error.meta.message });
     }
     }
       `,
-  updatePrismaContent: (serviceName) => `
-    async function update${capitalize(serviceName)}ById(req, res) {
+  updatePrismaContent: (modelName) => `
+    async function update${capitalize(modelName)}ById(req, res) {
     try {
         const updated${capitalize(
-          serviceName
-        )} = await prisma.${serviceName}.update({
+          modelName,
+        )} = await prisma.${modelName}.update({
             where: {
                 id: req.params.id
             },
             data: req.body
         });
-        if (!updated${capitalize(serviceName)}) {
+        if (!updated${capitalize(modelName)}) {
             return res.status(404).json({ error: '${capitalize(
-              serviceName
+              modelName,
             )} not found' });
         }
-        res.json(updated${capitalize(serviceName)});
+        res.json(updated${capitalize(modelName)});
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: error.meta.message });
     }
     }
       `,
-  deletePrismaContent: (serviceName) => `
-    async function delete${capitalize(serviceName)}ById(req, res) {
+  deletePrismaContent: (modelName) => `
+    async function delete${capitalize(modelName)}ById(req, res) {
     try {
         const deleted${capitalize(
-          serviceName
-        )} = await prisma.${serviceName}.delete({
+          modelName,
+        )} = await prisma.${modelName}.delete({
             where: {
                 id: req.params.id
             }
         });
-        if (!deleted${capitalize(serviceName)}) {
+        if (!deleted${capitalize(modelName)}) {
             return res.status(404).json({ error: '${capitalize(
-              serviceName
+              modelName,
             )} not found' });
         }
-        res.json({ message: '${capitalize(serviceName)} deleted successfully' });
+        res.json({ message: '${capitalize(modelName)} deleted successfully' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: error.meta.message });
