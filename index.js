@@ -3,7 +3,7 @@
 import { appTemplate, passport, aws, twilio } from './templates/index.js';
 import { scaffold } from './generate.js';
 // import { projectPrompts } from './prompt.js';
-import { schemaPrompts } from './prompt.js';
+// import { schemaPrompts } from './prompt.js';
 import { prisma, sequelize, mongoose } from './plugins/index.js';
 import {
   compile,
@@ -12,7 +12,8 @@ import {
   write,
   install,
   saveConfig,
-  prompt,
+  // uncomment to work on RBAC
+  // prompt,
 } from './utils/index.js';
 import sampledata from './sampledata.js';
 
@@ -42,6 +43,8 @@ const generateProjectStructure = async (input) => {
       'middlewares',
       'utils',
       'config',
+      'validation',
+      'validation/schemas',
     ];
     const files = [
       { path: 'app.js', content: compile(appTemplate)({ input }) },
@@ -118,7 +121,9 @@ const installDependencies = async (answers) => {
     'helmet',
     'winston',
     'compression',
+    'joi',
   ];
+  if (answers.error_handling) packages.push('morgan');
   if (answers.production) packages.push('winston', 'pm2', 'express-rate-limit');
   if (answers.authentication) {
     console.log('Setting up  passport,passport-jwt');
@@ -159,32 +164,33 @@ const CheckProjectExist = (answers) => {
   }
 };
 
-const getRoleInput = async () => {
-  try {
-    const roleAnswers = [];
-    let confirm = true;
-    while (confirm) {
-      const { addRole } = await prompt([
-        {
-          type: 'confirm',
-          name: 'addRole',
-          message: 'Do you want to add a role?',
-          default: true,
-        },
-      ]);
-      if (!addRole) {
-        confirm = false;
-      }
-      const { role } = await prompt([
-        { type: 'input', name: 'role', message: 'Enter the role:' },
-      ]);
-      roleAnswers.push(role);
-    }
-    return roleAnswers;
-  } catch {
-    console.error('Unable to get roles');
-  }
-};
+//uncomment to work on RBAC
+// const getRoleInput = async () => {
+//   try {
+//     const roleAnswers = [];
+//     let confirm = true;
+//     while (confirm) {
+//       const { addRole } = await prompt([
+//         {
+//           type: 'confirm',
+//           name: 'addRole',
+//           message: 'Do you want to add a role?',
+//           default: true,
+//         },
+//       ]);
+//       if (!addRole) {
+//         confirm = false;
+//       }
+//       const { role } = await prompt([
+//         { type: 'input', name: 'role', message: 'Enter the role:' },
+//       ]);
+//       roleAnswers.push(role);
+//     }
+//     return roleAnswers;
+//   } catch {
+//     console.error('Unable to get roles');
+//   }
+// };
 
 const main = async () => {
   try {
@@ -192,21 +198,24 @@ const main = async () => {
     // const answers = await projectPrompts();
     // checkout sampledata.js for preset inputs - faster development
     const answers = sampledata.p1;
+    // uncomment to auth feature
+    // let {authentication, roles, orm, db } = answers;
     CheckProjectExist(answers);
-    if (answers.authentication) {
-      if (answers.roles) answers.roles = await getRoleInput();
-      console.log('Let us create User model with required fields');
-      const userModel = await schemaPrompts(answers, 'user');
-      const name = 'user';
-      switch (answers.orm) {
-        case 'prisma':
-          prisma.model(name, userModel, answers.db);
-          break;
-        case 'sequelize':
-          sequelize.model(name, userModel);
-          break;
-      }
-    }
+    // uncomment to auth feature
+    // if (authentication) {
+    //   if (roles) roles = await getRoleInput();
+    //   console.log('Let us create User model with required fields');
+    //   const userModel = await schemaPrompts(answers, 'user');
+    //   const name = 'user';
+    //   switch (orm) {
+    //     case 'prisma':
+    //       prisma.model(name, userModel, db);
+    //       break;
+    //     case 'sequelize':
+    //       sequelize.model(name, userModel);
+    //       break;
+    //   }
+    // }
     await generateProjectStructure(answers);
     saveConfig(answers);
     console.log('Started generating scaffold...');

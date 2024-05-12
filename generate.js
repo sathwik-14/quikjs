@@ -4,6 +4,7 @@ import template from './templates/content.js';
 import { read, saveConfig, write } from './utils/index.js';
 import { prisma, sequelize } from './plugins/index.js';
 import sampledata from './sampledata.js';
+import content from './templates/content.js';
 // import { schemaPrompts } from './prompt.js';
 
 let state;
@@ -28,8 +29,7 @@ const authMiddleware = (roles) => {
   return '';
 };
 
-const generateRoutes = async (routeName, roles) => {
-  await write(`routes/${routeName}.js`, template.routesContent(routeName));
+const updateRouteInMain = async (routeName, roles) => {
   const importContent = `const ${routeName}Routes = require("./routes/${routeName}");`;
   const routeContent = `app.use("/api/${routeName}",${authMiddleware(roles)}${routeName}Routes);`;
   let mainFileContent = read('app.js');
@@ -55,6 +55,29 @@ const generateRoutes = async (routeName, roles) => {
   }
 };
 
+const generateRoutes = async (routeName, roles) => {
+  await write(`routes/${routeName}.js`, template.routesContent(routeName));
+  await updateRouteInMain(routeName, roles);
+};
+
+const setupJoiValidation = async () => {
+  await write(
+    'validation/validateMiddleware.js',
+    content.validation.middleware,
+  );
+  await write(
+    'validation/createValidator.js',
+    content.validation.createValidator,
+  );
+};
+
+const generateValidationSchemas = async (modelName, model) => {
+  await write(
+    `validation/schemas/${modelName}Schema.js`,
+    content.validation.schema(modelName, model),
+  );
+};
+
 const scaffold = async (input) => {
   try {
     loadState(input);
@@ -62,6 +85,7 @@ const scaffold = async (input) => {
     // const schemaData = await schemaPrompts(input);
     // checkout sampledata.js for predefined schemas - faster development
     const schemaData = sampledata.tasks;
+    await setupJoiValidation();
     if (Object.keys(schemaData).length) {
       for (const [key, value] of Object.entries(schemaData)) {
         const modelName = key;
@@ -79,6 +103,7 @@ const scaffold = async (input) => {
             sequelize.controller(modelName);
             break;
         }
+        await generateValidationSchemas(modelName, model);
         await generateRoutes(modelName, []);
         console.log('Generated routes and controllers for ', modelName);
       }

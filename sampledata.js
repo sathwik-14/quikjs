@@ -4,8 +4,8 @@ export default {
     description: '',
     db: 'mysql', // choose among [mysql,postgresql]
     orm: 'sequelize',
-    logging: false,
-    error_handling: false,
+    logging: true,
+    error_handling: true,
     production: false,
     tools: ['none'],
     authentication: false,

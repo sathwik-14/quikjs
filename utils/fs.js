@@ -15,6 +15,22 @@ const read = (relativePath) => {
   }
 };
 
+// const createDirectoryRecursive = (pathFragments) => {
+//   let currentPath = '';
+//   for (const fragment of pathFragments) {
+//     currentPath += fragment + '/';
+//     try {
+//       fs.mkdirSync(currentPath);
+//       console.log(`Directory created: ${currentPath}`);
+//     } catch (err) {
+//       if (err.code !== 'EEXIST') {
+//         // Handle other errors besides directory already existing
+//         console.error(err);
+//       }
+//     }
+//   }
+// }
+
 const write = async (relativePath, content, options = { format: true }) => {
   try {
     const absPath = pathJoin(relativePath);
@@ -22,8 +38,8 @@ const write = async (relativePath, content, options = { format: true }) => {
       content = await format(content, options?.parser);
     }
     fs.writeFileSync(absPath, content);
-  } catch {
-    console.error('FAILED WRITING TO FILE ', relativePath);
+  } catch (error) {
+    console.error('FAILED WRITING TO FILE ', relativePath, error);
   }
 };
 
