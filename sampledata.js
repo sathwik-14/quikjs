@@ -2,7 +2,7 @@ export default {
   p1: {
     name: 'todos',
     description: '',
-    db: 'mysql', // choose among [mysql,postgresql]
+    db: 'postgresql', // choose among [mysql,postgresql]
     orm: 'sequelize',
     logging: true,
     error_handling: true,

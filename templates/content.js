@@ -1,6 +1,6 @@
 import { capitalize } from '../utils/index.js';
 
-const schemaFields = (model) => {
+const schemaFields = (type, model) => {
   const getType = (type) => {
     switch (type) {
       case 'STRING':
@@ -23,38 +23,50 @@ const schemaFields = (model) => {
   };
   let content = [];
   model.forEach((item) => {
-    content.push(
-      `${item.name}:Joi.${getType(item.type)}()${item.allowNulls ? '' : '.required()'}`,
-    );
+    switch (type) {
+      case 'create':
+        content.push(
+          `${item.name}:Joi.${getType(item.type)}()${item.allowNulls ? '' : '.required()'}`,
+        );
+        break;
+      case 'update':
+        content.push(`${item.name}:Joi.${getType(item.type)}()`);
+        break;
+    }
   });
   return content.join(',\n');
 };
 
 export default {
   validation: {
-    createValidator: `const createValidator = (schema) => 
-      async (payload) => {
-        return await schema.validate(payload, {
-          // shows all error messages instead of first error message
-          abortEarly: false
-        })
+    createValidator: `const createValidator = async (payload, schema) => {
+      const { error, value } = await schema.validate(payload, {
+        // shows all error messages instead of first error message
+        abortEarly: false,
+      });
+      if (error) {
+        throw error;
+      }
+      return value;
       }
     
     module.exports = createValidator`,
-    middleware: `let createValidator = require('./createValidator')
+    middleware: `const createValidator = require('./createValidator')
 
-    let validateMiddleware = (schema) =>
+    const validateMiddleware = (schema) =>
       (req, res, next) => {
-        let payload = req.body
-        let validate = createValidator(schema)
+        const payload = req.body
+        const validate = createValidator(payload, schema)
     
         // proceed next if validated otherwise catch error and pass onto express error handler
-        validate(payload)
+        validate
           .then(validated => {
             req.body = validated
             next()
           })
-          .catch(next)
+          .catch(error => {
+            res.status(400).send(error.details)
+          })
       }
     
     module.exports = validateMiddleware`,
@@ -63,21 +75,20 @@ export default {
     
     // Schema for creating a product, all fields are required
     let create${capitalize(modelName)}Schema = Joi.object().keys({
-      ${schemaFields(model)}
+      ${schemaFields('create', model)}
     })
     
     // Schema for editing a product, all fields are optional and we can have a custom error message
-    let edit${capitalize(modelName)}Schema = Joi.object().keys({
-      ${schemaFields(model)}  
+    let update${capitalize(modelName)}Schema = Joi.object().keys({
+      ${schemaFields('update', model)}  
     })
     
     module.exports = { 
       create${capitalize(modelName)}Schema, 
-      edit${capitalize(modelName)}Schema
+      update${capitalize(modelName)}Schema
     }`,
   },
-  routesContent: (modelName) => `const express = require('express');
-const router = express.Router();
+  routesContent: (modelName) => `const router = require('express').Router();
 const ${modelName}Controller = require('../controllers/${modelName}');
 const validate = require('../validation/validateMiddleware');
 const { create${capitalize(modelName)}Schema, update${capitalize(modelName)}Schema} = require('../validation/schemas/${modelName}Schema')

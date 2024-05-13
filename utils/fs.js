@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import format from './format.js';
+import chalk from 'chalk';
 
 const pathJoin = (relPath) => {
   /* eslint-disable no-undef */
@@ -38,6 +39,7 @@ const write = async (relativePath, content, options = { format: true }) => {
       content = await format(content, options?.parser);
     }
     fs.writeFileSync(absPath, content);
+    console.log(chalk.bgGreen` Update `, ' ', relativePath);
   } catch (error) {
     console.error('FAILED WRITING TO FILE ', relativePath, error);
   }
@@ -59,6 +61,7 @@ const exists = (path) => {
 
 const createDirectory = (path) => {
   fs.mkdirSync(path);
+  console.log(chalk.bgGreen` Create `, ' ', path);
 };
 
 const saveConfig = (data) => {

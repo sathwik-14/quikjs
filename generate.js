@@ -30,28 +30,28 @@ const authMiddleware = (roles) => {
 };
 
 const updateRouteInMain = async (routeName, roles) => {
-  const importContent = `const ${routeName}Routes = require("./routes/${routeName}");`;
-  const routeContent = `app.use("/api/${routeName}",${authMiddleware(roles)}${routeName}Routes);`;
-  let mainFileContent = read('app.js');
+  const importContent = `const ${routeName}Routes = require("./${routeName}");`;
+  const routeContent = `router.use("/${routeName}",${authMiddleware(roles)}${routeName}Routes);`;
+  let mainFileContent = read('routes/index.js');
   let lines = mainFileContent.split('\n');
   const importRoutesIndex = lines.findIndex((line) =>
-    line.includes('// Import routes'),
+    line.includes('// import routes'),
   );
   if (
     importRoutesIndex !== -1 &&
     !lines.some((line) => line.includes(importContent))
   ) {
     lines.splice(importRoutesIndex + 1, 0, importContent);
-    await write('app.js', lines.join('\n'));
+    await write('routes/index.js', lines.join('\n'));
   }
 
-  const useRoutesIndex = lines.findIndex((line) => line.includes('// Routes'));
+  const useRoutesIndex = lines.findIndex((line) => line.includes('// routes'));
   if (
     useRoutesIndex !== -1 &&
     !lines.some((line) => line.includes(routeContent))
   ) {
     lines.splice(useRoutesIndex + 1, 0, routeContent);
-    await write('app.js', lines.join('\n'));
+    await write('routes/index.js', lines.join('\n'));
   }
 };
 

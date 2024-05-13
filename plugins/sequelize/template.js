@@ -31,6 +31,7 @@ export default {
       }
     }
     `,
+
   getAll: (modelName) => `
     async function getAll${capitalize(modelName)}(req, res) {
       try {
@@ -64,6 +65,7 @@ export default {
       }
     }
     `,
+
   getById: (modelName) => `
     async function get${capitalize(modelName)}ById(req, res) {
       try {
@@ -81,11 +83,12 @@ export default {
       }
     }
     `,
+
   update: (modelName) => `
     async function update${capitalize(modelName)}ById(req, res) {
       try {
         const { id } = req.params;
-        const [updatedCount] = await db.${capitalize(
+        const [updatedCount, newValue] = await db.${capitalize(
           modelName,
         )}.update(req.body, { where: { id } });
         if (updatedCount === 0) {
@@ -95,12 +98,13 @@ export default {
         }
         res.status(200).json({ message: '${capitalize(
           modelName,
-        )} updated successfully' });
+        )} updated successfully', newValue });
       } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
       }
     }`,
+
   delete: (modelName) => `
     async function delete${capitalize(modelName)}ById(req, res) {
       try {
@@ -121,6 +125,7 @@ export default {
         res.status(500).json({ error: 'Internal server error' });
       }
     }`,
+
   init: `
     const { Sequelize } = require("sequelize");
     require("dotenv").config();

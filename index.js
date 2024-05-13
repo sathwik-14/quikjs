@@ -48,6 +48,10 @@ const generateProjectStructure = async (input) => {
     ];
     const files = [
       { path: 'app.js', content: compile(appTemplate)({ input }) },
+      {
+        path: 'routes/index.js',
+        content: `const router = require('express').Router()\n\n// import routes\n\n// routes\n\nmodule.exports=router`,
+      },
       { path: '.env', content: 'DATABASE_URL=""' },
       { path: '.gitignore', content: 'node_modules\n.env\n' },
       {
@@ -97,22 +101,21 @@ const generateProjectStructure = async (input) => {
   }
 };
 
-const installDbDriver = (db) => {
+const getDbDriver = (db) => {
   const drivers = {
-    postgresql: ['pg', 'pg-hstore'],
+    postgresql: ['pg'],
     mysql: ['mysql2'],
     mariadb: ['mariadb'],
     sqlite: ['sqlite3'],
     mssql: ['tedious'],
     oracledb: ['oracledb'],
   };
-  const driver = drivers[db.toLowerCase()];
-  if (driver) {
-    install([driver]);
-  }
+  return drivers[db.toLowerCase()];
 };
 
 const installDependencies = async (answers) => {
+  const { error_handling, production, authentication, tools, db, orm } =
+    answers;
   console.log('Installing dependencies');
   const packages = [
     'express',
@@ -123,14 +126,14 @@ const installDependencies = async (answers) => {
     'compression',
     'joi',
   ];
-  if (answers.error_handling) packages.push('morgan');
-  if (answers.production) packages.push('winston', 'pm2', 'express-rate-limit');
-  if (answers.authentication) {
+  if (error_handling) packages.push('morgan');
+  if (production) packages.push('winston', 'pm2', 'express-rate-limit');
+  if (authentication) {
     console.log('Setting up  passport,passport-jwt');
     packages.push('passport', 'passport-jwt', 'jsonwebtoken', 'bcrypt');
   }
-  if (answers.tools.length) {
-    for (const item of answers.tools) {
+  if (tools.length) {
+    for (const item of tools) {
       switch (item) {
         case 's3':
         case 'sns':
@@ -141,9 +144,9 @@ const installDependencies = async (answers) => {
       }
     }
   }
+  packages.push(getDbDriver(db));
   install(packages);
-  installDbDriver(answers.db);
-  await runORMSetup(answers.orm, answers.db);
+  await runORMSetup(orm, db);
 };
 
 const CheckProjectExist = (answers) => {
