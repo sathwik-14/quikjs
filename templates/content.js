@@ -88,6 +88,7 @@ export default {
       update${capitalize(modelName)}Schema
     }`,
   },
+
   routesContent: (modelName) => `const router = require('express').Router();
 const ${modelName}Controller = require('../controllers/${modelName}');
 const validate = require('../validation/validateMiddleware');

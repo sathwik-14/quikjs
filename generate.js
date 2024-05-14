@@ -29,8 +29,9 @@ const authMiddleware = (roles) => {
   return '';
 };
 
-const updateRouteInMain = async (routeName, roles) => {
-  const importContent = `const ${routeName}Routes = require("./${routeName}");`;
+const updateRouteInMain = async (routeName, roles = []) => {
+  let importContent = `const ${routeName}Routes = require("./${routeName}");`;
+
   const routeContent = `router.use("/${routeName}",${authMiddleware(roles)}${routeName}Routes);`;
   let mainFileContent = read('routes/index.js');
   let lines = mainFileContent.split('\n');

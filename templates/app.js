@@ -38,7 +38,7 @@ app.get("/auth/profile", userAuth, (req,res) => res.status(200).json({ user: ser
   return '';
 });
 
-Handlebars.registerHelper('authImports', (authentication, roles) => {
+Handlebars.registerHelper('authImports', (authentication, roles = []) => {
   if (authentication && roles.length) {
     return `const passport = require("passport");
 const {userAuth, userRegister, userLogin, checkRole, serializeUser} = require("./utils/auth")`;

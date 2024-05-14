@@ -60,6 +60,7 @@ const exists = (path) => {
 };
 
 const createDirectory = (path) => {
+  if (exists(path)) return;
   fs.mkdirSync(path);
   console.log(chalk.bgGreen` Create `, ' ', path);
 };

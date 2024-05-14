@@ -50,7 +50,11 @@ const generateProjectStructure = async (input) => {
       { path: 'app.js', content: compile(appTemplate)({ input }) },
       {
         path: 'routes/index.js',
-        content: `const router = require('express').Router()\n\n// import routes\n\n// routes\n\nmodule.exports=router`,
+        content: `const router = require('express').Router()\n
+        ${authentication ? "const { userAuth } = require('../utils/auth')" : ''}\n
+        // import routes\n\n
+        // routes\n\n
+        module.exports=router`,
       },
       { path: '.env', content: 'DATABASE_URL=""' },
       { path: '.gitignore', content: 'node_modules\n.env\n' },
@@ -96,8 +100,8 @@ const generateProjectStructure = async (input) => {
         ? await write(file.path, file.content, { format: false })
         : await write(file.path, file.content);
     });
-  } catch {
-    console.error('Unable to create project structure');
+  } catch (err) {
+    console.error('Unable to create project structure', err);
   }
 };
 
@@ -114,8 +118,7 @@ const getDbDriver = (db) => {
 };
 
 const installDependencies = async (answers) => {
-  const { error_handling, production, authentication, tools, db, orm } =
-    answers;
+  const { error_handling, production, authentication, tools, db } = answers;
   console.log('Installing dependencies');
   const packages = [
     'express',
@@ -146,7 +149,6 @@ const installDependencies = async (answers) => {
   }
   packages.push(getDbDriver(db));
   install(packages);
-  await runORMSetup(orm, db);
 };
 
 const CheckProjectExist = (answers) => {
@@ -167,33 +169,33 @@ const CheckProjectExist = (answers) => {
   }
 };
 
-//uncomment to work on RBAC
-// const getRoleInput = async () => {
-//   try {
-//     const roleAnswers = [];
-//     let confirm = true;
-//     while (confirm) {
-//       const { addRole } = await prompt([
-//         {
-//           type: 'confirm',
-//           name: 'addRole',
-//           message: 'Do you want to add a role?',
-//           default: true,
-//         },
-//       ]);
-//       if (!addRole) {
-//         confirm = false;
-//       }
-//       const { role } = await prompt([
-//         { type: 'input', name: 'role', message: 'Enter the role:' },
-//       ]);
-//       roleAnswers.push(role);
-//     }
-//     return roleAnswers;
-//   } catch {
-//     console.error('Unable to get roles');
-//   }
-// };
+// uncomment to work on RBAC
+const getRoleInput = async () => {
+  try {
+    const roleAnswers = [];
+    let confirm = true;
+    while (confirm) {
+      const { addRole } = await prompt([
+        {
+          type: 'confirm',
+          name: 'addRole',
+          message: 'Do you want to add a role?',
+          default: true,
+        },
+      ]);
+      if (!addRole) {
+        confirm = false;
+      }
+      const { role } = await prompt([
+        { type: 'input', name: 'role', message: 'Enter the role:' },
+      ]);
+      roleAnswers.push(role);
+    }
+    return roleAnswers;
+  } catch {
+    console.error('Unable to get roles');
+  }
+};
 
 const main = async () => {
   try {
@@ -202,31 +204,34 @@ const main = async () => {
     // checkout sampledata.js for preset inputs - faster development
     const answers = sampledata.p1;
     // uncomment to auth feature
-    // let {authentication, roles, orm, db } = answers;
+    let { authentication, roles, orm, db } = answers;
     CheckProjectExist(answers);
     // uncomment to auth feature
-    // if (authentication) {
-    //   if (roles) roles = await getRoleInput();
-    //   console.log('Let us create User model with required fields');
-    //   const userModel = await schemaPrompts(answers, 'user');
-    //   const name = 'user';
-    //   switch (orm) {
-    //     case 'prisma':
-    //       prisma.model(name, userModel, db);
-    //       break;
-    //     case 'sequelize':
-    //       sequelize.model(name, userModel);
-    //       break;
-    //   }
-    // }
+    if (authentication) {
+      if (roles) roles = await getRoleInput();
+      console.log('Let us create User model with required fields');
+      //userModel = await schemaPrompts(answers, 'user');
+      userModel = sampledata.auth.noRoles.user;
+      const name = 'user';
+      switch (orm) {
+        case 'prisma':
+          prisma.model(name, userModel, db);
+          break;
+        case 'sequelize':
+          await sequelize.model(name, userModel);
+          break;
+      }
+    }
     await generateProjectStructure(answers);
     saveConfig(answers);
     console.log('Started generating scaffold...');
+    await runORMSetup(orm, db);
     await scaffold(answers);
     if (userModel) models.push({ name: 'user', model: userModel });
     await installDependencies(answers);
     console.log('Project setup successful');
   } catch (error) {
+    console.log(error);
     console.log('Unable to generate project due to .', error);
   }
 };
