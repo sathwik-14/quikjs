@@ -16,6 +16,7 @@ import {
   // prompt,
 } from './utils/index.js';
 import sampledata from './sampledata.js';
+import chalk from 'chalk';
 
 let userModel;
 let models = [];
@@ -101,7 +102,7 @@ const generateProjectStructure = async (input) => {
         : await write(file.path, file.content);
     });
   } catch (err) {
-    console.error('Unable to create project structure', err);
+    console.error(chalk.bgRed`Unable to create project structure`, err);
   }
 };
 
@@ -231,8 +232,7 @@ const main = async () => {
     await installDependencies(answers);
     console.log('Project setup successful');
   } catch (error) {
-    console.log(error);
-    console.log('Unable to generate project due to .', error);
+    console.log(chalk.bgRed`Error`, error);
   }
 };
 

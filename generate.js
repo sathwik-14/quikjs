@@ -2,9 +2,10 @@
 
 import template from './templates/content.js';
 import { read, saveConfig, write } from './utils/index.js';
-import { prisma, sequelize } from './plugins/index.js';
+import { joi, prisma, sequelize } from './plugins/index.js';
 import sampledata from './sampledata.js';
-import content from './templates/content.js';
+import chalk from 'chalk';
+// uncomment below import to work with custom input
 // import { schemaPrompts } from './prompt.js';
 
 let state;
@@ -61,24 +62,6 @@ const generateRoutes = async (routeName, roles) => {
   await updateRouteInMain(routeName, roles);
 };
 
-const setupJoiValidation = async () => {
-  await write(
-    'validation/validateMiddleware.js',
-    content.validation.middleware,
-  );
-  await write(
-    'validation/createValidator.js',
-    content.validation.createValidator,
-  );
-};
-
-const generateValidationSchemas = async (modelName, model) => {
-  await write(
-    `validation/schemas/${modelName}Schema.js`,
-    content.validation.schema(modelName, model),
-  );
-};
-
 const scaffold = async (input) => {
   try {
     loadState(input);
@@ -86,7 +69,7 @@ const scaffold = async (input) => {
     // const schemaData = await schemaPrompts(input);
     // checkout sampledata.js for predefined schemas - faster development
     const schemaData = sampledata.tasks;
-    await setupJoiValidation();
+    await joi.setup();
     if (Object.keys(schemaData).length) {
       for (const [key, value] of Object.entries(schemaData)) {
         const modelName = key;
@@ -104,14 +87,14 @@ const scaffold = async (input) => {
             sequelize.controller(modelName);
             break;
         }
-        await generateValidationSchemas(modelName, model);
+        await joi.schema(modelName, model);
         await generateRoutes(modelName, []);
         console.log('Generated routes and controllers for ', modelName);
       }
     }
     saveConfig({ schema: schemaData });
   } catch (err) {
-    console.error('something went wrong', err);
+    console.error(chalk.bgRed`ERROR`, err);
   }
 };
 
