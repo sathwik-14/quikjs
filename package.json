@@ -11,6 +11,7 @@
     "generate": "node generate.js",
     "build": "rollup --config",
     "test": "jest --config jest.config.js",
+    "coverage": "jest --config jest.config.js --coverage",
     "prepare": "husky install",
     "pre-commit": "lint-staged",
     "lint": "eslint . --fix --max-warnings=0",
