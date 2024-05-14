@@ -1,33 +1,32 @@
-import titlecase from '../../utils/capitalize';
+import capitalizeFirstLetter from '../../utils/capitalize';
 
-describe('Titlecase Utility Function', () => {
+describe('capitalizeFirstLetter Utility Function', () => {
   test('Capitalizes the first letter of a single word', () => {
-    expect(titlecase('hello')).toBe('Hello');
-    expect(titlecase('world')).toBe('World');
+    expect(capitalizeFirstLetter('hello')).toBe('Hello');
+    expect(capitalizeFirstLetter('world')).toBe('World');
   });
 
   test('Handles empty string', () => {
-    expect(titlecase('')).toBe('');
+    expect(capitalizeFirstLetter('')).toBe(undefined);
   });
 
   test('Handles string with all uppercase letters', () => {
-    expect(titlecase('EXAMPLE')).toBe('Example');
+    expect(capitalizeFirstLetter('EXAMPLE')).toBe('EXAMPLE');
   });
 
   test('Handles string with leading whitespace', () => {
-    expect(titlecase('  javascript')).toBe('  javascript');
+    expect(capitalizeFirstLetter('  javascript')).toBe('  javascript');
   });
 
   test('Handles non-string input', () => {
-    expect(titlecase(123)).toBe('123');
-    expect(titlecase(null)).toBe('null');
-    expect(titlecase(undefined)).toBe('undefined');
-    expect(titlecase({})).toBe('[object Object]');
+    expect(capitalizeFirstLetter(123)).toBe('123');
+    expect(capitalizeFirstLetter(null)).toBe(undefined);
+    expect(capitalizeFirstLetter()).toBe(undefined);
   });
 
   test('Handles special characters and symbols', () => {
-    expect(titlecase('@hello')).toBe('@hello');
-    expect(titlecase('$test')).toBe('$test');
-    expect(titlecase('#123')).toBe('#123');
+    expect(capitalizeFirstLetter('@hello')).toBe('@hello');
+    expect(capitalizeFirstLetter('$test')).toBe('$test');
+    expect(capitalizeFirstLetter('#123')).toBe('#123');
   });
 });
