@@ -38,7 +38,7 @@ app.get("/auth/profile", userAuth, (req,res) => res.status(200).json({ user: ser
   return '';
 });
 
-Handlebars.registerHelper('authImports', (authentication, roles) => {
+Handlebars.registerHelper('authImports', (authentication, roles = []) => {
   if (authentication && roles.length) {
     return `const passport = require("passport");
 const {userAuth, userRegister, userLogin, checkRole, serializeUser} = require("./utils/auth")`;
@@ -67,8 +67,7 @@ const rateLimit = require('express-rate-limit');
 {{!-- Auth imports --}}
 {{{authImports input.authentication input.roles}}}
 
-// Import routes
-
+const routes = require('./routes');
 
 const PORT = process.env.PORT || "3000";
 
@@ -95,7 +94,6 @@ const apiLimiter = rateLimit({
   skipFailedRequests: true, // Don't count failed requests towards the limit
   xfwd: true, // Use the X-Forwarded-For header to identify the client IP (if behind a proxy)
 });
-
 // Apply the rate limiter to all routes (or specific routes as needed)
 app.use(apiLimiter);
 {{/if}}
@@ -110,12 +108,14 @@ app.use(passport.initialize());
 require("./middlewares/passport")(passport);
 {{/if}}
 
-// Routes
-{{{authRoutes input.authentication}}}
-
 app.get('/',(req,res)=>{
   res.status(200).send("Welcome ! to {{input.name}}")
 })
+
+app.use('/api',routes);
+
+// Routes
+{{{authRoutes input.authentication}}}
 
 {{!-- Error handling middleware --}}
 {{#if input.error_handling}}

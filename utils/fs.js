@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import format from './format.js';
+import chalk from 'chalk';
 
 const pathJoin = (relPath) => {
   /* eslint-disable no-undef */
@@ -15,6 +16,22 @@ const read = (relativePath) => {
   }
 };
 
+// const createDirectoryRecursive = (pathFragments) => {
+//   let currentPath = '';
+//   for (const fragment of pathFragments) {
+//     currentPath += fragment + '/';
+//     try {
+//       fs.mkdirSync(currentPath);
+//       console.log(`Directory created: ${currentPath}`);
+//     } catch (err) {
+//       if (err.code !== 'EEXIST') {
+//         // Handle other errors besides directory already existing
+//         console.error(err);
+//       }
+//     }
+//   }
+// }
+
 const write = async (relativePath, content, options = { format: true }) => {
   try {
     const absPath = pathJoin(relativePath);
@@ -22,8 +39,9 @@ const write = async (relativePath, content, options = { format: true }) => {
       content = await format(content, options?.parser);
     }
     fs.writeFileSync(absPath, content);
-  } catch {
-    console.error('FAILED WRITING TO FILE ', relativePath);
+    console.log(chalk.bgGreen` Update `, ' ', relativePath);
+  } catch (error) {
+    console.error('FAILED WRITING TO FILE ', relativePath, error);
   }
 };
 
@@ -42,7 +60,9 @@ const exists = (path) => {
 };
 
 const createDirectory = (path) => {
+  if (exists(path)) return;
   fs.mkdirSync(path);
+  console.log(chalk.bgGreen` Create `, ' ', path);
 };
 
 const saveConfig = (data) => {

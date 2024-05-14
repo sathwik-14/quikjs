@@ -172,6 +172,9 @@ const generateModel = async (modelName, model) => {
       if (!field.allowNulls) {
         fieldDefinition += `, allowNull: false`;
       }
+      if (field.unique) {
+        fieldDefinition += `, unique: true`;
+      }
       if (field.foreignKey) {
         fieldDefinition += `, references: { model: '${field.refTable}', key: '${field.refField}' }`;
       }
@@ -200,7 +203,13 @@ const generateModel = async (modelName, model) => {
     createDirectory(modelsDirectory);
   }
   await write(`${modelsDirectory}/${modelName.toLowerCase()}.js`, modelContent);
-  await updateIndex(modelsDirectory, modelName, capitalizedServiceName, model);
+  await updateIndex(
+    modelsDirectory,
+    modelName,
+    capitalizedServiceName,
+    // uncomment below for association
+    // model
+  );
 };
 
 export { generateModel };

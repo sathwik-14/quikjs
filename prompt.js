@@ -1,7 +1,7 @@
 import { orms, tools } from './constants.js';
-import { prompt } from './utils/index.js';
+import { prompt, saveConfig } from './utils/index.js';
 
-export const projectPrompts = async () => {
+const projectPrompts = async () => {
   return await prompt([
     {
       type: 'input',
@@ -72,7 +72,7 @@ export const projectPrompts = async () => {
   ]);
 };
 
-export const schemaPrompts = async (input, name = '') => {
+const schemaPrompts = async (input, name = '') => {
   try {
     let tables = [];
     let schemaData = {};
@@ -83,7 +83,6 @@ export const schemaPrompts = async (input, name = '') => {
         type: 'input',
         name: 'name',
         message: 'Enter the name of the attribute:',
-        when: name === '',
         validate: function (value) {
           return /^[a-zA-Z_]\w*$/.test(value)
             ? true
@@ -179,34 +178,48 @@ export const schemaPrompts = async (input, name = '') => {
       },
     ];
 
-    while (true) {
-      const ans = await prompt([
-        {
-          type: 'confirm',
-          name: 'add_table',
-          message: 'Do you want to add a table?',
-          default: true,
-        },
-        {
-          type: 'input',
-          name: 'table_name',
-          message: 'Enter the table name?',
-          when: (answers) => answers.add_table,
-        },
-      ]);
-      if (!ans.add_table) {
-        break;
-      }
-      schemaData[ans.table_name] = [];
-      tables.push(ans.table_name);
+    if (name === '') {
       while (true) {
-        const model = await prompt(schemaQuestions);
-        if (!model.add_another) {
-          schemaData[ans.table_name].push(model);
+        const ans = await prompt([
+          {
+            type: 'confirm',
+            name: 'add_table',
+            message: 'Do you want to add a table?',
+            default: true,
+          },
+          {
+            type: 'input',
+            name: 'table_name',
+            message: 'Enter the table name?',
+            when: (answers) => answers.add_table,
+          },
+        ]);
+        if (!ans.add_table) {
           break;
         }
-        schemaData[ans.table_name].push(model);
+        schemaData[ans.table_name] = [];
+        tables.push(ans.table_name);
+        while (true) {
+          const model = await prompt(schemaQuestions);
+          if (!model.add_another) {
+            schemaData[ans.table_name].push(model);
+            break;
+          }
+          schemaData[ans.table_name].push(model);
+        }
       }
+    } else {
+      schemaData[name] = [];
+      while (true) {
+        const userModel = await prompt(schemaQuestions);
+        if (!userModel.add_another) {
+          schemaData[name].push(userModel);
+          break;
+        }
+        schemaData[name].push(userModel);
+      }
+      saveConfig({ schema: schemaData });
+      return schemaData;
     }
     return schemaData;
   } catch (e) {
@@ -214,3 +227,5 @@ export const schemaPrompts = async (input, name = '') => {
     console.log('error getting schema details\n' + e);
   }
 };
+
+export { schemaPrompts, projectPrompts };

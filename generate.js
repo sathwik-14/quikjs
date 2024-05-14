@@ -2,8 +2,10 @@
 
 import template from './templates/content.js';
 import { read, saveConfig, write } from './utils/index.js';
-import { prisma, sequelize } from './plugins/index.js';
+import { joi, prisma, sequelize } from './plugins/index.js';
 import sampledata from './sampledata.js';
+import chalk from 'chalk';
+// uncomment below import to work with custom input
 // import { schemaPrompts } from './prompt.js';
 
 let state;
@@ -28,31 +30,36 @@ const authMiddleware = (roles) => {
   return '';
 };
 
-const generateRoutes = async (routeName, roles) => {
-  await write(`routes/${routeName}.js`, template.routesContent(routeName));
-  const importContent = `const ${routeName}Routes = require("./routes/${routeName}");`;
-  const routeContent = `app.use("/api/${routeName}",${authMiddleware(roles)}${routeName}Routes);`;
-  let mainFileContent = read('app.js');
+const updateRouteInMain = async (routeName, roles = []) => {
+  let importContent = `const ${routeName}Routes = require("./${routeName}");`;
+
+  const routeContent = `router.use("/${routeName}",${authMiddleware(roles)}${routeName}Routes);`;
+  let mainFileContent = read('routes/index.js');
   let lines = mainFileContent.split('\n');
   const importRoutesIndex = lines.findIndex((line) =>
-    line.includes('// Import routes'),
+    line.includes('// import routes'),
   );
   if (
     importRoutesIndex !== -1 &&
     !lines.some((line) => line.includes(importContent))
   ) {
     lines.splice(importRoutesIndex + 1, 0, importContent);
-    await write('app.js', lines.join('\n'));
+    await write('routes/index.js', lines.join('\n'));
   }
 
-  const useRoutesIndex = lines.findIndex((line) => line.includes('// Routes'));
+  const useRoutesIndex = lines.findIndex((line) => line.includes('// routes'));
   if (
     useRoutesIndex !== -1 &&
     !lines.some((line) => line.includes(routeContent))
   ) {
     lines.splice(useRoutesIndex + 1, 0, routeContent);
-    await write('app.js', lines.join('\n'));
+    await write('routes/index.js', lines.join('\n'));
   }
+};
+
+const generateRoutes = async (routeName, roles) => {
+  await write(`routes/${routeName}.js`, template.routesContent(routeName));
+  await updateRouteInMain(routeName, roles);
 };
 
 const scaffold = async (input) => {
@@ -62,6 +69,7 @@ const scaffold = async (input) => {
     // const schemaData = await schemaPrompts(input);
     // checkout sampledata.js for predefined schemas - faster development
     const schemaData = sampledata.tasks;
+    await joi.setup();
     if (Object.keys(schemaData).length) {
       for (const [key, value] of Object.entries(schemaData)) {
         const modelName = key;
@@ -79,13 +87,14 @@ const scaffold = async (input) => {
             sequelize.controller(modelName);
             break;
         }
+        await joi.schema(modelName, model);
         await generateRoutes(modelName, []);
         console.log('Generated routes and controllers for ', modelName);
       }
     }
     saveConfig({ schema: schemaData });
   } catch (err) {
-    console.error('something went wrong', err);
+    console.error(chalk.bgRed`ERROR`, err);
   }
 };
 
