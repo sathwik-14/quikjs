@@ -9,6 +9,6 @@ export default [
   },
   pluginJs.configs.recommended,
   {
-    ignores: ['tests/'],
+    ignores: ['tests/**'],
   },
 ];
