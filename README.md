@@ -15,7 +15,7 @@ QUIKJS- API Generator is a powerful tool designed to streamline the process of b
 To install QUIKJS- API Generator, simply run:
 
 ```bash
-npm install -g @waglesathwik/quikjs
+npm install -D quikjs
 ```
 
 ## Usage
