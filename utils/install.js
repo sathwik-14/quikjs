@@ -1,4 +1,4 @@
-import { execSync, exec } from 'child_process';
+import { execSync, exec } from 'node:child_process';
 
 const install = (packages, options = { sync: true }) => {
   try {

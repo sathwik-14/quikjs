@@ -25,7 +25,7 @@ npm install -D quikjs
 To generate a new project with QUIKJS API Generator, run:
 
 ```bash
-npx quikjs-g-p
+npx quik-g-p
 ```
 
 <!-- ## Generating APIs -

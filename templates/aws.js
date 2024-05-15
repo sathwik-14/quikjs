@@ -17,7 +17,7 @@ module.exports = {
     `,
     utils: () => `
     const {s3,BUCKET} = require("../config/aws.js");
-    const path = require('path');
+    const path = require('node:path');
 
     const uploadFile = (filePath, keyName) => {
   
