@@ -15,7 +15,7 @@ QUIKJS- API Generator is a powerful tool designed to streamline the process of b
 To install QUIKJS- API Generator, simply run:
 
 ```bash
-npm install -g @waglesathwik/quikjs
+npm install -D quikjs
 ```
 
 ## Usage
@@ -25,16 +25,16 @@ npm install -g @waglesathwik/quikjs
 To generate a new project with QUIKJS API Generator, run:
 
 ```bash
-npx quikjs-g-p
+npx quik-g-p
 ```
 
-## Generating APIs
+<!-- ## Generating APIs -
 
 Once your project is set up, you can generate APIs for your models using the following command:
 
 ```bash
 npx quikjs-g-m
-```
+``` -->
 
 ## Test cases & Code Coverage
 

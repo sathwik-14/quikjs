@@ -1,6 +1,7 @@
 import { write, capitalize, install, compile } from '../../utils/index.js';
 import templates from './template.js';
 import { generateModel } from './model.js';
+import { spawnSync } from 'node:child_process';
 
 const clientInit = async (db) => {
   const compiledTemplate = compile(templates.init);
@@ -59,10 +60,28 @@ const controller = async (modelName) => {
   await write(`controllers/${modelName}.js`, controllerContent);
 };
 
+const migrate = () => {
+  const migrateDevProcess = spawnSync('npx', ['sequelize-cli', 'db:migrate'], {
+    input: '\n',
+    encoding: 'utf-8',
+    stdio: 'inherit',
+  });
+  if (migrateDevProcess.error) {
+    console.log('Sequelize migrate dev failed');
+  } else if (migrateDevProcess.status !== 0) {
+    console.error(
+      `Sequelize migrate failed with status code ${migrateDevProcess.status}`,
+    );
+  } else {
+    console.log('Sequelize migrate dev completed');
+  }
+};
+
 export default {
   setup,
   type,
   clientInit,
   model: generateModel,
   controller,
+  migrate,
 };

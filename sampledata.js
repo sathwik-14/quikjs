@@ -1,14 +1,45 @@
 export default {
   p1: {
-    name: 'todos',
+    name: 'test',
     description: '',
-    db: 'mysql', // choose among [mysql,postgresql]
+    db: 'postgresql', // choose among [mysql,postgresql]
     orm: 'sequelize',
-    logging: false,
-    error_handling: false,
+    logging: true,
+    error_handling: true,
     production: false,
     tools: ['none'],
     authentication: false,
+  },
+
+  auth: {
+    noRoles: {
+      user: [
+        {
+          name: 'email',
+          type: 'STRING',
+          size: '',
+          defaultValue: '',
+          primaryKey: false,
+          allowNulls: false,
+          unique: true,
+          autoIncrement: false,
+          foreignKey: false,
+          add_another: true,
+        },
+        {
+          name: 'password',
+          type: 'STRING',
+          size: '',
+          defaultValue: '',
+          primaryKey: false,
+          allowNulls: false,
+          unique: false,
+          autoIncrement: false,
+          foreignKey: false,
+          add_another: false,
+        },
+      ],
+    },
   },
 
   employee: {

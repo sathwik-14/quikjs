@@ -27,9 +27,9 @@ const loginThrough = (userModel) => {
 };
 
 const serializeUserContent = (userModel) => {
-  const keys = Object.keys(userModel);
+  const keys = userModel;
   const validKeys = keys.filter(
-    (key) => !['password', 'id', 'createdAt', 'updatedAt'].includes(key),
+    (key) => !['password', 'id', 'createdAt', 'updatedAt'].includes(key.name),
   );
 
   let content = `const serializeUser = (user) => {
@@ -40,7 +40,7 @@ const serializeUserContent = (userModel) => {
 
   validKeys.forEach((key) => {
     content += `
-      ${key}: user.${key},`;
+      ${key.name}: user.${key.name},`;
   });
 
   content += `
@@ -165,7 +165,7 @@ const userLogin = async (user, res) => {
   }
 };
 
-${input.roles.length ? 'const checkRole = roles => (req,res,next) => !roles.includes(req.user.role) ? res.status(401).json("unauthorized"):next();' : ''}
+${input?.roles?.length ? 'const checkRole = roles => (req,res,next) => !roles.includes(req.user.role) ? res.status(401).json("unauthorized"):next();' : ''}
 
 ${serializeUserContent(userModel)}
 
@@ -179,8 +179,8 @@ module.exports = {
   userRegister,
   userLogin,
   userAuth,
-  checkRole,
   serializeUser,
+  ${input.roles ? 'checkRole' : ''}
 };
 
   `,
