@@ -28,13 +28,13 @@ To generate a new project with QUIKJS API Generator, run:
 npx quikjs-g-p
 ```
 
-## Generating APIs
+<!-- ## Generating APIs -
 
 Once your project is set up, you can generate APIs for your models using the following command:
 
 ```bash
 npx quikjs-g-m
-```
+``` -->
 
 ## Configuring Database
 
