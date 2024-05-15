@@ -4,7 +4,7 @@ import { appTemplate, passport, aws, twilio } from './templates/index.js';
 import { scaffold } from './generate.js';
 // import { projectPrompts } from './prompt.js';
 // import { schemaPrompts } from './prompt.js';
-import { prisma, sequelize, mongoose } from './plugins/index.js';
+import { prisma, sequelize, mongoose, swagger } from './plugins/index.js';
 import {
   compile,
   createDirectory,
@@ -36,7 +36,13 @@ const runORMSetup = async (orm, db) => {
 
 const generateProjectStructure = async (input) => {
   try {
-    const { tools, authentication, logging, error_handling } = input;
+    const {
+      tools = [],
+      authentication = false,
+      logging = false,
+      error_handling = true,
+      api_documentation = true,
+    } = input;
     const folders = [
       'controllers',
       'models',
@@ -94,6 +100,10 @@ const generateProjectStructure = async (input) => {
       files.push({ path: 'error.log', content: '' });
     }
 
+    if (api_documentation) {
+      swagger.setup(input);
+    }
+
     folders.forEach(createDirectory);
 
     files.map(async (file) => {
@@ -108,18 +118,25 @@ const generateProjectStructure = async (input) => {
 
 const getDbDriver = (db) => {
   const drivers = {
-    postgresql: ['pg'],
-    mysql: ['mysql2'],
-    mariadb: ['mariadb'],
-    sqlite: ['sqlite3'],
-    mssql: ['tedious'],
-    oracledb: ['oracledb'],
+    postgresql: 'pg',
+    mysql: 'mysql2',
+    mariadb: 'mariadb',
+    sqlite: 'sqlite3',
+    mssql: 'tedious',
+    oracledb: 'oracledb',
   };
   return drivers[db.toLowerCase()];
 };
 
 const installDependencies = async (answers) => {
-  const { error_handling, production, authentication, tools, db } = answers;
+  const {
+    error_handling,
+    production,
+    authentication,
+    api_documentation,
+    tools,
+    db,
+  } = answers;
   console.log('Installing dependencies');
   const packages = [
     'express',
@@ -130,6 +147,8 @@ const installDependencies = async (answers) => {
     'compression',
     'joi',
   ];
+  if (api_documentation)
+    install(['swagger-jsdoc', 'swagger-ui-express'], { dev: true });
   if (error_handling) packages.push('morgan');
   if (production) packages.push('winston', 'pm2', 'express-rate-limit');
   if (authentication) {

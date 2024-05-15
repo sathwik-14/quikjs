@@ -66,7 +66,9 @@ const rateLimit = require('express-rate-limit');
 {{/if}}
 {{!-- Auth imports --}}
 {{{authImports input.authentication input.roles}}}
-
+{{#if input.api_documentation}}
+const swaggerJSDoc = require('./swagger');
+{{/if}}
 const routes = require('./routes');
 
 const PORT = process.env.PORT || "3000";
@@ -156,4 +158,8 @@ app.use((err, req, res, next) => {
 // Start the server
 app.listen(PORT, () => {
   console.log(\`Server running on port \${PORT}\`);
-});`;
+});
+{{#if input.api_documentation}}
+swaggerJSDoc(app,PORT)
+{{/if}}
+`;
