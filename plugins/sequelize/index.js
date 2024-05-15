@@ -1,7 +1,7 @@
 import { write, capitalize, install, compile } from '../../utils/index.js';
 import templates from './template.js';
 import { generateModel } from './model.js';
-import { spawnSync } from 'child_process';
+import { spawnSync } from 'node:child_process';
 
 const clientInit = async (db) => {
   const compiledTemplate = compile(templates.init);
