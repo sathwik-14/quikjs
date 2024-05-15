@@ -1,6 +1,5 @@
 import { install } from '../../utils/install';
 
-// Mock child_process module and functions
 jest.mock('child_process', () => ({
   execSync: jest.fn(),
   exec: jest.fn(),

@@ -1,10 +1,53 @@
 # top-most EditorConfig file
+# Editor configuration
+
 root = true
 
 [*]
 indent_style = space
-indent_size = 4
+indent_size = 2
+tab_width = 2
+insert_final_newline = true
 end_of_line = lf
 charset = utf-8
 trim_trailing_whitespace = true
-insert_final_newline = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.json]
+indent_size = 2
+
+[*.yml]
+indent_size = 2
+
+[*.yaml]
+indent_size = 2
+
+[*.html]
+indent_size = 2
+
+[*.css]
+indent_size = 2
+
+[*.scss]
+indent_size = 2
+
+[*.js]
+indent_size = 2
+
+[*.jsx]
+indent_size = 2
+
+[*.ts]
+indent_size = 2
+
+[*.tsx]
+indent_size = 2
+
+[*.vue]
+indent_size = 2
+
+[*.{txt,md}]
+max_line_length = 80
+
