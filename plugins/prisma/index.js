@@ -1,6 +1,6 @@
 import templates from './template.js';
 import { format, write, install, capitalize } from '../../utils/index.js';
-import { execSync, spawnSync } from 'child_process';
+import { execSync, spawnSync } from 'node:child_process';
 import { generateModel, getType } from './model.js';
 
 const init = (db) => {

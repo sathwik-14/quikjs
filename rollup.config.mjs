@@ -1,4 +1,4 @@
-import nodeResolve from '@rollup/plugin-node-resolve';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 
 // rollup.config.mjs
@@ -17,12 +17,5 @@ export default {
     },
   ],
   plugins: [nodeResolve()],
-  external: [
-    'handlebars',
-    'child_process',
-    'prettier',
-    'inquirer',
-    'fs',
-    'path',
-  ],
+  external: ['handlebars', 'prettier', 'inquirer'],
 };

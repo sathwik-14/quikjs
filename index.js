@@ -3,7 +3,7 @@
 import { appTemplate, passport, aws, twilio } from './templates/index.js';
 import { scaffold } from './generate.js';
 // import { projectPrompts } from './prompt.js';
-import { schemaPrompts } from './prompt.js';
+// import { schemaPrompts } from './prompt.js';
 import { prisma, sequelize, mongoose } from './plugins/index.js';
 import {
   compile,
@@ -12,9 +12,11 @@ import {
   write,
   install,
   saveConfig,
-  prompt,
+  // uncomment to work on RBAC
+  // prompt,
 } from './utils/index.js';
 import sampledata from './sampledata.js';
+import chalk from 'chalk';
 
 let userModel;
 let models = [];
@@ -42,9 +44,19 @@ const generateProjectStructure = async (input) => {
       'middlewares',
       'utils',
       'config',
+      'validation',
+      'validation/schemas',
     ];
     const files = [
       { path: 'app.js', content: compile(appTemplate)({ input }) },
+      {
+        path: 'routes/index.js',
+        content: `const router = require('express').Router()\n
+        ${authentication ? "const { userAuth } = require('../utils/auth')" : ''}\n
+        // import routes\n\n
+        // routes\n\n
+        module.exports=router`,
+      },
       { path: '.env', content: 'DATABASE_URL=""' },
       { path: '.gitignore', content: 'node_modules\n.env\n' },
       {
@@ -89,27 +101,25 @@ const generateProjectStructure = async (input) => {
         ? await write(file.path, file.content, { format: false })
         : await write(file.path, file.content);
     });
-  } catch {
-    console.error('Unable to create project structure');
+  } catch (err) {
+    console.error(chalk.bgRed`Unable to create project structure`, err);
   }
 };
 
-const installDbDriver = (db) => {
+const getDbDriver = (db) => {
   const drivers = {
-    postgresql: ['pg', 'pg-hstore'],
+    postgresql: ['pg'],
     mysql: ['mysql2'],
     mariadb: ['mariadb'],
     sqlite: ['sqlite3'],
     mssql: ['tedious'],
     oracledb: ['oracledb'],
   };
-  const driver = drivers[db.toLowerCase()];
-  if (driver) {
-    install([driver]);
-  }
+  return drivers[db.toLowerCase()];
 };
 
 const installDependencies = async (answers) => {
+  const { error_handling, production, authentication, tools, db } = answers;
   console.log('Installing dependencies');
   const packages = [
     'express',
@@ -118,14 +128,16 @@ const installDependencies = async (answers) => {
     'helmet',
     'winston',
     'compression',
+    'joi',
   ];
-  if (answers.production) packages.push('winston', 'pm2', 'express-rate-limit');
-  if (answers.authentication) {
+  if (error_handling) packages.push('morgan');
+  if (production) packages.push('winston', 'pm2', 'express-rate-limit');
+  if (authentication) {
     console.log('Setting up  passport,passport-jwt');
     packages.push('passport', 'passport-jwt', 'jsonwebtoken', 'bcrypt');
   }
-  if (answers.tools.length) {
-    for (const item of answers.tools) {
+  if (tools.length) {
+    for (const item of tools) {
       switch (item) {
         case 's3':
         case 'sns':
@@ -136,9 +148,8 @@ const installDependencies = async (answers) => {
       }
     }
   }
+  packages.push(getDbDriver(db));
   install(packages);
-  installDbDriver(answers.db);
-  await runORMSetup(answers.orm, answers.db);
 };
 
 const CheckProjectExist = (answers) => {
@@ -159,6 +170,7 @@ const CheckProjectExist = (answers) => {
   }
 };
 
+// uncomment to work on RBAC
 const getRoleInput = async () => {
   try {
     const roleAnswers = [];
@@ -192,30 +204,35 @@ const main = async () => {
     // const answers = await projectPrompts();
     // checkout sampledata.js for preset inputs - faster development
     const answers = sampledata.p1;
+    // uncomment to auth feature
+    let { authentication, roles, orm, db } = answers;
     CheckProjectExist(answers);
-    if (answers.authentication) {
-      if (answers.roles) answers.roles = await getRoleInput();
+    // uncomment to auth feature
+    if (authentication) {
+      if (roles) roles = await getRoleInput();
       console.log('Let us create User model with required fields');
-      const userModel = await schemaPrompts(answers, 'user');
+      //userModel = await schemaPrompts(answers, 'user');
+      userModel = sampledata.auth.noRoles.user;
       const name = 'user';
-      switch (answers.orm) {
+      switch (orm) {
         case 'prisma':
-          prisma.model(name, userModel, answers.db);
+          prisma.model(name, userModel, db);
           break;
         case 'sequelize':
-          sequelize.model(name, userModel);
+          await sequelize.model(name, userModel);
           break;
       }
     }
     await generateProjectStructure(answers);
     saveConfig(answers);
     console.log('Started generating scaffold...');
+    await runORMSetup(orm, db);
     await scaffold(answers);
     if (userModel) models.push({ name: 'user', model: userModel });
     await installDependencies(answers);
     console.log('Project setup successful');
   } catch (error) {
-    console.log('Unable to generate project due to .', error);
+    console.log(chalk.bgRed`Error`, error);
   }
 };
 
