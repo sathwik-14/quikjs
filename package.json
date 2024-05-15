@@ -21,11 +21,11 @@
   "author": "waglesathwik",
   "license": "MIT",
   "dependencies": {
+    "esprima": "^4.0.1",
     "handlebars": "^4.7.8",
     "inquirer": "^9.2.16",
-    "package1": "^0.0.0",
-    "package2": "^1.0.0",
-    "prettier": "^3.2.5"
+    "prettier": "^3.2.5",
+    "recast": "^0.23.7"
   },
   "type": "module",
   "devDependencies": {
