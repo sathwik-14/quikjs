@@ -57,8 +57,8 @@ const helmet = require("helmet")
 const compression = require("compression")
 {{#if input.logging}}
 const morgan = require("morgan")
-const fs = require("fs")
-const path = require("path")
+const fs = require("node:fs")
+const path = require("node:path")
 {{/if}}
 {{#if input.production}}
 const winston = require("winston")

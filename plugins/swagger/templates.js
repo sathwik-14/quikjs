@@ -1,5 +1,46 @@
 import { capitalize } from '../../utils/index.js';
 
+const convertType = (type) => {
+  switch (type.toLowerCase()) {
+    case 'string':
+    case 'text':
+    case 'varchar':
+    case 'char':
+      return 'string';
+    case 'number':
+    case 'float':
+    case 'decimal':
+    case 'double':
+      return 'number';
+    case 'integer':
+    case 'int':
+    case 'int32':
+    case 'int64':
+      return 'integer';
+    case 'boolean':
+    case 'bool':
+      return 'boolean';
+    case 'json':
+    case 'jsonb':
+    case 'object':
+      return 'object';
+    default:
+      return 'string';
+  }
+};
+
+const getProperties = (model) => {
+  let fields = model
+    .map(
+      (item) =>
+        ` *              ${item.name}:
+ *                type: ${convertType(item.type)}`,
+    )
+    .join('\n');
+  return ` *            properties:
+${fields}`;
+};
+
 export default {
   main: (config) =>
     `const swaggerJsdoc = require('swagger-jsdoc')
@@ -47,29 +88,30 @@ export default {
   paths: {
     getAll: (modelName) =>
       `/**
-     * @openapi
-     * '/api/${modelName}':
-     *  get:
-     *     tags:
-     *     - ${capitalize(modelName)}
-     *     summary: Get all ${modelName}
-     *     responses:
-     *      200:
-     *        description: Fetched Successfully
-     *      400:
-     *        description: Bad Request
-     *      404:
-     *        description: Not Found
-     *      500:
-     *        description: Server Error
-     **/`,
+ * @openapi
+ * '/api/${modelName}':
+ *  get:
+ *     tags:
+ *     - ${capitalize(modelName)}
+ *     summary: Get all ${modelName}
+ *     responses:
+ *      200:
+ *        description: Fetched Successfully
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */`,
     getByid: (modelName) =>
       `/**
+        * @openapi
         * '/api/${modelName}/{id}':
         *  get:
         *     tags:
         *     - ${capitalize(modelName)}
-        *     summary: Get all ${modelName}
+        *     summary: Get ${modelName} by id
         *     parameters:
         *      - name: id
         *        in: path
@@ -84,6 +126,84 @@ export default {
         *        description: Not Found
         *      500:
         *        description: Server Error
-        **/`,
+        */`,
+    post: (modelName, model) =>
+      `/**
+ * @openapi
+ * '/api/${modelName}':
+ *  post:
+ *     tags:
+ *     - ${capitalize(modelName)}
+ *     summary: Create new ${modelName} entry
+ *     requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *           schema:
+ *            type: object
+${getProperties(model)}
+ *     responses:
+ *      201:
+ *        description: Created Successfully
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */`,
+    put: (modelName, model) =>
+      `/**
+ * @openapi
+ * '/api/${modelName}/{id}':
+ *  put:
+ *     tags:
+ *     - ${capitalize(modelName)}
+ *     summary: Modify existing ${modelName} entry
+ *     parameters:
+ *      - name: id
+ *        in: path
+ *        description: The id of the ${modelName}
+ *        required: true
+ *     requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *           schema:
+ *            type: object
+${getProperties(model)}
+ *     responses:
+ *      201:
+ *        description: Modified Successfully
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */`,
+    delete: (modelName) =>
+      `/**
+ * @openapi
+ * '/api/${modelName}/{id}':
+ *  delete:
+ *     tags:
+ *     - ${capitalize(modelName)}
+ *     summary: Delete a ${modelName} entry
+ *     parameters:
+ *      - name: id
+ *        in: path
+ *        description: The id of the ${modelName}
+ *        required: true
+ *     responses:
+ *      200:
+ *        description: Deleted Successfully
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */`,
   },
 };
