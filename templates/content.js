@@ -20,8 +20,8 @@ router.get('/:id', ${modelName}Controller.get${capitalize(modelName)}ById);
 ${swaggerTemplates.paths.post(modelName, model)}
 router.post('/', validate(create${capitalize(modelName)}Schema), ${modelName}Controller.create${capitalize(modelName)});
 // Update ${modelName} by ID
-${swaggerTemplates.paths.put(modelName, model)}
-router.put('/:id', validate(update${capitalize(modelName)}Schema), ${modelName}Controller.update${capitalize(modelName)}ById);
+${swaggerTemplates.paths.patch(modelName, model)}
+router.patch('/:id', validate(update${capitalize(modelName)}Schema), ${modelName}Controller.update${capitalize(modelName)}ById);
 // Delete ${modelName} by ID
 ${swaggerTemplates.paths.delete(modelName)}
 router.delete('/:id', ${modelName}Controller.delete${capitalize(

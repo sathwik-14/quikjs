@@ -152,11 +152,11 @@ ${getProperties(model)}
  *      500:
  *        description: Server Error
  */`,
-    put: (modelName, model) =>
+    patch: (modelName, model) =>
       `/**
  * @openapi
  * '/api/${modelName}/{id}':
- *  put:
+ *  patch:
  *     tags:
  *     - ${capitalize(modelName)}
  *     summary: Modify existing ${modelName} entry
