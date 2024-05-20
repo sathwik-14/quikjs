@@ -57,8 +57,11 @@ const updateRouteInMain = async (routeName, roles = []) => {
   }
 };
 
-const generateRoutes = async (routeName, roles) => {
-  await write(`routes/${routeName}.js`, template.routesContent(routeName));
+const generateRoutes = async (routeName, roles, model) => {
+  await write(
+    `routes/${routeName}.js`,
+    template.routesContent(routeName, model),
+  );
   await updateRouteInMain(routeName, roles);
 };
 
@@ -88,7 +91,7 @@ const scaffold = async (input) => {
             break;
         }
         await joi.schema(modelName, model);
-        await generateRoutes(modelName, []);
+        await generateRoutes(modelName, [], model);
         console.log('Generated routes and controllers for ', modelName);
       }
     }

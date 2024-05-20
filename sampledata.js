@@ -9,6 +9,7 @@ export default {
     production: false,
     tools: ['none'],
     authentication: false,
+    api_documentation: true,
   },
 
   auth: {

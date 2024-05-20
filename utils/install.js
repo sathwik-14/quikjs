@@ -1,10 +1,11 @@
 import { execSync, exec } from 'node:child_process';
 
-const install = (packages, options = { sync: true }) => {
+const install = (packages, options = { sync: true, dev: false }) => {
   try {
     packages.forEach((pkg) => {
-      if (options.sync) execSync(`npm install ${pkg}`);
-      else exec(`npm install ${pkg}`);
+      if (options.sync)
+        execSync(`npm install ${options.dev ? '-D' : ''} ${pkg}`);
+      else exec(`npm install ${options.dev ? '-D' : ''} ${pkg}`);
     });
   } catch {
     console.error('Error installing packages:', ...packages);
