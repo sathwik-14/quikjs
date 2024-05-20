@@ -2,8 +2,11 @@
 
 import { appTemplate, passport, aws, twilio } from './templates/index.js';
 import { scaffold } from './generate.js';
-// import { projectPrompts } from './prompt.js';
-// import { schemaPrompts } from './prompt.js';
+// uncomment below lines to take manual user inputs
+// import {
+// projectPrompts
+// , schemaPrompts
+// } from './prompt.js';
 import { prisma, sequelize, mongoose, swagger } from './plugins/index.js';
 import {
   compile,
@@ -12,6 +15,7 @@ import {
   write,
   install,
   saveConfig,
+  prompt,
   // uncomment to work on RBAC
   // prompt,
 } from './utils/index.js';
@@ -228,8 +232,9 @@ const main = async () => {
     CheckProjectExist(answers);
     // uncomment to auth feature
     if (authentication) {
-      if (roles) roles = await getRoleInput();
+      if (roles) answers.roles = await getRoleInput();
       console.log('Let us create User model with required fields');
+      //uncomment the below line to take manual schema input
       //userModel = await schemaPrompts(answers, 'user');
       userModel = sampledata.auth.noRoles.user;
       const name = 'user';
