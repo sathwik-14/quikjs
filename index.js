@@ -151,7 +151,7 @@ const installDependencies = async (answers) => {
     'compression',
     'joi',
   ];
-  if (api_documentation) install(['swagger-jsdoc', 'swagger-ui-express']);
+  if (api_documentation) packages.push('swagger-jsdoc', 'swagger-ui-express');
   if (error_handling) packages.push('morgan');
   if (production) packages.push('winston', 'pm2', 'express-rate-limit');
   if (authentication) {
