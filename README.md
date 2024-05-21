@@ -36,6 +36,28 @@ Once your project is set up, you can generate APIs for your models using the fol
 npx quikjs-g-m
 ``` -->
 
+## Test cases & Code Coverage
+
+To run unit tests:
+
+```sh
+npm test
+```
+
+To run the coverage:
+
+```
+npm run coverage
+```
+
+After running the command, you will find `coverage/lcov-report` generated within the project directory. This is served via simple-http-server, which would be available via `coverage.js`, hence run the following command:
+
+```sh
+node coverage.js
+```
+
+You will find the coverage report served at `localhost:8000`.
+
 ## Configuring Database
 
 QUIKJS API Generator doesn't automatically sets up PostgreSQL database using Sequelize ORM. You have to provide the database connection string to .env file.(ex: DATABASE_URL="postgre.......)
