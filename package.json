@@ -21,11 +21,9 @@
   "author": "waglesathwik",
   "license": "MIT",
   "dependencies": {
-    "esprima": "^4.0.1",
     "handlebars": "^4.7.8",
     "inquirer": "^9.2.16",
-    "prettier": "^3.2.5",
-    "recast": "^0.23.7"
+    "prettier": "^3.2.5"
   },
   "type": "module",
   "devDependencies": {
