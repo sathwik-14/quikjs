@@ -5,7 +5,7 @@ QUIKJS- API Generator is a powerful tool designed to streamline the process of b
 ## Features
 
 - Scaffold Express.js projects with ease.
-- Automatically generate CRUD APIs for your database models.
+- Automatically generate CRUD APIs with validation(joi) and documentation(swaggerUI) for your database models.
 - Seamlessly integrate with PostgreSQL database using Sequelize ORM.
 - Planned support for other ORMs and databases in future updates.
 - Integrating 3rd party services for messaging, mail services, and storage services (e.g., S3).
