@@ -37,11 +37,10 @@ const serializeUserContent = (userModel) => {
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       id: user.id,`;
-
-  validKeys.forEach((key) => {
+  for (const key of validKeys) {
     content += `
       ${key.name}: user.${key.name},`;
-  });
+  }
 
   content += `
     };

@@ -22,7 +22,7 @@ const schemaFields = (type, model) => {
     }
   };
   let content = [];
-  model.forEach((item) => {
+  for (const item of model) {
     switch (type) {
       case 'create':
         content.push(
@@ -33,7 +33,7 @@ const schemaFields = (type, model) => {
         content.push(`${item.name}:Joi.${getType(item.type)}()`);
         break;
     }
-  });
+  }
   return content.join(',\n');
 };
 
@@ -49,15 +49,15 @@ export default {
           }
           return value;
           }
-        
+
         module.exports = createValidator`,
     middleware: `const createValidator = require('./createValidator')
-    
+
         const validateMiddleware = (schema) =>
           (req, res, next) => {
             const payload = req.body
             const validate = createValidator(payload, schema)
-        
+
             // proceed next if validated otherwise catch error and pass onto express error handler
             validate
               .then(validated => {
@@ -68,23 +68,23 @@ export default {
                 res.status(400).send(error.details)
               })
           }
-        
+
         module.exports = validateMiddleware`,
     schema: (modelName, model) =>
       `let Joi = require('joi')
-        
+
         // Schema for creating a product, all fields are required
         let create${capitalize(modelName)}Schema = Joi.object().keys({
           ${schemaFields('create', model)}
         })
-        
+
         // Schema for editing a product, all fields are optional and we can have a custom error message
         let update${capitalize(modelName)}Schema = Joi.object().keys({
-          ${schemaFields('update', model)}  
+          ${schemaFields('update', model)}
         })
-        
-        module.exports = { 
-          create${capitalize(modelName)}Schema, 
+
+        module.exports = {
+          create${capitalize(modelName)}Schema,
           update${capitalize(modelName)}Schema
         }`,
   },

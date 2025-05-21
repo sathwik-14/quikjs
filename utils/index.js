@@ -1,7 +1,9 @@
-import capitalize from './capitalize.js';
-import compile from './compile.js';
-import format from './format.js';
-import {
+export { default as capitalize } from './capitalize.js';
+export { default as compile } from './compile.js';
+export { default as format } from './format.js';
+export { default as install } from './install.js';
+export { default as prompt } from './prompt.js';
+export {
   append,
   createDirectory,
   exists,
@@ -9,19 +11,3 @@ import {
   write,
   saveConfig,
 } from './fs.js';
-import { install } from './install.js';
-import prompt from './prompt.js';
-
-export {
-  capitalize,
-  compile,
-  format,
-  install,
-  prompt,
-  read,
-  write,
-  append,
-  exists,
-  createDirectory,
-  saveConfig,
-};

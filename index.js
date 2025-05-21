@@ -10,10 +10,10 @@ import {
 } from './templates/index.js';
 import { scaffold } from './generate.js';
 // uncomment below lines to take manual user inputs
-// import {
-//   projectPrompts,
-// , schemaPrompts
-// } from './prompt.js';
+import {
+  projectPrompts,
+  // , schemaPrompts
+} from './prompt.js';
 import { prisma, sequelize, swagger } from './plugins/index.js';
 import {
   compile,
@@ -37,19 +37,16 @@ let userModel;
 let models = [];
 
 const runORMSetup = async (orm, db) => {
-  if (!orms[orm].setup) {
-    throw new Error(`Unsupported ORM: ${orm}`);
-  }
-  await orms[orm].setup(db);
+  orms[orm]?.setup && (await orms[orm].setup(db));
 };
 
-const preFillEnv = (input) => {
+const preFillEnv = async (input) => {
   input.authentication && append('.env', 'SECRET="mysecret"\nSALT_ROUNDS=10');
   if (input.tools.length) {
-    input.tools.forEach(async (tool) => {
-      const envContent = tools[tool].env || '';
+    for (const tool of input.tools) {
+      const envContent = tools[tool]?.env || '';
       await append('.env', envContent);
-    });
+    }
   }
 };
 
@@ -94,10 +91,9 @@ const generateProjectStructure = async (input) => {
       sendgrid: [{ path: 'utils/sendgrid.js', content: sendgrid() }],
     };
 
-    tools.length &&
-      tools.forEach((tool) => {
-        files.push(...(toolFiles[tool] || []));
-      });
+    for (const tool of tools) {
+      files.push(...(toolFiles[tool] || []));
+    }
 
     authentication &&
       files.push(
@@ -111,7 +107,9 @@ const generateProjectStructure = async (input) => {
 
     api_documentation && swagger.setup(input);
 
-    folders.forEach(createDirectory);
+    for (const folder of folders) {
+      createDirectory(folder);
+    }
 
     files.map(async (file) => {
       ['.env', 'README.md', '.gitignore'].includes(file.path)
@@ -119,7 +117,7 @@ const generateProjectStructure = async (input) => {
         : await write(file.path, file.content);
     });
 
-    preFillEnv(input);
+    await preFillEnv(input);
   } catch (err) {
     console.error(chalk.bgRed`Unable to create project structure`, err);
   }
@@ -244,9 +242,9 @@ const main = async () => {
       }
     } else {
       // uncomment below line and import line on top if you want to provide custom input
-      // answers = await projectPrompts();
+      answers = await projectPrompts();
       // checkout sampledata.js for preset inputs - faster development
-      answers = sampledata.p1;
+      // answers = sampledata.p1;
       // uncomment to auth feature
     }
     let { authentication, roles, orm, db } = answers;

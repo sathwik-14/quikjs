@@ -110,11 +110,11 @@ app.use(passport.initialize());
 require("./middlewares/passport")(passport);
 {{/if}}
 
+app.use('/api',routes);
+
 app.get('/',(req, res)=>{
   res.status(200).send("Welcome ! to {{input.name}}")
 })
-
-app.use('/api',routes);
 
 // Routes
 {{{authRoutes input.authentication}}}

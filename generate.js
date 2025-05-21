@@ -3,10 +3,10 @@
 import template from './templates/content.js';
 import { read, saveConfig, write } from './utils/index.js';
 import { joi, prisma, sequelize } from './plugins/index.js';
-import sampledata from './sampledata.js';
+// import sampledata from './sampledata.js';
 import chalk from 'chalk';
 // uncomment below import to work with custom input
-// import { schemaPrompts } from './prompt.js';
+import { schemaPrompts } from './prompt.js';
 
 let state;
 
@@ -72,9 +72,9 @@ const scaffold = async (input) => {
       schemaData = input.schema;
     } else {
       // uncomment the below code to enter schema manually and uncommer import also for schemaPrompts
-      // schemaData = await schemaPrompts(input);
+      schemaData = await schemaPrompts(input);
       // checkout sampledata.js for predefined schemas - faster development
-      schemaData = sampledata.blogs;
+      // schemaData = sampledata.blogs;
     }
     await joi.setup();
     if (Object.keys(schemaData).length) {

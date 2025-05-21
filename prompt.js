@@ -9,6 +9,10 @@ const getFields = (schemaData, refTable) => {
   return fields;
 };
 
+const checkPrimaryKey = (entity) => {
+  return entity?.findIndex((item) => item.primaryKey === true);
+};
+
 const projectPrompts = async () => {
   return await prompt([
     {
@@ -49,14 +53,19 @@ const projectPrompts = async () => {
     {
       type: 'confirm',
       name: 'error_handling',
-      message: 'Do you want error_logging for your application?',
+      message: 'Do you want error_logging?',
       default: true,
+    },
+    {
+      type: 'confirm',
+      name: 'api_documentation',
+      message: 'Do you want swagger api documenation?',
     },
     {
       type: 'checkbox',
       name: 'tools',
       message: 'Select third-party tools you would like to configure',
-      choices: tools,
+      choices: () => Object.values(tools),
     },
     // {
     //   type: 'confirm',
@@ -117,6 +126,7 @@ const schemaPrompts = async (input, name = '') => {
         type: 'confirm',
         name: 'primaryKey',
         message: 'Is this attribute a primary key?',
+        when: () => checkPrimaryKey(schemaData[name]),
         default: true,
       },
       {
@@ -143,6 +153,7 @@ const schemaPrompts = async (input, name = '') => {
         type: 'confirm',
         name: 'foreignKey',
         message: 'Is this attribute a foreign key?',
+        when: (answers) => !answers.primaryKey,
         default: true,
       },
       {
@@ -199,6 +210,7 @@ const schemaPrompts = async (input, name = '') => {
         }
         schemaData[ans.table_name] = [];
         tables.push(ans.table_name);
+        name = ans.table_name;
         while (true) {
           const model = await prompt(schemaQuestions);
           schemaData[ans.table_name].push(model);
@@ -217,7 +229,6 @@ const schemaPrompts = async (input, name = '') => {
         }
       }
       saveConfig({ schema: schemaData });
-      return schemaData;
     }
     return schemaData;
   } catch (e) {

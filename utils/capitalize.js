@@ -4,9 +4,6 @@
  * @returns {any} str
  */
 export default (str) => {
-  if (!str) {
-    return;
-  }
-  str = String(str);
-  return str.charAt(0).toUpperCase() + str.slice(1);
+  if (typeof str !== 'string' || !str) return str;
+  return str[0].toUpperCase() + str.slice(1);
 };
