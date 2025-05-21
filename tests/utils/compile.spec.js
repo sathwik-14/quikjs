@@ -1,5 +1,6 @@
 import compileHandlebarsTemplate from '../../utils/compile';
 import Handlebars from 'handlebars';
+import { jest } from '@jest/globals';
 
 jest.mock('handlebars', () => ({
   compile: jest.fn(),

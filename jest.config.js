@@ -10,16 +10,16 @@ export default {
   coverageReporters: ['json', 'text', 'lcov', 'clover'],
   coveragePathIgnorePatterns: ['/node_modules/'],
   testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  transformIgnorePatterns: ['/node_modules/(?!inquirer)/'], // Add this line
   coverageDirectory: 'coverage',
   moduleDirectories: ['node_modules'],
   watchman: true,
   testEnvironment: 'node',
   runner: 'jest-runner',
-  notify: true,
+  notify: false,
   testMatch: ['**/tests/**/*.spec.js'],
   collectCoverage: true,
   transform: {
     '^.+\\.js$': 'babel-jest',
   },
-  experimentalEsmLoader: true,
 };

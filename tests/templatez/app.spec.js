@@ -24,8 +24,8 @@ describe('Handlebars App Template', () => {
       'const compression = require("compression")',
     );
     expect(renderedTemplate).toContain('const morgan = require("morgan")');
-    expect(renderedTemplate).toContain('const fs = require("fs")');
-    expect(renderedTemplate).toContain('const path = require("path")');
+    expect(renderedTemplate).toContain('const fs = require("node:fs")');
+    expect(renderedTemplate).toContain('const path = require("node:path")'); // Also updating path for consistency
     expect(renderedTemplate).toContain('const passport = require("passport")');
     expect(renderedTemplate).toContain('const winston = require("winston")');
     expect(renderedTemplate).toContain(

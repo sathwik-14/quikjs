@@ -1,5 +1,6 @@
 import formatCode from '../../utils/format';
 import prettier from 'prettier';
+import { jest } from '@jest/globals';
 
 jest.mock('prettier', () => ({
   format: jest.fn(),

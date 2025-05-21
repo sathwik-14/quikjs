@@ -1,37 +1,30 @@
 #!/usr/bin/env node
 
-import {
-  appTemplate,
-  passport,
-  aws,
-  twilio,
-  sendgrid,
-  msg91,
-} from './templates/index.js';
 import { scaffold } from './generate.js';
 // uncomment below lines to take manual user inputs
 import {
   projectPrompts,
   // , schemaPrompts
 } from './prompt.js';
-import { prisma, sequelize, swagger } from './plugins/index.js';
+import { prisma, sequelize } from './plugins/index.js'; // swagger removed, compile, createDirectory, write removed
 import {
-  compile,
-  createDirectory,
-  read,
-  write,
+  read, // compile, createDirectory, write are no longer used directly here
   install,
   saveConfig,
   prompt,
   append,
-  // uncomment to work on RBAC
-  // prompt,
 } from './utils/index.js';
+import {
+  generateBaseFiles,
+  generateToolFiles,
+  generateAuthFiles,
+  generateInfraFiles,
+} from './utils/project-structure/index.js';
 import sampledata from './sampledata.js';
 import chalk from 'chalk';
 import path from 'node:path';
 import fs from 'node:fs';
-import { databases, folders, orms, packages, tools } from './constants.js';
+import { databases, orms, packages, tools } from './constants.js'; // folders removed
 
 let userModel;
 let models = [];
@@ -52,74 +45,19 @@ const preFillEnv = async (input) => {
 
 const generateProjectStructure = async (input) => {
   try {
-    const {
-      tools = [],
-      authentication = false,
-      logging = false,
-      error_handling = true,
-      api_documentation = true,
-    } = input;
-    const files = [
-      { path: 'app.js', content: compile(appTemplate)({ input }) },
-      {
-        path: 'routes/index.js',
-        content: `const router = require('express').Router()\n
-        ${authentication ? "const { userAuth } = require('../utils/auth')" : ''}\n
-        // import routes\n\n
-        // routes\n\n
-        module.exports=router`,
-      },
-      {
-        path: '.env',
-        content: `PORT=3000\nDATABASE_URL="${input.db}://<user>:<password>@<host>:5432/<database name>"`,
-      },
-      { path: '.gitignore', content: 'node_modules\n.env\n' },
-      {
-        path: 'README.md',
-        content: '# Your Project Name\n\nProject documentation goes here.',
-      },
-    ];
+    // The new helper functions will handle directory creation internally where needed.
+    // For example, generateBaseFiles creates the main 'folders'.
+    await generateBaseFiles(input);
+    await generateToolFiles(input.tools);
+    await generateAuthFiles(input, userModel);
+    await generateInfraFiles(input); // This now handles swagger.setup internally
 
-    const toolFiles = {
-      s3: [
-        { path: 'config/aws.js', content: aws.s3.config() },
-        { path: 'utils/s3.js', content: aws.s3.utils() },
-      ],
-      sns: [{ path: 'utils/sns.js', content: aws.sns() }],
-      twilio: [{ path: 'utils/twilio.js', content: twilio() }],
-      msg91: [{ path: 'utils/msg91.js', content: msg91() }],
-      sendgrid: [{ path: 'utils/sendgrid.js', content: sendgrid() }],
-    };
-
-    for (const tool of tools) {
-      files.push(...(toolFiles[tool] || []));
-    }
-
-    authentication &&
-      files.push(
-        { path: 'middlewares/passport.js', content: passport.middleware },
-        { path: 'utils/auth.js', content: passport.util(input, userModel) },
-      );
-
-    logging && files.push({ path: 'access.log', content: '' });
-
-    error_handling && files.push({ path: 'error.log', content: '' });
-
-    api_documentation && swagger.setup(input);
-
-    for (const folder of folders) {
-      createDirectory(folder);
-    }
-
-    files.map(async (file) => {
-      ['.env', 'README.md', '.gitignore'].includes(file.path)
-        ? await write(file.path, file.content, { format: false })
-        : await write(file.path, file.content);
-    });
-
+    // preFillEnv needs to be called after .env is created by generateBaseFiles
     await preFillEnv(input);
   } catch (err) {
     console.error(chalk.bgRed`Unable to create project structure`, err);
+    // Propagate the error to be caught by the main function's catch block
+    throw err;
   }
 };
 
@@ -133,28 +71,63 @@ const installDependencies = async (answers) => {
     production,
     authentication,
     api_documentation,
-    tools,
+    tools: selectedTools = [], // Ensure tools is an array
     db,
   } = answers;
-  api_documentation && packages.push('swagger-jsdoc', 'swagger-ui-express');
-  error_handling && packages.push('morgan');
-  production && packages.push('winston', 'pm2', 'express-rate-limit');
-  authentication &&
-    packages.push('passport', 'passport-jwt', 'jsonwebtoken', 'bcrypt');
-  if (tools.length) {
-    for (const item of tools) {
-      switch (item) {
-        case 's3':
-        case 'sns':
-          packages.push('aws-sdk');
-          break;
-        case 'twilio':
-          packages.push('twilio');
-      }
+
+  // Base packages (already in constants.js, but we might want to manage them here or ensure they are added)
+  // For now, assuming `packages` from constants.js is the initial list.
+  // If `packages` from constants.js is meant to be mutable and added to,
+  // we should ensure it's either passed in or handled consistently.
+  // Let's assume `packages` from constants.js is a base list and we add to it.
+  // To avoid modifying the imported `packages` array directly if it's not desired,
+  // let's create a new list.
+  let packagesToInstall = [...packages]; // Start with base packages from constants.js
+
+  const featurePackages = {
+    api_documentation: ['swagger-jsdoc', 'swagger-ui-express'],
+    error_handling: ['morgan'],
+    production: ['winston', 'pm2', 'express-rate-limit'],
+    authentication: ['passport', 'passport-jwt', 'jsonwebtoken', 'bcrypt'],
+  };
+
+  const toolPackages = {
+    s3: ['aws-sdk'],
+    sns: ['aws-sdk'], // aws-sdk is shared for s3 and sns
+    twilio: ['twilio'],
+    // msg91 and sendgrid might have SDKs, add them here if so.
+    // e.g., msg91: ['sendotp'], sendgrid: ['@sendgrid/mail']
+  };
+
+  if (api_documentation) {
+    packagesToInstall.push(...featurePackages.api_documentation);
+  }
+  if (error_handling) {
+    packagesToInstall.push(...featurePackages.error_handling);
+  }
+  if (production) {
+    packagesToInstall.push(...featurePackages.production);
+  }
+  if (authentication) {
+    packagesToInstall.push(...featurePackages.authentication);
+  }
+
+  for (const tool of selectedTools) {
+    if (toolPackages[tool]) {
+      packagesToInstall.push(...toolPackages[tool]);
     }
   }
-  packages.push(getDbDriver(db));
-  install(packages);
+
+  // Add database driver
+  const dbDriver = getDbDriver(db);
+  if (dbDriver) {
+    packagesToInstall.push(dbDriver);
+  }
+
+  // Remove duplicates before installing
+  packagesToInstall = [...new Set(packagesToInstall)];
+
+  install(packagesToInstall);
 };
 
 const CheckProjectExist = (answers) => {
