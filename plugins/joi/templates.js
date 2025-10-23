@@ -1,91 +1,106 @@
 import { capitalize } from '../../utils/index.js';
 
-const schemaFields = (type, model) => {
-  const getType = (type) => {
-    switch (type) {
-      case 'STRING':
-      case 'TEXT':
-        return 'string';
-      case 'INTEGER':
-      case 'FLOAT':
-        return 'number';
-      case 'BOOLEAN':
-        return 'boolean';
-      case 'DATE':
-        return 'date';
-      case 'JSON':
-        return 'object';
-      case 'ARRAY':
-        return 'array';
-      default:
-        return 'any';
-    }
-  };
-  let content = [];
-  for (const item of model) {
-    switch (type) {
+const mapSequelizeTypeToJoi = (sequelizeType) => {
+  switch (sequelizeType) {
+    case 'STRING':
+    case 'TEXT':
+      return 'string';
+    case 'INTEGER':
+    case 'FLOAT':
+      return 'number';
+    case 'BOOLEAN':
+      return 'boolean';
+    case 'DATE':
+      return 'date';
+    case 'JSON':
+      return 'object';
+    case 'ARRAY':
+      return 'array';
+    default:
+      return 'any';
+  }
+};
+
+const generateSchemaFields = (schemaType, modelFields) => {
+  const fields = [];
+  
+  for (const field of modelFields) {
+    const joiType = mapSequelizeTypeToJoi(field.type);
+    
+    switch (schemaType) {
       case 'create':
-        content.push(
-          `${item.name}:Joi.${getType(item.type)}()${item.allowNulls ? '' : '.required()'}`,
+        fields.push(
+          `${field.name}: Joi.${joiType}()${field.allowNulls ? '' : '.required()'}`,
         );
         break;
       case 'update':
-        content.push(`${item.name}:Joi.${getType(item.type)}()`);
+        fields.push(`${field.name}: Joi.${joiType}()`);
         break;
     }
   }
-  return content.join(',\n');
+  
+  return fields.join(',\n  ');
 };
 
 export default {
   validation: {
     createValidator: `const createValidator = async (payload, schema) => {
-          const { error, value } = await schema.validate(payload, {
-            // shows all error messages instead of first error message
-            abortEarly: false,
-          });
-          if (error) {
-            throw error;
-          }
-          return value;
-          }
+  const { error, value } = await schema.validate(payload, {
+    // Shows all error messages instead of first error message
+    abortEarly: false,
+  });
+  
+  if (error) {
+    throw error;
+  }
+  
+  return value;
+};
 
-        module.exports = createValidator`,
-    middleware: `const createValidator = require('./createValidator')
+module.exports = createValidator;`,
 
-        const validateMiddleware = (schema) =>
-          (req, res, next) => {
-            const payload = req.body
-            const validate = createValidator(payload, schema)
+    middleware: `const createValidator = require('./createValidator');
 
-            // proceed next if validated otherwise catch error and pass onto express error handler
-            validate
-              .then(validated => {
-                req.body = validated
-                next()
-              })
-              .catch(error => {
-                res.status(400).send(error.details)
-              })
-          }
+const validateMiddleware = (schema) => (req, res, next) => {
+  const payload = req.body;
+  const validate = createValidator(payload, schema);
+  
+  // Proceed next if validated, otherwise catch error and pass to express error handler
+  validate
+    .then((validated) => {
+      req.body = validated;
+      next();
+    })
+    .catch((error) => {
+      res.status(400).json({
+        message: 'Validation failed',
+        errors: error.details,
+        success: false,
+      });
+    });
+};
 
-        module.exports = validateMiddleware`,
-    schema: (modelName, model) =>
-      `let Joi = require('joi')
+module.exports = validateMiddleware;`,
 
-        // Schema for creating a product, all fields are required
-        let create${capitalize(modelName)}Schema = Joi.object().keys({
-          ${schemaFields('create', model)}
-        })
+    schema: (modelName, modelFields) => {
+      const ModelName = capitalize(modelName);
+      
+      return `const Joi = require('joi');
 
-        // Schema for editing a product, all fields are optional and we can have a custom error message
-        let update${capitalize(modelName)}Schema = Joi.object().keys({
-          ${schemaFields('update', model)}
-        })
+// Schema for creating a ${modelName}, all fields are required
+const create${ModelName}Schema = Joi.object().keys({
+  ${generateSchemaFields('create', modelFields)}
+});
 
-        module.exports = {
-          create${capitalize(modelName)}Schema,
-          update${capitalize(modelName)}Schema
-        }`,
+// Schema for updating a ${modelName}, all fields are optional
+const update${ModelName}Schema = Joi.object().keys({
+  ${generateSchemaFields('update', modelFields)}
+});
+
+module.exports = {
+  create${ModelName}Schema,
+  update${ModelName}Schema,
+};`;
+    },
   },
 };
