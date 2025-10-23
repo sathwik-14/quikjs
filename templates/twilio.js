@@ -1,26 +1,28 @@
-export default () => `
-const twilio = require('twilio');
+export default () => `const twilio = require('twilio');
 
-const sendMessage(body, from, to) {
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+// Initialize Twilio client
+const twilioClient = twilio(accountSid, authToken);
+
+// Send SMS message
+const sendSmsMessage = async (messageBody, fromNumber, toNumber) => {
   try {
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const client = twilio(accountSid, authToken);
-
-    const message = await client.messages.create({
-      body,
-      from,
-      to
+    const message = await twilioClient.messages.create({
+      body: messageBody,
+      from: fromNumber,
+      to: toNumber,
     });
-
-    console.log("Message SID:", message.sid);
-
-    return message.sid; // Return the message SID (optional)
+    
+    console.log(\`Twilio message sent successfully. SID: \${message.sid}\`);
+    return message.sid;
   } catch (error) {
-    // Handle errors
-    console.log("Error sending Twilio message:", error);
+    console.error('Twilio message error:', error.message);
+    throw error;
   }
-}
+};
 
-module.exports = sendMessage;
-`;
+module.exports = {
+  sendSmsMessage,
+};`;

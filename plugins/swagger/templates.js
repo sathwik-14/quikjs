@@ -1,6 +1,6 @@
 import { capitalize } from '../../utils/index.js';
 
-const convertType = (type) => {
+const mapTypeToSwagger = (type) => {
   switch (type.toLowerCase()) {
     case 'string':
     case 'text':
@@ -29,70 +29,77 @@ const convertType = (type) => {
   }
 };
 
-const getProperties = (model) => {
-  let fields = model
+const generateSchemaProperties = (modelFields) => {
+  const fields = modelFields
     .map(
-      (item) =>
-        ` *              ${item.name}:
- *                type: ${convertType(item.type)}`,
+      (field) =>
+        ` *              ${field.name}:
+ *                type: ${mapTypeToSwagger(field.type)}`,
     )
     .join('\n');
+  
   return ` *            properties:
 ${fields}`;
 };
 
 export default {
   main: (config) =>
-    `const swaggerJsdoc = require('swagger-jsdoc')
-    const swaggerUi = require('swagger-ui-express')
+    `const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
 
-    const options = {
-      definition: {
-        openapi: '3.0.0',
-        info: {
-          title: '${config.name} API',
-          description: "API endpoints for a ${config.name} services documented on swagger",
-          contact: {
-            name: "Desmond Obisi",
-            email: "info@miniblog.com",
-            url: "https://github.com/DesmondSanctity/node-js-swagger"
-          },
-          version: '1.0.0',
-        },
-        servers: [
-          {
-            url: "http://localhost:3000/",
-            description: "Local server"
-          },
-        //   {
-        //     url: "<your live url here>",
-        //     description: "Live server"
-        //   },
-        ]
+const options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: '${config.name} API',
+      description: 'API endpoints for ${config.name} services documented on Swagger',
+      contact: {
+        name: 'Desmond Obisi',
+        email: 'info@miniblog.com',
+        url: 'https://github.com/DesmondSanctity/node-js-swagger'
       },
-      // looks for configuration in specified directories
-      apis: ['./routes/*.js'],
-    }
-    const swaggerSpec = swaggerJsdoc(options)
-    function swaggerDocs(app, port) {
-      // Swagger Page
-      app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
-      // Documentation in JSON format
-      app.get('/docs.json', (req, res) => {
-        res.setHeader('Content-Type', 'application/json')
-        res.send(swaggerSpec)
-      })
-    }
-    module.exports = swaggerDocs   
-    `,
+      version: '1.0.0',
+    },
+    servers: [
+      {
+        url: 'http://localhost:3000/',
+        description: 'Local server'
+      },
+      // {
+      //   url: '<your live url here>',
+      //   description: 'Live server'
+      // },
+    ]
+  },
+  // Looks for configuration in specified directories
+  apis: ['./routes/*.js'],
+};
+
+const swaggerSpec = swaggerJsdoc(options);
+
+function swaggerDocs(app, port) {
+  // Swagger Page
+  app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  
+  // Documentation in JSON format
+  app.get('/docs.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
+  });
+}
+
+module.exports = swaggerDocs;`,
+
   paths: {
-    getAll: (modelName) =>
-      `/**
+    getAll: (modelName) => {
+      const ModelName = capitalize(modelName);
+      
+      return `/**
  * @openapi
  * '/api/${modelName}':
  *  get:
  *     tags:
- *     - ${capitalize(modelName)}
+ *     - ${ModelName}
  *     summary: Get all ${modelName}
  *     responses:
  *      200:
@@ -103,37 +110,45 @@ export default {
  *        description: Not Found
  *      500:
  *        description: Server Error
- */`,
-    getByid: (modelName) =>
-      `/**
-        * @openapi
-        * '/api/${modelName}/{id}':
-        *  get:
-        *     tags:
-        *     - ${capitalize(modelName)}
-        *     summary: Get ${modelName} by id
-        *     parameters:
-        *      - name: id
-        *        in: path
-        *        description: The id of the ${modelName}
-        *        required: true
-        *     responses:
-        *      200:
-        *        description: Fetched Successfully
-        *      400:
-        *        description: Bad Request
-        *      404:
-        *        description: Not Found
-        *      500:
-        *        description: Server Error
-        */`,
-    post: (modelName, model) =>
-      `/**
+ */`;
+    },
+
+    getById: (modelName) => {
+      const ModelName = capitalize(modelName);
+      
+      return `/**
+ * @openapi
+ * '/api/${modelName}/{id}':
+ *  get:
+ *     tags:
+ *     - ${ModelName}
+ *     summary: Get ${modelName} by id
+ *     parameters:
+ *      - name: id
+ *        in: path
+ *        description: The id of the ${modelName}
+ *        required: true
+ *     responses:
+ *      200:
+ *        description: Fetched Successfully
+ *      400:
+ *        description: Bad Request
+ *      404:
+ *        description: Not Found
+ *      500:
+ *        description: Server Error
+ */`;
+    },
+
+    post: (modelName, modelFields) => {
+      const ModelName = capitalize(modelName);
+      
+      return `/**
  * @openapi
  * '/api/${modelName}':
  *  post:
  *     tags:
- *     - ${capitalize(modelName)}
+ *     - ${ModelName}
  *     summary: Create new ${modelName} entry
  *     requestBody:
  *      required: true
@@ -141,7 +156,7 @@ export default {
  *        application/json:
  *           schema:
  *            type: object
-${getProperties(model)}
+${generateSchemaProperties(modelFields)}
  *     responses:
  *      201:
  *        description: Created Successfully
@@ -151,14 +166,18 @@ ${getProperties(model)}
  *        description: Not Found
  *      500:
  *        description: Server Error
- */`,
-    patch: (modelName, model) =>
-      `/**
+ */`;
+    },
+
+    patch: (modelName, modelFields) => {
+      const ModelName = capitalize(modelName);
+      
+      return `/**
  * @openapi
  * '/api/${modelName}/{id}':
  *  patch:
  *     tags:
- *     - ${capitalize(modelName)}
+ *     - ${ModelName}
  *     summary: Modify existing ${modelName} entry
  *     parameters:
  *      - name: id
@@ -171,9 +190,9 @@ ${getProperties(model)}
  *        application/json:
  *           schema:
  *            type: object
-${getProperties(model)}
+${generateSchemaProperties(modelFields)}
  *     responses:
- *      201:
+ *      200:
  *        description: Modified Successfully
  *      400:
  *        description: Bad Request
@@ -181,14 +200,18 @@ ${getProperties(model)}
  *        description: Not Found
  *      500:
  *        description: Server Error
- */`,
-    delete: (modelName) =>
-      `/**
+ */`;
+    },
+
+    delete: (modelName) => {
+      const ModelName = capitalize(modelName);
+      
+      return `/**
  * @openapi
  * '/api/${modelName}/{id}':
  *  delete:
  *     tags:
- *     - ${capitalize(modelName)}
+ *     - ${ModelName}
  *     summary: Delete a ${modelName} entry
  *     parameters:
  *      - name: id
@@ -204,6 +227,7 @@ ${getProperties(model)}
  *        description: Not Found
  *      500:
  *        description: Server Error
- */`,
+ */`;
+    },
   },
 };

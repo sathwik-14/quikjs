@@ -55,18 +55,18 @@ const cors = require("cors")
 const dotenv = require("dotenv")
 const helmet = require("helmet")
 const compression = require("compression")
-{{#if input.logging}}
+{{#if enableLogging}}
 const morgan = require("morgan")
 const fs = require("node:fs")
 const path = require("node:path")
 {{/if}}
-{{#if input.production}}
+{{#if enableProduction}}
 const winston = require("winston")
 const rateLimit = require('express-rate-limit');
 {{/if}}
 {{!-- Auth imports --}}
-{{{authImports input.authentication input.roles}}}
-{{#if input.api_documentation}}
+{{{authImports enableAuthentication roles}}}
+{{#if enableApiDocumentation}}
 const swaggerJSDoc = require('./swagger');
 {{/if}}
 const routes = require('./routes');
@@ -84,7 +84,7 @@ app.use(cors());
 app.use(express.json()); // Parses JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parses URL-encoded form data
 app.use(helmet()); // Set security HTTP headers
-{{#if input.production}}
+{{#if enableProduction}}
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes window (adjust based on your needs)
   max: 100, // Limit each IP to 100 requests per window
@@ -100,12 +100,12 @@ const apiLimiter = rateLimit({
 app.use(apiLimiter);
 {{/if}}
 {{!-- Log middleware --}}
-{{#if input.logging}}
+{{#if enableLogging}}
 app.use(morgan("combined", { stream: fs.createWriteStream(path.join(process.cwd(), 'access.log'), { flags: 'a' }) })); // Logging to file
 {{/if}}
 app.use(compression()); // Gzip compression
 {{!-- Auth middleware --}}
-{{#if input.authentication}}
+{{#if enableAuthentication}}
 app.use(passport.initialize());
 require("./middlewares/passport")(passport);
 {{/if}}
@@ -113,14 +113,14 @@ require("./middlewares/passport")(passport);
 app.use('/api',routes);
 
 app.get('/',(req, res)=>{
-  res.status(200).send("Welcome ! to {{input.name}}")
+  res.status(200).send("Welcome ! to {{appName}}")
 })
 
 // Routes
-{{{authRoutes input.authentication}}}
+{{{authRoutes enableAuthentication}}}
 
 {{!-- Error handling middleware --}}
-{{#if input.error_handling}}
+{{#if enableErrorHandling}}
 app.use((err, req, res, next) => {
   console.error("Custom error handler - " + err.stack);
 
@@ -132,7 +132,7 @@ app.use((err, req, res, next) => {
   res.status(500).send("Something went wrong!");
 });
 {{/if}}
-{{#if input.production}}
+{{#if enableProduction}}
 app.use((err, req, res, next) => {
   console.error('Custom error handler - ' + err.stack);
 
@@ -159,7 +159,7 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(\`Server running on port \${PORT}\`);
 });
-{{#if input.api_documentation}}
+{{#if enableApiDocumentation}}
 swaggerJSDoc(app,PORT)
 {{/if}}
 `;

@@ -1,64 +1,64 @@
-export default () => `
-const msg91 = require('msg91');
+export default () => `const msg91 = require('msg91');
 
-const authKey = process.env.MSG_AUTH_KEY;
-msg91.initialize({authKey});
+const authKey = process.env.MSG91_AUTH_KEY;
 
-// Get SMS object
-const getSMS = () => {
+// Initialize MSG91
+msg91.initialize({ authKey });
+
+// Get SMS client
+const getSmsClient = () => {
   return msg91.getSMS();
 };
 
 // Send SMS
-const sendSMS = (flowId, mobileNumber, variables) => {
-  const sms = getSMS();
-  return sms.send(flowId, { mobile: mobileNumber, ...variables });
+const sendSms = (flowId, mobileNumber, variables) => {
+  const smsClient = getSmsClient();
+  return smsClient.send(flowId, { mobile: mobileNumber, ...variables });
 };
 
-// Get OTP object
-const getOTP = (otpTemplateId, options) => {
-  return msg91.getOTP(otpTemplateId, options);
+// Get OTP client
+const getOtpClient = (templateId, options = {}) => {
+  return msg91.getOTP(templateId, options);
 };
 
 // Send OTP
-const sendOTP = (otpInstance, mobileNumber) => {
-  return otpInstance.send(mobileNumber);
+const sendOtp = (otpClient, mobileNumber) => {
+  return otpClient.send(mobileNumber);
 };
 
 // Retry OTP
-const retryOTP = (otpInstance, mobileNumber) => {
-  return otpInstance.retry(mobileNumber);
+const retryOtp = (otpClient, mobileNumber) => {
+  return otpClient.retry(mobileNumber);
 };
 
 // Verify OTP
-const verifyOTP = (otpInstance, mobileNumber, otp) => {
-  return otpInstance.verify(mobileNumber, otp);
+const verifyOtp = (otpClient, mobileNumber, otp) => {
+  return otpClient.verify(mobileNumber, otp);
 };
 
-// Get Campaign object
-const getCampaign = () => {
+// Get Campaign client
+const getCampaignClient = () => {
   return msg91.getCampaign();
 };
 
 // Get all campaigns
-const getAllCampaigns = (campaignInstance) => {
-  return campaignInstance.getAll();
+const getAllCampaigns = (campaignClient) => {
+  return campaignClient.getAll();
 };
 
 // Run a campaign
-const runCampaign = (campaignInstance, slug, data) => {
-  return campaignInstance.run(slug, { data });
+const runCampaign = (campaignClient, slug, data) => {
+  return campaignClient.run(slug, { data });
 };
 
 module.exports = {
-  initializeMsg91,
-  sendSMS,
-  getOTP,
-  sendOTP,
-  retryOTP,
-  verifyOTP,
-  getCampaign,
+  getSmsClient,
+  sendSms,
+  getOtpClient,
+  sendOtp,
+  retryOtp,
+  verifyOtp,
+  getCampaignClient,
   getAllCampaigns,
-  runCampaign
-};
-`;
+  runCampaign,
+};`;
