@@ -2,7 +2,7 @@
 
 import template from './templates/content.js';
 import { read, saveConfig, write } from './utils/index.js';
-import { joi, prisma, sequelize } from './plugins/index.js';
+import { joi, prisma, sequelize, mongoose } from './plugins/index.js';
 // import sampledata from './sampledata.js';
 import chalk from 'chalk';
 // uncomment below import to work with custom input
@@ -92,6 +92,10 @@ const scaffold = async (input) => {
           case 'sequelize':
             await sequelize.model(modelName, model);
             sequelize.controller(modelName);
+            break;
+          case 'mongoose':
+            await mongoose.model(modelName, model);
+            mongoose.controller(modelName);
             break;
         }
         await joi.schema(modelName, model);

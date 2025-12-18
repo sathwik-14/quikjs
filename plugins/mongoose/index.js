@@ -1,5 +1,6 @@
-import templates from '../../templates/content.js';
-import { write, install, format } from '../../utils/index.js';
+import { write, install, format, capitalize } from '../../utils/index.js';
+import templates from './template.js';
+import { generateModel } from './model.js';
 
 const type = (input) => {
   switch (input.toLowerCase()) {
@@ -40,4 +41,17 @@ const setup = async () => {
   await clientInit();
 };
 
-export default { setup, type, clientInit };
+const controller = async (modelName) => {
+  const controllerContent = `const ${capitalize(modelName)} = require('../models/${modelName.toLowerCase()}');\n\n ${templates.create(modelName)}\n 
+ ${templates.getAll(modelName)}\n 
+ ${templates.getById(modelName)}\n ${templates.update(modelName)}\n  
+ ${templates.delete(modelName)}\n  
+     module.exports = {\n  \n          create${capitalize(modelName)}, 
+  getAll${capitalize(modelName)}, 
+    get${capitalize(modelName)}ById,
+      update${capitalize(modelName)}ById,
+        delete${capitalize(modelName)}ById};`;
+  await write(`controllers/${modelName}.js`, controllerContent);
+};
+
+export default { setup, type, clientInit, model: generateModel, controller };

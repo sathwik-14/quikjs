@@ -21,6 +21,7 @@ const packages = [
 
 const databases = new Map([
   ['postgresql', { supportedORM: ['sequelize'], driver: 'pg' }],
+  ['mongodb', { supportedORM: ['mongoose'], driver: 'mongoose' }],
   // ['mysql', { supportedORM: ['sequelize', driver: 'mysql2' ]}],
   // '['mariadb', , { supportedORM: ['sequelize', driver: 'mariadb' ]}]'
 ]);

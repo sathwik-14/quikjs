@@ -14,7 +14,7 @@ import {
   projectPrompts,
   // , schemaPrompts
 } from './prompt.js';
-import { prisma, sequelize, swagger } from './plugins/index.js';
+import { prisma, sequelize, mongoose, swagger } from './plugins/index.js';
 import {
   compile,
   createDirectory,
@@ -221,6 +221,7 @@ const handleAuthentication = async (answer) => {
   const orm = answer.orm;
   orm == 'prisma' && (await prisma.model(name, userModel, answer.db));
   orm == 'sequelize' && (await sequelize.model(name, userModel));
+  orm == 'mongoose' && (await mongoose.model(name, userModel));
 };
 
 const main = async () => {
