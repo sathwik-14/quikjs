@@ -141,16 +141,23 @@ const schemaPrompts = async (input, name = '') => {
       {
         type: 'confirm',
         name: 'allowNulls',
-        message: 'Allow NULL values for this attribute?',
+        message: isMongoose
+          ? 'Is this field required?'
+          : 'Allow NULL values for this attribute?',
         when: (answers) => !answers.primaryKey,
         default: true,
+        filter: (input) => (isMongoose ? !input : input),
       },
       {
         type: 'confirm',
         name: 'unique',
         message: 'Should this attribute have unique values?',
-        when: (answers) => !answers.primaryKey,
-        default: true,
+        when: (answers) =>
+          !answers.primaryKey &&
+          (!isMongoose ||
+            (isMongoose &&
+              !['ObjectId', 'Schema.Types.ObjectId'].includes(answers.type))),
+        default: false, // Changed default to false as unique is less common than non-unique
       },
       {
         type: 'confirm',
@@ -165,7 +172,11 @@ const schemaPrompts = async (input, name = '') => {
         message: isMongoose
           ? 'Is this attribute a reference to another Model?'
           : 'Is this attribute a foreign key?',
-        when: (answers) => !answers.primaryKey,
+        when: (answers) =>
+          !answers.primaryKey &&
+          (!isMongoose ||
+            (isMongoose &&
+              ['ObjectId', 'Schema.Types.ObjectId'].includes(answers.type))),
         default: true,
       },
       {
