@@ -87,7 +87,11 @@ const schemaPrompts = async (input, name = '') => {
   try {
     let tables = [];
     let schemaData = {};
-    let mappedTypes = orms[input.orm].types;
+
+    // Ensure input.orm is a string key
+    const ormKey = typeof input.orm === 'string' ? input.orm : input.orm.name;
+    let mappedTypes = orms[ormKey].types;
+
     const schemaQuestions = [
       {
         type: 'input',
@@ -109,7 +113,7 @@ const schemaPrompts = async (input, name = '') => {
         type: 'input',
         name: 'size',
         message: 'Enter the size (if applicable):',
-        when: (answers) => orms[input.orm].allowSizeInput(answers.type),
+        when: (answers) => orms[ormKey].allowSizeInput(answers.type),
         default: '',
       },
       {
