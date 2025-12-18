@@ -55,6 +55,7 @@ const orms = {
     ],
     setup: prisma.setup,
     getType: (input) => prisma.type(input),
+    allowSizeInput: () => false,
   },
   sequelize: {
     id: 2,
@@ -121,6 +122,7 @@ const orms = {
     ],
     setup: mongoose.setup,
     getType: (input) => mongoose.type(input),
+    allowSizeInput: () => false,
   },
   typeORM: {
     id: 4,
@@ -149,6 +151,7 @@ const orms = {
       'Json[]',
     ],
     getType: (input) => typeorm.type(input),
+    allowSizeInput: () => false,
   },
 };
 
