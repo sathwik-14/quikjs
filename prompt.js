@@ -10,7 +10,8 @@ const getFields = (schemaData, refTable) => {
 };
 
 const checkPrimaryKey = (entity) => {
-  return entity?.findIndex((item) => item.primaryKey === true);
+  if (!entity) return true;
+  return entity.findIndex((item) => item.primaryKey === true) === -1;
 };
 
 const projectPrompts = async () => {
@@ -91,6 +92,9 @@ const schemaPrompts = async (input, name = '') => {
 
     // Ensure input.orm is a string key
     const ormKey = typeof input.orm === 'string' ? input.orm : input.orm.name;
+    const isMongoose = ormKey === 'mongoose';
+    const entityLabel = isMongoose ? 'model' : 'table';
+
     let mappedTypes = orms[ormKey].types;
 
     const schemaQuestions = [
@@ -131,7 +135,7 @@ const schemaPrompts = async (input, name = '') => {
         type: 'confirm',
         name: 'primaryKey',
         message: 'Is this attribute a primary key?',
-        when: () => checkPrimaryKey(schemaData[name]),
+        when: () => !isMongoose && checkPrimaryKey(schemaData[name]),
         default: true,
       },
       {
@@ -152,19 +156,22 @@ const schemaPrompts = async (input, name = '') => {
         type: 'confirm',
         name: 'autoIncrement',
         message: 'Should this attribute auto-increment?',
+        when: () => !isMongoose,
         default: true,
       },
       {
         type: 'confirm',
         name: 'foreignKey',
-        message: 'Is this attribute a foreign key?',
+        message: isMongoose
+          ? 'Is this attribute a reference to another Model?'
+          : 'Is this attribute a foreign key?',
         when: (answers) => !answers.primaryKey,
         default: true,
       },
       {
         type: 'list',
         name: 'refTable',
-        message: 'Select the referenced table:',
+        message: `Select the referenced ${entityLabel}:`,
         choices: tables,
         when: (answers) => answers.foreignKey,
       },
@@ -172,7 +179,7 @@ const schemaPrompts = async (input, name = '') => {
         type: 'list',
         name: 'refField',
         message: 'Enter the referenced field:',
-        when: (answers) => answers.foreignKey,
+        when: (answers) => answers.foreignKey && !isMongoose,
         choices: (answers) => {
           const refTable = answers.refTable;
           const fields = getFields(schemaData, refTable);
@@ -184,7 +191,7 @@ const schemaPrompts = async (input, name = '') => {
         name: 'relationshipType',
         message: 'Select the relationship type:',
         choices: ['One-to-One', 'One-to-Many', 'Many-to-One', 'Many-to-Many'],
-        when: (answers) => answers.foreignKey,
+        when: (answers) => answers.foreignKey && !isMongoose,
       },
       {
         type: 'confirm',
@@ -200,13 +207,13 @@ const schemaPrompts = async (input, name = '') => {
           {
             type: 'confirm',
             name: 'add_table',
-            message: 'Do you want to add a table?',
+            message: `Do you want to add a ${entityLabel}?`,
             default: true,
           },
           {
             type: 'input',
             name: 'table_name',
-            message: 'Enter the table name?',
+            message: `Enter the ${entityLabel} name?`,
             when: (answers) => answers.add_table,
           },
         ]);
