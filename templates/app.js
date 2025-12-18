@@ -49,6 +49,13 @@ const {userAuth, userRegister, userLogin, serializeUser} = require("./utils/auth
   return '';
 });
 
+Handlebars.registerHelper('dbConnection', (input) => {
+  if (input.orm === 'mongoose') {
+    return 'require("./config/db");';
+  }
+  return '';
+});
+
 export const appTemplate = `
 const express = require("express")
 const cors = require("cors")
@@ -75,6 +82,8 @@ const PORT = process.env.PORT || "3000";
 
 // Load environment variables from .env file
 dotenv.config();
+
+{{{dbConnection input}}}
 
 // Initialize Express app
 const app = express();
