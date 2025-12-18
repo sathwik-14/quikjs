@@ -39,7 +39,7 @@ const mapType = (type) => {
 
 const getExportedNames = (content) => {
   try {
-    const exportRegex = /module\.exports\s*=\s*{([^}]*)}/; 
+    const exportRegex = /module\.exports\s*=\s*{([^}]*)}/;
     const match = content.match(exportRegex);
     if (match && match[1]) {
       const namesString = match[1].trim();
@@ -55,7 +55,11 @@ const getExportedNames = (content) => {
   }
 };
 
-const updateIndex = async (modelsDirectory, modelName, capitalizedServiceName) => {
+const updateIndex = async (
+  modelsDirectory,
+  modelName,
+  capitalizedServiceName,
+) => {
   const indexFilePath = `${modelsDirectory}/index.js`;
   let indexContent = `// imports
 
@@ -121,27 +125,34 @@ const generateModel = async (modelName, model) => {
         // Usually validation or just unique index.
         // For now, let's ignore primaryKey as _id covers it, or treat as unique.
       }
-      
-      if (field.defaultValue !== null && field.defaultValue !== undefined && field.defaultValue !== '') {
-         // handle strings needing quotes
-         const defVal = (mapType(field.type) === 'String' && !field.defaultValue.startsWith("'"')) 
-            ? `'${field.defaultValue}'` 
+
+      if (
+        field.defaultValue !== null &&
+        field.defaultValue !== undefined &&
+        field.defaultValue !== ''
+      ) {
+        // handle strings needing quotes
+        const defVal =
+          mapType(field.type) === 'String' &&
+          !field.defaultValue.startsWith("'")
+            ? `'${field.defaultValue}'`
             : field.defaultValue;
-         fieldDefinition += `, default: ${defVal}`;
+        fieldDefinition += `, default: ${defVal}`;
       }
 
-      if (!field.allowNulls && field.required !== false) { // Assuming !allowNulls means required
+      if (!field.allowNulls && field.required !== false) {
+        // Assuming !allowNulls means required
         fieldDefinition += `, required: true`;
       }
-      
+
       if (field.unique) {
         fieldDefinition += `, unique: true`;
       }
 
       if (field.foreignKey) {
-         // Override type to ObjectId for relations
-         fieldDefinition = `  ${field.name}: { type: mongoose.Schema.Types.ObjectId, ref: '${capitalize(field.refTable)}'`;
-         if(!field.allowNulls) fieldDefinition += `, required: true`;
+        // Override type to ObjectId for relations
+        fieldDefinition = `  ${field.name}: { type: mongoose.Schema.Types.ObjectId, ref: '${capitalize(field.refTable)}'`;
+        if (!field.allowNulls) fieldDefinition += `, required: true`;
       }
 
       fieldDefinition += ' }';
