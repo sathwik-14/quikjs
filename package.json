@@ -1,8 +1,18 @@
 {
   "name": "quikjs",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "A a powerful tool designed to streamline the process of building APIs for Express.js applications",
   "main": "index.js",
+  "files": [
+    "index.js",
+    "generate.js",
+    "prompt.js",
+    "constants.js",
+    "sampledata.js",
+    "templates",
+    "plugins",
+    "utils"
+  ],
   "bin": {
     "quik-g-p": "./index.js",
     "quik-g-m": "./generate.js"
