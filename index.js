@@ -31,10 +31,45 @@ import sampledata from './sampledata.js';
 import chalk from 'chalk';
 import path from 'node:path';
 import fs from 'node:fs';
+import process from 'node:process';
+import { execSync } from 'node:child_process';
 import { databases, folders, orms, packages, tools } from './constants.js';
 
 let userModel;
 let models = [];
+
+const showBanner = () => {
+  console.log(
+    chalk.cyan(`
+  ╔════════════════════════════════════════════════════════════════╗
+  ║                                                                ║
+  ║   ██████╗ ██╗   ██╗██╗██╗  ██╗   ██╗███████╗                   ║
+  ║  ██╔═══██╗██║   ██║██║██║ ██╔╝   ██║██╔════╝                   ║
+  ║  ██║   ██║██║   ██║██║█████╔╝    ██║███████╗                   ║
+  ║  ██║▄▄ ██║██║   ██║██║██╔═██╗    ██║╚════██║                   ║
+  ║  ╚██████╔╝╚██████╔╝██║██║  ██╗█████╔╝███████║                   ║
+  ║   ╚══▀▀═╝  ╚═════╝ ╚═╝╚═╝  ╚═╝╚════╝ ╚══════╝                   ║
+  ║                                                                ║
+  ║                🚀 RAPID API GENERATOR v2.1.2                   ║
+  ║                                                                ║
+  ╚════════════════════════════════════════════════════════════════╝
+  `),
+  );
+};
+
+const ensurePackageJson = () => {
+  if (!fs.existsSync(path.join(process.cwd(), 'package.json'))) {
+    console.log(
+      chalk.yellow('No package.json found. Initializing npm project...'),
+    );
+    try {
+      execSync('npm init -y', { stdio: 'inherit' });
+      console.log(chalk.green('✔ package.json created successfully.\n'));
+    } catch (error) {
+      console.error(chalk.red('Failed to initialize npm project.'), error);
+    }
+  }
+};
 
 const runORMSetup = async (orm, db) => {
   orms[orm]?.setup && (await orms[orm].setup(db));
@@ -226,8 +261,10 @@ const handleAuthentication = async (answer) => {
 
 const main = async () => {
   try {
+    showBanner();
+    ensurePackageJson();
     let answers;
-    // eslint-disable-next-line no-undef
+
     const args = process.argv.slice(2);
     const configFilePath = getFlagValue(args, '-c');
     if (configFilePath) {
