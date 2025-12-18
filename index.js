@@ -33,6 +33,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import process from 'node:process';
 import { execSync } from 'node:child_process';
+import ora from 'ora';
 import { databases, folders, orms, packages, tools } from './constants.js';
 
 let userModel;
@@ -50,7 +51,7 @@ const showBanner = () => {
   ║  ╚██████╔╝╚██████╔╝██║██║  ██╗█████╔╝███████║                   ║
   ║   ╚══▀▀═╝  ╚═════╝ ╚═╝╚═╝  ╚═╝╚════╝ ╚══════╝                   ║
   ║                                                                ║
-  ║                🚀 RAPID API GENERATOR v2.1.2                   ║
+  ║                🚀 RAPID API GENERATOR v2.1.3                   ║
   ║                                                                ║
   ╚════════════════════════════════════════════════════════════════╝
   `),
@@ -59,20 +60,28 @@ const showBanner = () => {
 
 const ensurePackageJson = () => {
   if (!fs.existsSync(path.join(process.cwd(), 'package.json'))) {
-    console.log(
+    const spinner = ora(
       chalk.yellow('No package.json found. Initializing npm project...'),
-    );
+    ).start();
     try {
-      execSync('npm init -y', { stdio: 'inherit' });
-      console.log(chalk.green('✔ package.json created successfully.\n'));
+      execSync('npm init -y', { stdio: 'ignore' });
+      spinner.succeed(chalk.green('package.json created successfully.'));
     } catch (error) {
-      console.error(chalk.red('Failed to initialize npm project.'), error);
+      spinner.fail(chalk.red('Failed to initialize npm project.'));
+      console.error(error);
     }
   }
 };
 
 const runORMSetup = async (orm, db) => {
-  orms[orm]?.setup && (await orms[orm].setup(db));
+  const spinner = ora(chalk.blue(`Setting up ${orm} ORM...`)).start();
+  try {
+    orms[orm]?.setup && (await orms[orm].setup(db));
+    spinner.succeed(chalk.green(`${orm} setup completed.`));
+  } catch (error) {
+    spinner.fail(chalk.red(`${orm} setup failed.`));
+    console.error(error);
+  }
 };
 
 const preFillEnv = async (input) => {
@@ -86,6 +95,7 @@ const preFillEnv = async (input) => {
 };
 
 const generateProjectStructure = async (input) => {
+  const spinner = ora(chalk.blue('Generating project structure...')).start();
   try {
     const {
       tools = [],
@@ -153,8 +163,10 @@ const generateProjectStructure = async (input) => {
     });
 
     await preFillEnv(input);
+    spinner.succeed(chalk.green('Project structure generated.'));
   } catch (err) {
-    console.error(chalk.bgRed`Unable to create project structure`, err);
+    spinner.fail(chalk.red('Unable to create project structure.'));
+    console.error(err);
   }
 };
 
@@ -163,33 +175,42 @@ const getDbDriver = (db) => {
 };
 
 const installDependencies = async (answers) => {
-  const {
-    error_handling,
-    production,
-    authentication,
-    api_documentation,
-    tools,
-    db,
-  } = answers;
-  api_documentation && packages.push('swagger-jsdoc', 'swagger-ui-express');
-  error_handling && packages.push('morgan');
-  production && packages.push('winston', 'pm2', 'express-rate-limit');
-  authentication &&
-    packages.push('passport', 'passport-jwt', 'jsonwebtoken', 'bcrypt');
-  if (tools.length) {
-    for (const item of tools) {
-      switch (item) {
-        case 's3':
-        case 'sns':
-          packages.push('aws-sdk');
-          break;
-        case 'twilio':
-          packages.push('twilio');
+  const spinner = ora(
+    chalk.blue('Installing dependencies... This may take a moment.'),
+  ).start();
+  try {
+    const {
+      error_handling,
+      production,
+      authentication,
+      api_documentation,
+      tools,
+      db,
+    } = answers;
+    api_documentation && packages.push('swagger-jsdoc', 'swagger-ui-express');
+    error_handling && packages.push('morgan');
+    production && packages.push('winston', 'pm2', 'express-rate-limit');
+    authentication &&
+      packages.push('passport', 'passport-jwt', 'jsonwebtoken', 'bcrypt');
+    if (tools.length) {
+      for (const item of tools) {
+        switch (item) {
+          case 's3':
+          case 'sns':
+            packages.push('aws-sdk');
+            break;
+          case 'twilio':
+            packages.push('twilio');
+        }
       }
     }
+    packages.push(getDbDriver(db));
+    install(packages);
+    spinner.succeed(chalk.green('Dependencies installed successfully.'));
+  } catch (error) {
+    spinner.fail(chalk.red('Failed to install dependencies.'));
+    console.error(error);
   }
-  packages.push(getDbDriver(db));
-  install(packages);
 };
 
 const CheckProjectExist = (answers) => {

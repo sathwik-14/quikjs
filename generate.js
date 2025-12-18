@@ -5,6 +5,7 @@ import { read, saveConfig, write } from './utils/index.js';
 import { joi, prisma, sequelize, mongoose } from './plugins/index.js';
 // import sampledata from './sampledata.js';
 import chalk from 'chalk';
+import ora from 'ora';
 // uncomment below import to work with custom input
 import { schemaPrompts } from './prompt.js';
 
@@ -76,6 +77,7 @@ const scaffold = async (input) => {
       // checkout sampledata.js for predefined schemas - faster development
       // schemaData = sampledata.blogs;
     }
+    const spinner = ora(chalk.blue('Generating APIs and Models...')).start();
     await joi.setup();
     if (Object.keys(schemaData).length) {
       for (const [key, value] of Object.entries(schemaData)) {
@@ -103,6 +105,7 @@ const scaffold = async (input) => {
       }
     }
     saveConfig({ schema: schemaData });
+    spinner.succeed(chalk.green('APIs and Models generated successfully.'));
   } catch (err) {
     console.error(chalk.bgRed`ERROR`, err);
   }
