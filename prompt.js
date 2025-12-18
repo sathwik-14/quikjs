@@ -14,6 +14,7 @@ const checkPrimaryKey = (entity) => {
 };
 
 const projectPrompts = async () => {
+  console.log('Available databases:', Array.from(databases.keys()));
   return await prompt([
     {
       type: 'input',
